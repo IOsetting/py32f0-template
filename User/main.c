@@ -21,7 +21,9 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "py32f0xx_bsp_button.h"
+#include "py32f0xx_bsp_led.h"
+#include "py32f0xx_bsp_printf.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -44,11 +46,14 @@ int main(void)
   /* 初始化LED */
   APP_LedConfig();
 
+  BSP_USART_Config();
+
   while (1)
   {
     /* 延时250ms */
-    HAL_Delay(250);                            
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5); 
+    HAL_Delay(1000);                            
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_5);
+    printf("echo\r\n");
   }
 }
 

@@ -13,7 +13,7 @@
   */
 
   .syntax unified
-  .cpu cortex-m0
+  .cpu cortex-m0plus
   .fpu softvfp
   .thumb
 

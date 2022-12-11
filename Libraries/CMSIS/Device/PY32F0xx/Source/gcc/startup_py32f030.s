@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
-  * @file      startup_py32f003x6.s
-  * @brief     PY32F003X6 devices vector table for GCC toolchain.
+  * @file      startup_py32f030x6.s
+  * @brief     PY32F030X6 devices vector table for GCC toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -13,7 +13,7 @@
   */
 
   .syntax unified
-  .cpu cortex-m0
+  .cpu cortex-m0plus
   .fpu softvfp
   .thumb
 

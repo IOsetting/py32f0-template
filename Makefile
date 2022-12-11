@@ -18,19 +18,20 @@ ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bi
 
 # path to JLinkExe
 JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
-# MCU type: PY32F003X4, PY32F003X6, PY32F003X8
-JLINK_DEVICE	?= PY32F003X6
-# path to PyOCD
+# JLink device type, options: PY32F003X4, PY32F003X6, PY32F003X8, PY32F030X6, PY32F030X7, PY32F030X8
+JLINK_DEVICE	?= PY32F003X8
+# path to PyOCD, 
 PYOCD_EXE		?= pyocd
-PYOCD_DEVICE	?= py32f003x6
+# PyOCD device type, options: py32f003x4, py32f003x6, py32f003x8, py32f030x3, py32f030x4, py32f030x6, py32f030x7, py32f030x8
+PYOCD_DEVICE	?= py32f003x8
 
 
 ##### Paths ############
 
 # Link descript file
-LDSCRIPT		= Libraries/LDScripts/py32f003x6.ld
+LDSCRIPT		= Libraries/LDScripts/py32f003x8.ld
 # Library build flags: PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, PY32F003x4, PY32F003x6, PY32F003x8
-LIB_FLAGS       = PY32F003x6
+LIB_FLAGS       = PY32F003x8
 
 # C source folders
 CDIRS	:= User \

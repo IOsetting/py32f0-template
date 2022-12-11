@@ -106,7 +106,7 @@ flash:
 ifeq ($(FLASH_PROGRM),jlink)
 	$(JLINKEXE) -device $(JLINK_DEVICE) -if swd -speed 4000 -CommanderScript $(TOP)/Misc/flash.jlink
 else ifeq ($(FLASH_PROGRM),pyocd)
-	$(PYOCD_EXE) erase -c -t $(PYOCD_DEVICE) --config $(TOP)/Misc/pyocd.yaml
+	$(PYOCD_EXE) erase -t $(PYOCD_DEVICE) --chip --config $(TOP)/Misc/pyocd.yaml
 	$(PYOCD_EXE) load $(BDIR)/$(PROJECT).hex -t $(PYOCD_DEVICE) --config $(TOP)/Misc/pyocd.yaml
 else
 	@echo "FLASH_PROGRM is invalid\n"

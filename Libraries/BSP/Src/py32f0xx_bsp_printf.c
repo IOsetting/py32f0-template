@@ -4,6 +4,8 @@
 #include "py32f0xx_bsp_printf.h"
 
 #ifdef HAL_UART_MODULE_ENABLED
+UART_HandleTypeDef DebugUartHandle;
+
 /**
   * @brief  DEBUG_USART GPIO Config,Mode Config,115200 8-N-1
   * @param  None

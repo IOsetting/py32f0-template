@@ -7,14 +7,16 @@ BUILD_DIR		= Build
 
 ##### Options #####
 
+# Enable printf float %f support, y:yes, n:no
+ENABLE_PRINTF_FLOAT	?= n
 # Programmer, jlink or pyocd
 FLASH_PROGRM	?= pyocd
 
 ##### Toolchains #######
 
 #ARM_TOOCHAIN	?= /opt/gcc-arm/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin
-ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin
-#ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.mpacbti-bet1-x86_64-arm-none-eabi/bin
+#ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin
+ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.mpacbti-bet1-x86_64-arm-none-eabi/bin
 
 # path to JLinkExe
 JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
@@ -37,8 +39,7 @@ LIB_FLAGS       = PY32F003x8
 CDIRS	:= User \
 		Libraries/CMSIS/Device/PY32F0xx/Source \
 		Libraries/PY32F0xx_HAL_Driver/Src \
-		Libraries/BSP/Src \
-		Libraries/BSP/PY32F003xx_Start_Kit
+		Libraries/BSP/Src
 # C source files (if there are any single ones)
 CFILES := 
 
@@ -52,7 +53,6 @@ INCLUDES	:= Libraries/CMSIS/Include \
 			Libraries/CMSIS/Device/PY32F0xx/Include \
 			Libraries/PY32F0xx_HAL_Driver/Inc \
 			Libraries/BSP/Inc \
-			Libraries/BSP/PY32F003xx_Start_Kit \
 			User
 
 include ./rules.mk

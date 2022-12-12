@@ -32,7 +32,10 @@
 /* External functions --------------------------------------------------------*/
 
 /**
-  * @brief 初始化全局MSP
+  * @brief  Configure the Flash prefetch and the Instruction cache,
+  *         the time base source, NVIC and any required global low level hardware
+  *         by calling the HAL_MspInit() callback function from HAL_Init()
+  *         
   */
 void HAL_MspInit(void)
 {

@@ -9,6 +9,8 @@ BUILD_DIR		= Build
 
 # Enable printf float %f support, y:yes, n:no
 ENABLE_PRINTF_FLOAT	?= n
+# Build with CMSIS DSP functions, y:yes, n:no
+USE_DSP			?= n
 # Programmer, jlink or pyocd
 FLASH_PROGRM	?= pyocd
 
@@ -54,5 +56,20 @@ INCLUDES	:= Libraries/CMSIS/Include \
 			Libraries/PY32F0xx_HAL_Driver/Inc \
 			Libraries/BSP/Inc \
 			User
+
+ifeq ($(USE_DSP),y)
+LIB_FLAGS	+= ARM_MATH_CM0PLUS
+CDIRS 		+= Libraries/CMSIS/DSP_Lib/Source/BasicMathFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/CommonTables \
+		Libraries/CMSIS/DSP_Lib/Source/ComplexMathFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/ControllerFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/FastMathFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/FilteringFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/MatrixFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/StatisticsFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/SupportFunctions \
+		Libraries/CMSIS/DSP_Lib/Source/TransformFunctions
+
+endif
 
 include ./rules.mk

@@ -22,7 +22,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "py32f003xx_ll_Start_Kit.h"
+#include "py32f0xx_bsp_button.h"
+#include "py32f0xx_bsp_led.h"
+#include "py32f0xx_bsp_printf.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/

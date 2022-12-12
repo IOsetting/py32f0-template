@@ -52,10 +52,6 @@ typedef enum
 #define BUTTONx_GPIO_CLK_ENABLE(__INDEX__)      do { if((__INDEX__) == 0) USER_BUTTON_GPIO_CLK_ENABLE();} while(0)
 #define BUTTONx_GPIO_CLK_DISABLE(__INDEX__)     (((__INDEX__) == 0) ? USER_BUTTON_GPIO_CLK_DISABLE() : 0)
 
-/** @defgroup Functions
-  * @{
-  */
-uint32_t         BSP_GetVersion(void);
 
 void             BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode);
 void             BSP_PB_DeInit(Button_TypeDef Button);

@@ -7,6 +7,8 @@ BUILD_DIR		= Build
 
 ##### Options #####
 
+# Use LL library instead of HAL
+USE_LL_LIB ?= y
 # Enable printf float %f support, y:yes, n:no
 ENABLE_PRINTF_FLOAT	?= n
 # Build with CMSIS DSP functions, y:yes, n:no
@@ -39,9 +41,7 @@ LIB_FLAGS       = PY32F003x8
 
 # C source folders
 CDIRS	:= User \
-		Libraries/CMSIS/Device/PY32F0xx/Source \
-		Libraries/PY32F0xx_HAL_Driver/Src \
-		Libraries/BSP/Src
+		Libraries/CMSIS/Device/PY32F0xx/Source
 # C source files (if there are any single ones)
 CFILES := 
 
@@ -53,9 +53,19 @@ AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f003.s
 # Include paths
 INCLUDES	:= Libraries/CMSIS/Include \
 			Libraries/CMSIS/Device/PY32F0xx/Include \
-			Libraries/PY32F0xx_HAL_Driver/Inc \
-			Libraries/BSP/Inc \
 			User
+
+ifeq ($(USE_LL_LIB),y)
+CDIRS		+= Libraries/PY32F0xx_LL_Driver/Src \
+		Libraries/BSP_LL/Src
+INCLUDES	+= Libraries/PY32F0xx_LL_Driver/Inc \
+		Libraries/BSP_LL/Inc
+else
+CDIRS		+= Libraries/PY32F0xx_HAL_Driver/Src \
+		Libraries/BSP/Src
+INCLUDES	+= Libraries/PY32F0xx_HAL_Driver/Inc \
+		Libraries/BSP/Inc
+endif
 
 ifeq ($(USE_DSP),y)
 LIB_FLAGS	+= ARM_MATH_CM0PLUS

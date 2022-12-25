@@ -8,7 +8,7 @@ BUILD_DIR		= Build
 ##### Options #####
 
 # Use LL library instead of HAL
-USE_LL_LIB ?= y
+USE_LL_LIB ?= n
 # Enable printf float %f support, y:yes, n:no
 ENABLE_PRINTF_FLOAT	?= n
 # Build with CMSIS DSP functions, y:yes, n:no
@@ -20,7 +20,7 @@ FLASH_PROGRM	?= pyocd
 
 #ARM_TOOCHAIN	?= /opt/gcc-arm/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin
 #ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin
-ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.mpacbti-bet1-x86_64-arm-none-eabi/bin
+ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
 
 # path to JLinkExe
 JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
@@ -34,7 +34,7 @@ PYOCD_DEVICE	?= py32f003x8
 
 ##### Paths ############
 
-# Link descript file
+# Link descript file: py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
 LDSCRIPT		= Libraries/LDScripts/py32f003x8.ld
 # Library build flags: PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, PY32F003x4, PY32F003x6, PY32F003x8
 LIB_FLAGS       = PY32F003x8

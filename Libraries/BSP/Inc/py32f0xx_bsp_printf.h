@@ -7,8 +7,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef PY32F003_BSP_PRINTF_H
-#define PY32F003_BSP_PRINTF_H
+#ifndef PY32F0XX_BSP_PRINTF_H
+#define PY32F0XX_BSP_PRINTF_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,4 +67,4 @@ void             BSP_USART_Config(void);
 }
 #endif
 
-#endif /* PY32F003_BSP_PRINTF_H */
+#endif /* PY32F0XX_BSP_PRINTF_H */

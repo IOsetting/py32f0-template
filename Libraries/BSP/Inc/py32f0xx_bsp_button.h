@@ -7,8 +7,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef PY32F003_BSP_BUTTON_H
-#define PY32F003_BSP_BUTTON_H
+#ifndef PY32F0XX_BSP_BUTTON_H
+#define PY32F0XX_BSP_BUTTON_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,4 +61,4 @@ uint32_t         BSP_PB_GetState(Button_TypeDef Button);
 }
 #endif
 
-#endif /* PY32F003_BSP_BUTTON_H */
+#endif /* PY32F0XX_BSP_BUTTON_H */

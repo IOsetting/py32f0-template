@@ -7,8 +7,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef PY32F003_BSP_LED_H
-#define PY32F003_BSP_LED_H
+#ifndef PY32F0XX_BSP_LED_H
+#define PY32F0XX_BSP_LED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,4 +47,4 @@ void             BSP_LED_Toggle(Led_TypeDef Led);
 }
 #endif
 
-#endif /* PY32F003_BSP_LED_H */
+#endif /* PY32F0XX_BSP_LED_H */

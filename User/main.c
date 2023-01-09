@@ -21,8 +21,6 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "py32f0xx_bsp_button.h"
-#include "py32f0xx_bsp_led.h"
 #include "py32f0xx_bsp_printf.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -35,12 +33,6 @@ static void APP_LedConfig(void);
 
 int main(void)
 {
-  /*
-  * Configure the Flash prefetch and the Instruction cache,
-  * the time base source, NVIC and any required global low level hardware
-  * by calling the HAL_MspInit() callback function to be optionally defined in user file
-  * PY32F0xx_hal_msp.c.
-  */
   HAL_Init();                                 
   
   /* LED GPIO init */
@@ -58,16 +50,16 @@ int main(void)
 
 static void APP_LedConfig(void)
 {
-  GPIO_InitTypeDef  GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct;
 
-  __HAL_RCC_GPIOB_CLK_ENABLE();                          /* GPIOB时钟使能 */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   GPIO_InitStruct.Pin = GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;            /* 推挽输出 */
-  GPIO_InitStruct.Pull = GPIO_PULLUP;                    /* 使能上拉 */
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;          /* GPIO速度 */
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);                /* GPIO初始化 */
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
 
 void APP_ErrorHandler(void)

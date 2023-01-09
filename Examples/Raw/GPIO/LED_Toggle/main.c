@@ -21,8 +21,6 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "py32f0xx_bsp_button.h"
-#include "py32f0xx_bsp_led.h"
 #include "py32f0xx_bsp_printf.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -33,11 +31,6 @@
 static void APP_LedConfig(void);
 
 
-/**
-  * @brief  应用程序入口函数.
-  * @param  无
-  * @retval int
-  */
 int main(void)
 {
   HAL_Init();                                 
@@ -56,24 +49,21 @@ int main(void)
 
 static void APP_LedConfig(void)
 {
-  GPIO_InitTypeDef  GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct;
 
-  __HAL_RCC_GPIOB_CLK_ENABLE();                          /* GPIOB时钟使能 */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   GPIO_InitStruct.Pin = GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;            /* 推挽输出 */
-  GPIO_InitStruct.Pull = GPIO_PULLUP;                    /* 使能上拉 */
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;          /* GPIO速度 */
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);                /* GPIO初始化 */
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
-
 
 void APP_ErrorHandler(void)
 {
-  while (1)
-  {
-  }
+  while (1);
 }
 
 #ifdef  USE_FULL_ASSERT

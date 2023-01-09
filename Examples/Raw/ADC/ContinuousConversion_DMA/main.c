@@ -25,6 +25,7 @@
 #include "py32f0xx_bsp_printf.h"
 
 /* Private define ------------------------------------------------------------*/
+#define BUF_SIZE    1024
 /* Private variables ---------------------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -38,7 +39,7 @@ ADC_ChannelConfTypeDef        sConfig;
 TIM_HandleTypeDef             TimHandle;
 TIM_OC_InitTypeDef            OCConfig;
 TIM_MasterConfigTypeDef       sMasterConfig;
-uint32_t   gADCxConvertedData = 1;
+uint32_t   gADCxConvertedData[BUF_SIZE];
 
 /* Private user code ---------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -57,8 +58,8 @@ int main(void)
   {
     if (__HAL_DMA_GET_FLAG(DMA1, DMA_ISR_TCIF1))
     {
+      printf("ADC: %ld %ld %ld\r\n", *gADCxConvertedData, *(gADCxConvertedData + 1), *(gADCxConvertedData + 2));
       __HAL_DMA_CLEAR_FLAG(DMA1, DMA_IFCR_CTCIF1);
-      printf("ADC: %ld \r\n", gADCxConvertedData);
     }
   }
 }
@@ -77,7 +78,7 @@ static void APP_AdcConfig(void)
 
   AdcHandle.Instance = ADC1;
   AdcHandle.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV1;            /* ADC clock */
-  AdcHandle.Init.Resolution = ADC_RESOLUTION_12B;                      /* Resolution can be 6bit, 8bit, 10bit, 12bit */
+  AdcHandle.Init.Resolution = ADC_RESOLUTION_12B;                      /* Valid resolution is around 8 bit */
   AdcHandle.Init.DataAlign = ADC_DATAALIGN_RIGHT;                      /* Right alignment */
   AdcHandle.Init.ScanConvMode = ADC_SCAN_DIRECTION_BACKWARD;
   AdcHandle.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
@@ -101,7 +102,7 @@ static void APP_AdcConfig(void)
     APP_ErrorHandler();
   }
 
-  if (HAL_ADC_Start_DMA(&AdcHandle, &gADCxConvertedData, 1) != HAL_OK)
+  if (HAL_ADC_Start_DMA(&AdcHandle, gADCxConvertedData, BUF_SIZE) != HAL_OK)
   {
     APP_ErrorHandler();
   }

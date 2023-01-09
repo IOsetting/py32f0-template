@@ -29,7 +29,6 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static DMA_HandleTypeDef HdmaCh1;
-extern uint32_t   aADCxConvertedData;
 /* Private function prototypes -----------------------------------------------*/
 /* External functions --------------------------------------------------------*/
 
@@ -56,27 +55,16 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*
-   * DMA1_MAP:
-   *  00000:ADC       00001:SPI1_TX     00010:SPI1_RX     00011:Reserved
-   *  00100:Reserved  00101:USART1_TX   00110:USART1_RX   00111:USART2_TX
-   *  01000:USART2_RX 01001:I2C_TX      01010:I2C_RX      01011:TIM1_CH1
-   *  01100:TIM1_CH2  01101:TIM1_CH3    01110:TIM1_CH4    01111:TIM1_COM
-   *  10000:TIM1_UP   10001:TIM1_TRIG   10010:TIM3_CH1    10011:TIM3_CH3
-   *  10100:TIM3_CH4  10101:TIM3_TRG    10110:TIM3_UP     10111:Reserved
-   *  11000:TIM16_CH1 11001:TIM16_UP    11010:TIM17_CH1   11011:TIM17_UP
-   *  Others:Reserved
-  */
-  HAL_SYSCFG_DMA_Req(0);                                      /* DMA1_MAP Set to ADC */
+  HAL_SYSCFG_DMA_Req(DMA_CHANNEL_MAP_ADC);            /* DMA1_MAP Set to ADC */
 
   HdmaCh1.Instance                 = DMA1_Channel1;
   HdmaCh1.Init.Direction           = DMA_PERIPH_TO_MEMORY;
   HdmaCh1.Init.PeriphInc           = DMA_PINC_DISABLE;
-  HdmaCh1.Init.MemInc              = DMA_MINC_DISABLE;
+  HdmaCh1.Init.MemInc              = DMA_MINC_ENABLE;
   HdmaCh1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-  HdmaCh1.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
+  HdmaCh1.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
   HdmaCh1.Init.Mode                = DMA_CIRCULAR;
-  HdmaCh1.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  HdmaCh1.Init.Priority            = DMA_PRIORITY_HIGH;
 
   HAL_DMA_DeInit(&HdmaCh1);
   HAL_DMA_Init(&HdmaCh1);

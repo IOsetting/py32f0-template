@@ -95,6 +95,7 @@
   * @brief DMA HAL module driver
   * @{
   */
+#if (defined(PY32F003PRE)|| defined(PY32F030PRE) || defined(PY32F072PRE))
 
 #ifdef HAL_DMA_MODULE_ENABLED
 
@@ -883,6 +884,8 @@ static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t
   */
 
 #endif /* HAL_DMA_MODULE_ENABLED */
+
+#endif
 /**
   * @}
   */

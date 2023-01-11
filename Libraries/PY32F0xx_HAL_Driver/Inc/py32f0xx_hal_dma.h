@@ -45,6 +45,7 @@ extern "C" {
   * @{
   */
 
+#if (defined(PY32F003PRE)|| defined(PY32F030PRE) || defined(PY32F072PRE))
 /**
   * @brief  DMA Configuration Structure definition
   */
@@ -471,7 +472,7 @@ uint32_t             HAL_DMA_GetError(DMA_HandleTypeDef *hdma);
 #define IS_DMA_MAP_VALUE(VALUE)  (VALUE < DMA_CHANNEL_MAP_END)
 
 
-
+#endif
 /**
   * @}
   */

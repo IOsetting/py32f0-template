@@ -34,7 +34,7 @@ PYOCD_DEVICE	?= py32f003x8
 
 ##### Paths ############
 
-# Link descript file: py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
+# Link descript file: py32f002x5.ld, py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
 LDSCRIPT		= Libraries/LDScripts/py32f003x8.ld
 # Library build flags: PY32F002x5, PY32F002Ax5, PY32F003x4, PY32F003x6, PY32F003x8, PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, PY32F072xB
 LIB_FLAGS       = PY32F003x8

@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file    system_py32f0xx.h
   * @brief   CMSIS Cortex-M0+ Device Peripheral Access Layer Header File for
-  *                    PY32F0xx Device Series
+    *                    PY32F030xx Device Series
   * @version v1.0.0
   *
   ******************************************************************************

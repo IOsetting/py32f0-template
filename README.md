@@ -1,6 +1,18 @@
 # py32f0-template
 
-* Puya PY32F003/030 template project for GNU Arm Embedded Toolchain
+* Puya PY32F0 template project for GNU Arm Embedded Toolchain
+* Puya PY32F0 family:
+  * PY32F002x5
+  * PY32F002Ax5
+  * PY32F003x4
+  * PY32F003x6
+  * PY32F003x8
+  * PY32F030x3
+  * PY32F030x4
+  * PY32F030x6
+  * PY32F030x7
+  * PY32F030x8
+  * PY32F072xB
 * Supported programmers: J-Link, DAPLink/PyOCD
 * Supported IDE: VSCode
 
@@ -8,6 +20,7 @@
 
 ```
 ├── Build                       # Build results
+├── Docs                        # Datesheets and User Manuals
 ├── Examples
 │   ├── FreeRTOS                # FreeRTOS examples
 │   ├── Raw                     # NonFreeRTOS examples
@@ -16,12 +29,15 @@
 │   ├── BSP                     # SysTick delay and printf for debug
 │   ├── BSP_LL                  # SysTick delay and printf for debug
 │   ├── CMSIS
-│   ├── LDScripts               # ld files
+│   ├── LDScripts               # LD files
 │   ├── PY32F0xx_HAL_Driver     # MCU peripheral driver
 │   └── PY32F0xx_LL_Driver      # MCU low layer peripheral driver
 ├── Makefile                    # Make config
 ├── Misc
-│   └── Devices                 # FLM files
+│   ├── Flash
+│   │   ├── Devices             # FLM files
+│   │   └── Sources             # Flash algorithm source code
+│   └── SVD                     # SVD files
 ├── README.md
 ├── rules.mk                    # Pre-defined rules include in Makefile 
 └── User                        # User application code
@@ -29,7 +45,7 @@
 
 # Requirements
 
-* PY32F0 EVB or boards of PY32F003/030 series
+* PY32F0 EVB or boards of PY32F002/003/030/072 series
 * Programmer
   * J-Link: J-Link OB programmer
   * PyOCD: DAPLink or J-Link
@@ -59,11 +75,11 @@ sudo dpkg -i JLink_Linux_V770a_x86_64.deb
 ```
 The default installation directory is */opt/SEGGER*
 
-Copy all .FLM files from [Project directory]/Misc/Devices/Puya to [JLink directory]/Devices/Puya
+Copy all .FLM files from [Project directory]/Misc/Flash/Devices/Puya to [JLink directory]/Devices/Puya
 
 ```bash
 cd py32f0-template
-sudo cp -r Misc/Devices/* /opt/SEGGER/JLink/Devices/
+sudo cp -r Misc/Flash/Devices/* /opt/SEGGER/JLink/Devices/
 ```
 
 Edit JLinkDevices.xml 

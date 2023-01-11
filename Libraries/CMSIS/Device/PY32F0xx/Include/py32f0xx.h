@@ -53,6 +53,8 @@ extern "C" {
 #define PY32F003PRE
 #elif (defined(PY32F072xB))
 #define PY32F072PRE
+#elif (defined(PY32F002x5))
+#define PY32F002PRE
 #elif (defined(PY32F002Ax5))
 #define PY32F002APRE
 #endif
@@ -64,7 +66,7 @@ extern "C" {
 #if !defined (PY32F030x3) && !defined (PY32F030x4) && !defined (PY32F030x6) && !defined (PY32F030x7) && !defined (PY32F030x8) && !defined (PY32F030xx) && \
     !defined (PY32F003x4) && !defined (PY32F003x6) && !defined (PY32F003x8) && \
     !defined (PY32F072xB) && \
-    !defined (PY32F002Ax5)
+    !defined (PY32F002x5) && !defined (PY32F002Ax5)
 /* #define PY32F030x3  */  /*!< PY32F030x3  Devices (PY32F030xx  microcontrollers where the Flash memory is 8 Kbytes)               */
 /* #define PY32F030x4  */  /*!< PY32F030x4  Devices (PY32F030xx  microcontrollers where the Flash memory is 16 Kbytes)              */
 /* #define PY32F030x6  */  /*!< PY32F030x6  Devices (PY32F030xx  microcontrollers where the Flash memory is 32 Kbytes)              */
@@ -74,6 +76,7 @@ extern "C" {
 /* #define PY32F003x6  */  /*!< PY32F003x6  Devices (PY32F003xx  microcontrollers where the Flash memory is 32 Kbytes)              */
 /* #define PY32F003x8  */  /*!< PY32F003x8  Devices (PY32F003xx  microcontrollers where the Flash memory is 64 Kbytes)              */
 /* #define PY32F072xB  */  /*!< PY32F072xB  Devices (PY32F072xx  microcontrollers where the Flash memory is 128 Kbytes)             */
+/* #define PY32F002x5  */  /*!< PY32F002x5  Devices (PY32F002x5  microcontrollers where the Flash memory is 20 Kbytes)              */
 /* #define PY32F002Ax5 */  /*!< PY32F002Ax5 Devices (PY32F002Ax5 microcontrollers where the Flash memory is 20 Kbytes)              */
 #endif
 
@@ -127,6 +130,8 @@ extern "C" {
 #include "py32f003x8.h"
 #elif defined(PY32F072xB)
 #include "py32f072xB.h"
+#elif defined(PY32F002x5)
+#include "py32f002x5.h"
 #elif defined(PY32F002Ax5)
 #include "py32f002ax5.h"
 #else

@@ -3,6 +3,14 @@
   <!-- Puya            -->
   <!--                 -->
   <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F002AX5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="Devices/Puya/PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F002X5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="Devices/Puya/PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
     <ChipInfo Vendor="Puya" Name="PY32F003X4"  WorkRAMAddr="0x20000000" WorkRAMSize="0x800" Core="JLINK_CORE_CORTEX_M0"/>
     <FlashBankInfo Name="Flash_16K" BaseAddr="0x08000000" MaxSize="0x4000" Loader="Devices/Puya/PY32F003xx_16.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
   </Device>

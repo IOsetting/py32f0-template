@@ -34,11 +34,9 @@ static void APP_LedConfig(void);
 int main(void)
 {
   HAL_Init();                                 
-  
-  /* LED GPIO init */
   APP_LedConfig();
-
   BSP_USART_Config();
+  printf("SystemClk:%ld\r\n", SystemCoreClock);
 
   while (1)
   {
@@ -64,9 +62,7 @@ static void APP_LedConfig(void)
 
 void APP_ErrorHandler(void)
 {
-  while (1)
-  {
-  }
+  while (1);
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -76,9 +72,7 @@ void APP_ErrorHandler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  while (1)
-  {
-  }
+  while (1);
 }
 #endif /* USE_FULL_ASSERT */
 

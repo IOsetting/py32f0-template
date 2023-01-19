@@ -30,7 +30,7 @@ JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
 #   PY32F002AX5, PY32F002X5, 
 #   PY32F003X4, PY32F003X6, PY32F003X8, 
 #   PY32F030X4, PY32F030X6, PY32F030X7, PY32F030X8
-JLINK_DEVICE	?= PY32F003X8
+JLINK_DEVICE	?= PY32F030X8
 # path to PyOCD, 
 PYOCD_EXE		?= pyocd
 # PyOCD device type, options: 
@@ -38,19 +38,19 @@ PYOCD_EXE		?= pyocd
 #   py32f003x4,  py32f003x6, py32f003x8, 
 #   py32f030x3,  py32f030x4, py32f030x6, py32f030x7, py32f030x8
 #   py32f072xb
-PYOCD_DEVICE	?= py32f003x8
+PYOCD_DEVICE	?= py32f030x8
 
 
 ##### Paths ############
 
 # Link descript file: py32f002x5.ld, py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
-LDSCRIPT		= Libraries/LDScripts/py32f003x8.ld
+LDSCRIPT		= Libraries/LDScripts/py32f030x8.ld
 # Library build flags: 
 #   PY32F002x5, PY32F002Ax5, 
 #   PY32F003x4, PY32F003x6, PY32F003x8, 
 #   PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, 
 #   PY32F072xB
-LIB_FLAGS       = PY32F003x8
+LIB_FLAGS       = PY32F030x8
 
 # C source folders
 CDIRS	:= User \
@@ -61,7 +61,7 @@ CFILES :=
 # ASM source folders
 ADIRS	:= User
 # ASM single files
-AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f003.s
+AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f030.s
 
 # Include paths
 INCLUDES	:= Libraries/CMSIS/Core/Include \

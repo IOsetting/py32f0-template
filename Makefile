@@ -62,7 +62,7 @@ ADIRS	:= User
 AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f003.s
 
 # Include paths
-INCLUDES	:= Libraries/CMSIS/Include \
+INCLUDES	:= Libraries/CMSIS/Core/Include \
 			Libraries/CMSIS/Device/PY32F0xx/Include \
 			User
 
@@ -79,17 +79,23 @@ INCLUDES	+= Libraries/PY32F0xx_HAL_Driver/Inc \
 endif
 
 ifeq ($(USE_DSP),y)
-LIB_FLAGS	+= ARM_MATH_CM0PLUS
-CDIRS 		+= Libraries/CMSIS/DSP_Lib/Source/BasicMathFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/CommonTables \
-		Libraries/CMSIS/DSP_Lib/Source/ComplexMathFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/ControllerFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/FastMathFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/FilteringFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/MatrixFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/StatisticsFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/SupportFunctions \
-		Libraries/CMSIS/DSP_Lib/Source/TransformFunctions
+CFILES 		+= Libraries/CMSIS/DSP/Source/BasicMathFunctions/BasicMathFunctions.c \
+		Libraries/CMSIS/DSP/Source/BayesFunctions/BayesFunctions.c \
+		Libraries/CMSIS/DSP/Source/CommonTables/CommonTables.c \
+		Libraries/CMSIS/DSP/Source/ComplexMathFunctions/ComplexMathFunctions.c \
+		Libraries/CMSIS/DSP/Source/ControllerFunctions/ControllerFunctions.c \
+		Libraries/CMSIS/DSP/Source/DistanceFunctions/DistanceFunctions.c \
+		Libraries/CMSIS/DSP/Source/FastMathFunctions/FastMathFunctions.c \
+		Libraries/CMSIS/DSP/Source/FilteringFunctions/FilteringFunctions.c \
+		Libraries/CMSIS/DSP/Source/InterpolationFunctions/InterpolationFunctions.c \
+		Libraries/CMSIS/DSP/Source/MatrixFunctions/MatrixFunctions.c \
+		Libraries/CMSIS/DSP/Source/QuaternionMathFunctions/QuaternionMathFunctions.c \
+		Libraries/CMSIS/DSP/Source/StatisticsFunctions/StatisticsFunctions.c \
+		Libraries/CMSIS/DSP/Source/SupportFunctions/SupportFunctions.c \
+		Libraries/CMSIS/DSP/Source/SVMFunctions/SVMFunctions.c \
+		Libraries/CMSIS/DSP/Source/TransformFunctions/TransformFunctions.c
+INCLUDES	+= Libraries/CMSIS/DSP/Include \
+		Libraries/CMSIS/DSP/PrivateInclude
 
 endif
 

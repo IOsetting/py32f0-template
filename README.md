@@ -23,12 +23,13 @@
 ├── Docs                        # Datesheets and User Manuals
 ├── Examples
 │   ├── FreeRTOS                # FreeRTOS examples
-│   ├── Raw                     # NonFreeRTOS examples
-│   └── Raw_LL                  # NonFreeRTOS examples with low layer lib
+│   ├── HAL                     # HAL library examples
+│   └── LL                      # LL(Low Layer) library examples
 ├── Libraries
 │   ├── BSP                     # SysTick delay and printf for debug
 │   ├── BSP_LL                  # SysTick delay and printf for debug
 │   ├── CMSIS
+│   ├── FreeRTOS                # FreeRTOS library
 │   ├── LDScripts               # LD files
 │   ├── PY32F0xx_HAL_Driver     # MCU peripheral driver
 │   └── PY32F0xx_LL_Driver      # MCU low layer peripheral driver

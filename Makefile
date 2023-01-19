@@ -11,6 +11,8 @@ BUILD_DIR		= Build
 USE_LL_LIB ?= n
 # Enable printf float %f support, y:yes, n:no
 ENABLE_PRINTF_FLOAT	?= n
+# Build with FreeRTOS, y:yes, n:no
+USE_FREERTOS	?= n
 # Build with CMSIS DSP functions, y:yes, n:no
 USE_DSP			?= n
 # Programmer, jlink or pyocd
@@ -76,6 +78,16 @@ CDIRS		+= Libraries/PY32F0xx_HAL_Driver/Src \
 		Libraries/BSP/Src
 INCLUDES	+= Libraries/PY32F0xx_HAL_Driver/Inc \
 		Libraries/BSP/Inc
+endif
+
+ifeq ($(USE_FREERTOS),y)
+CDIRS		+= Libraries/FreeRTOS \
+			Libraries/FreeRTOS/portable/GCC/ARM_CM0
+
+CFILES		+= Libraries/FreeRTOS/portable/MemMang/heap_4.c
+
+INCLUDES	+= Libraries/FreeRTOS/include \
+			Libraries/FreeRTOS/portable/GCC/ARM_CM0
 endif
 
 ifeq ($(USE_DSP),y)

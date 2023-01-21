@@ -1,20 +1,21 @@
 # py32f0-template
 
 * Puya PY32F0 template project for GNU Arm Embedded Toolchain
-* Puya PY32F0 family:
-  * PY32F002x5
-  * PY32F002Ax5
-  * PY32F003x4
-  * PY32F003x6
-  * PY32F003x8
-  * PY32F030x3
-  * PY32F030x4
-  * PY32F030x6
-  * PY32F030x7
-  * PY32F030x8
-  * PY32F072xB
 * Supported programmers: J-Link, DAPLink/PyOCD
 * Supported IDE: VSCode
+
+# Puya PY32F0 family
+
+* PY32F002
+  * PY32F002x5(20KB Flash/3KB RAM)
+* PY32F002A
+  * PY32F002Ax5(20KB Flash/3KB RAM)
+* PY32F003
+  * PY32F003x4(16KB Flash/2KB RAM), PY32F003x6(32KB Flash/4KB RAM), PY32F003x8(64KB Flash/8KB RAM)
+* PY32F030
+  * PY32F030x4(16KB Flash/2KB RAM), PY32F030x6(32KB Flash/4KB RAM), PY32F030x7(48KB Flash/6KB RAM), PY32F030x8(64KB Flash/8KB RAM)
+* PY32F072
+  * PY32F072xB(128KB Flash/16KB RAM)
 
 # File Structure
 
@@ -220,6 +221,51 @@ make
 V=1 make
 # flash
 make flash
+```
+
+# Debugging In VSCode
+
+Install Cortex Debug extension, add a new configuration in launch.json, e.g.
+```json
+{
+    "armToolchainPath": "/opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/",
+    "toolchainPrefix": "arm-none-eabi",
+    "name": "Cortex Debug",
+    "cwd": "${workspaceFolder}",
+    "executable": "${workspaceFolder}/Build/app.elf",
+    "request": "launch",        // can be launch or attach
+    "type": "cortex-debug",
+    "runToEntryPoint": "Reset_Handler", // "main" or other function name. runToMain is deprecated
+    "servertype": "jlink",  // jlink, openocd, pyocd, pe and stutil
+    "device": "PY32F030X8",
+    "interface": "swd",
+    "preLaunchTask": "build",  // Set this to run a task from tasks.json before starting a debug session
+    // "preLaunchCommands": ["Build all"], // Uncomment this if not using preLaunchTask
+    "svdFile": "${workspaceFolder}/Misc/SVD/py32f030xx.svd",  // svd for this part number
+    "showDevDebugOutput": "vscode", // parsed, raw, vscode:vscode log and raw
+    "swoConfig":
+    {
+        "enabled": true,
+        "cpuFrequency": 8000000, // Target CPU frequency in Hz
+        "swoFrequency":  4000000,
+        "source": "probe", // either be “probe” to get directly from the debug probe, 
+                           // or a serial port device to use a serial port external to the debug probe.
+        "decoders":
+        [
+            {
+                "label": "ITM port 0 output",
+                "type": "console",
+                "port": 0,
+                "showOnStartup": true,
+                "encoding": "ascii"
+            }
+        ]
+    }
+}
+```
+If Cortex Debug cannot find JLinkGDBServerCLExe, add the following line to settings.json
+```
+"cortex-debug.JLinkGDBServerPath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
 ```
 
 # Try Other Examples

@@ -1,0 +1,14 @@
+int InitEMU(void) {
+  JLINK_SYS_Report("--InitEMU()--");
+  // Silence confirm updating firmware dialog boxes that appear when uploading
+  JLINK_ExecCommand("SuppressInfoUpdateFW");
+  JLINK_ExecCommand("DisableAutoUpdateFW");
+  // Uncomment to hide flash windows
+  //JLINK_ExecCommand("DisableInfoWinFlashDL");
+  //JLINK_ExecCommand("DisableInfoWinFlashBPs");
+  return 0;
+}
+int ConfigTargetSettings(void) {
+  JLINK_SYS_Report("--ConfigTargetSettings()--");
+  return 0;
+}

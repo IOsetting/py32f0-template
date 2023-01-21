@@ -226,7 +226,7 @@ make flash
 # Debugging In VSCode
 
 Install Cortex Debug extension, add a new configuration in launch.json, e.g.
-```json
+```
 {
     "armToolchainPath": "/opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/",
     "toolchainPrefix": "arm-none-eabi",

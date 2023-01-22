@@ -31,8 +31,6 @@ extern "C" {
 
 
 //debug printf redirect config
-#define DEBUG_USART_BAUDRATE                    115200
-
 #define DEBUG_USART                             USART2
 #define DEBUG_USART_CLK_ENABLE()                LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2)
 
@@ -59,7 +57,7 @@ extern "C" {
 
 /************************************************************/
 
-void             BSP_USART_Config(void);
+void             BSP_USART_Config(uint32_t baudRate);
 
 
 #ifdef __cplusplus

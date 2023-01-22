@@ -8,12 +8,12 @@
   * @param  None
   * @retval None
   */
-void BSP_USART_Config(void)
+void BSP_USART_Config(uint32_t baudRate)
 {
   DEBUG_USART_CLK_ENABLE();
 
   /* USART Init */
-  LL_USART_SetBaudRate(DEBUG_USART, SystemCoreClock, LL_USART_OVERSAMPLING_16, DEBUG_USART_BAUDRATE);
+  LL_USART_SetBaudRate(DEBUG_USART, SystemCoreClock, LL_USART_OVERSAMPLING_16, baudRate);
   LL_USART_SetDataWidth(DEBUG_USART, LL_USART_DATAWIDTH_8B);
   LL_USART_SetStopBitsLength(DEBUG_USART, LL_USART_STOPBITS_1);
   LL_USART_SetParity(DEBUG_USART, LL_USART_PARITY_NONE);

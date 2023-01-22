@@ -1,6 +1,4 @@
 #include "main.h"
-#include "py32f0xx_bsp_button.h"
-#include "py32f0xx_bsp_led.h"
 #include "py32f0xx_bsp_printf.h"
 
 static void APP_SystemClockConfig(void);
@@ -12,12 +10,17 @@ int main(void)
 
   APP_GPIOConfig();
 
+  BSP_USART_Config(115200);
+
   LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_SYSCLK,LL_RCC_MCO1_DIV_1);
+
+  printf("Clock: %ld \r\n", SystemCoreClock);
 
   while (1)
   {
-    LL_mDelay(200);
+    LL_mDelay(1000);
     LL_GPIO_TogglePin(GPIOB,LL_GPIO_PIN_5);
+    printf("echo\r\n");
   }
 }
 
@@ -26,7 +29,8 @@ static void APP_SystemClockConfig(void)
   LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
 
   LL_RCC_HSI_Enable();
-  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz);
+  /* Change this value to adjust frequency */
+  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz + 15);
   while(LL_RCC_HSI_IsReady() != 1);
 
   UTILS_ClkInitStruct.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;

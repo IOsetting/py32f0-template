@@ -36,7 +36,7 @@ int main(void)
   APP_AdcCalibrate();
   APP_AdcConfig();
   LL_ADC_Enable(ADC1);
-  /* Ensure ADC is stable, >= 8 ADC Clock */
+  /* Delay 1ms(>= 8 ADC Clock) to ensure ADC is stable */
   LL_mDelay(1);
   LL_ADC_REG_StartConversion(ADC1);
 
@@ -109,7 +109,7 @@ static void APP_AdcCalibrate(void)
 #endif
     }
 
-    /* Delay before re-enable ADC */
+    /* Delay 1ms(>= 4 ADC clocks) before re-enable ADC */
     LL_mDelay(1);
     /* Apply saved settings */
     LL_ADC_REG_SetDMATransfer(ADC1, backup_setting_adc_dma_transfer);
@@ -119,7 +119,7 @@ static void APP_AdcCalibrate(void)
 static void APP_TimerInit(void)
 {
   LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
-  /* Set period to 48000000 */
+  /* Set period to 48000000 for 48MHz clock */
   LL_TIM_SetPrescaler(TIM1, 6000);
   LL_TIM_SetAutoReload(TIM1, 8000);
   /* Triggered by update */
@@ -164,7 +164,7 @@ static void APP_SystemClockConfig(void)
   LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
 
   LL_RCC_HSI_Enable();
-  /* Change this value to adjust frequency */
+  /* Change this value to adjust clock frequency, larger is faster */
   LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz + 15);
   while(LL_RCC_HSI_IsReady() != 1);
 

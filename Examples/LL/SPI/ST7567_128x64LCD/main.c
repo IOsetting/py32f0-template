@@ -17,7 +17,6 @@
 
 static void APP_SPIConfig(void);
 static void APP_SystemClockConfig(void);
-uint8_t SPI_TxRxByte(uint8_t data);
 
 int main(void)
 {

@@ -17,6 +17,10 @@
 * PY32F072
   * PY32F072xB(128KB Flash/16KB RAM)
 
+**Note**
+
+There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, despite all the parts listed, you can simply treat them all as PY32F030 in coding and programming.
+
 # File Structure
 
 ```
@@ -47,7 +51,7 @@
 
 # Requirements
 
-* PY32F0 EVB or boards of PY32F002/003/030/072 series
+* PY32F0 EVB or boards of PY32F002/003/030 series
 * Programmer
   * J-Link: J-Link OB programmer
   * PyOCD: DAPLink or J-Link
@@ -166,7 +170,7 @@ Change the settings in Makefile
 * If you use J-Link, **FLASH_PROGRM** can be jlink or pyocd
 * If you use DAPLink, set **FLASH_PROGRM** to pyocd
 * ST-LINK is not supported yet. ST-LINK works in Windows Keil5, but I failed to make it work in Ubuntu
-* Puya provides two sets of library, HAL lib and LL lib, switch in **USE_LL_LIB** option
+* Puya provides two sets of library, HAL lib and LL lib, switch with **USE_LL_LIB** option
 * **ENABLE_PRINTF_FLOAT** will add `-u _printf_float` to link options, which will significantly increase the binary size.
 
 ```makefile

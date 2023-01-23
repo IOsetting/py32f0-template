@@ -138,8 +138,8 @@ void ST7567_UpdateScreen(void)
     for (i = 0; i < ST7567_PAGES; i++)
     {
         ST7567_WriteCommand(ST7567_SET_PAGE_ADDRESS|(i & ST7567_SET_PAGE_ADDRESS_MASK));
-        ST7567_WriteCommand(ST7567_SET_COLUMN_ADDRESS_MSB|(0 >> 4));
-        ST7567_WriteCommand(ST7567_SET_COLUMN_ADDRESS_LSB|(0 & 0x0F));
+        ST7567_WriteCommand(ST7567_SET_COLUMN_ADDRESS_MSB|(ST7567_X_OFFSET >> 4));
+        ST7567_WriteCommand(ST7567_SET_COLUMN_ADDRESS_LSB|(ST7567_X_OFFSET & 0x0F));
         ST7567_Transmit(pt + (ST7567_WIDTH * i), ST7567_WIDTH, ST7567_TIMEOUT);
     }
 }
@@ -174,11 +174,11 @@ void ST7567_DrawPixel(uint16_t x, uint16_t y, uint8_t color)
 
     if (color == ST7567_COLOR_FRONT)
     {
-        ST7567_Buffer_all[ST7567_X_OFFSET + x + (y / 8) * (ST7567_WIDTH + ST7567_SEG_EXPAND)] |= 1 << (y % 8);
+        ST7567_Buffer_all[x + (y / 8) * ST7567_WIDTH] |= 1 << (y % 8);
     }
     else
     {
-        ST7567_Buffer_all[ST7567_X_OFFSET + x + (y / 8) * (ST7567_WIDTH + ST7567_SEG_EXPAND)] &= ~(1 << (y % 8));
+        ST7567_Buffer_all[x + (y / 8) * ST7567_WIDTH] &= ~(1 << (y % 8));
     }
 }
 

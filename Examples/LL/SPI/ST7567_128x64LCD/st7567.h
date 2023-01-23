@@ -43,7 +43,7 @@
 // Y height
 #define ST7567_HEIGHT 64
 // Additional bytes in each row
-#define ST7567_SEG_EXPAND 0
+#define ST7567_SEG_EXPAND 4
 // Display RAM Pages (8x8bit + 1bit)
 #define ST7567_PAGES 8
 // X orientation

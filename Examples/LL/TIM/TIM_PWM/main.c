@@ -17,7 +17,7 @@ int main(void)
 {
   APP_SystemClockConfig();
   BSP_USART_Config(115200);
-  printf("TIM1 DMA Demo\r\nClock: %ld\r\n", SystemCoreClock);
+  printf("TIM1 PWM Demo\r\nClock: %ld\r\n", SystemCoreClock);
 
   APP_TIM1Config();
   APP_PWMChannelConfig();

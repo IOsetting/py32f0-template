@@ -12,14 +12,14 @@ int main(void)
 
   BSP_USART_Config(115200);
 
-  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_SYSCLK,LL_RCC_MCO1_DIV_1);
+  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_SYSCLK, LL_RCC_MCO1_DIV_1);
 
   printf("Clock: %ld \r\n", SystemCoreClock);
 
   while (1)
   {
     LL_mDelay(1000);
-    LL_GPIO_TogglePin(GPIOB,LL_GPIO_PIN_5);
+    LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_5);
     printf("echo\r\n");
   }
 }
@@ -31,22 +31,14 @@ static void APP_SystemClockConfig(void)
   LL_RCC_HSI_Enable();
   /* Change this value to adjust frequency */
   LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz + 15);
-  while(LL_RCC_HSI_IsReady() != 1);
+  while (LL_RCC_HSI_IsReady() != 1);
 
   UTILS_ClkInitStruct.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;
   UTILS_ClkInitStruct.APB1CLKDivider = LL_RCC_APB1_DIV_1;
   LL_PLL_ConfigSystemClock_HSI(&UTILS_ClkInitStruct);
 
-  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL);
-
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
   /* Re-init frequency of SysTick source, reload = freq/ticks = 48000000/1000 = 48000 */
   LL_InitTick(48000000, 1000U);
-  /* Update global SystemCoreClock(or through SystemCoreClockUpdate function) */
-  LL_SetSystemCoreClock(48000000);
 }
 
 static void APP_GPIOConfig(void)

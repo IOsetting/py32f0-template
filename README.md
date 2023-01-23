@@ -4,7 +4,7 @@
 * Supported programmers: J-Link, DAPLink/PyOCD
 * Supported IDE: VSCode
 
-# Puya PY32F0 family
+# Puya PY32F0 Family
 
 * PY32F002
   * PY32F002x5(20KB Flash/3KB RAM)

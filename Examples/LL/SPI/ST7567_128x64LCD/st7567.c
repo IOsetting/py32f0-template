@@ -3,7 +3,7 @@
  * \file        st7567.c
  * \author      IOsetting | iosetting@outlook.com
  * \date        
- * \brief       Library of ST7567 LCD on W806
+ * \brief       Library of ST7567 LCD
  * \note        
  * \version     v0.1
  * \ingroup     demo

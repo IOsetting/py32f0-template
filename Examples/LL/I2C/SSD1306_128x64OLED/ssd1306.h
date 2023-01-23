@@ -26,12 +26,6 @@ extern C {
 #include "main.h"
 #include "ascii_fonts.h"
 
-
-#define SSD1306_SCL_PORT    GPIOA
-#define SSD1306_SCL_PIN     GPIO_PIN_1
-#define SSD1306_SDA_PORT    GPIOA
-#define SSD1306_SDA_PIN     GPIO_PIN_4
-
 /* I2C address
 * address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
 */

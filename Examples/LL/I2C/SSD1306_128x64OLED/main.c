@@ -130,6 +130,12 @@ static void APP_I2cMasterConfig(void)
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
 
+  /**
+   * SCL: PF1 & AF_12, PA9 & AF_6
+   * SDA: PF0 & AF_12, PA10 & AF_6
+   * 
+   * Change pins to PF1 / PF0 for parts have no PA9 / PA10
+  */
   // PA9 SCL
   GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;

@@ -20,22 +20,7 @@
 extern C {
 #endif
 
-/**
- * This SSD1306 LCD uses I2C for communication
- *
- * Library features functions for drawing lines, rectangles and circles.
- *
- * It also allows you to draw texts and characters using appropriate functions provided in library.
- *
- * Default pinout
- *
-SSD1306    |W806         |DESCRIPTION
 
-VCC        |3.3V         |
-GND        |GND          |
-SCL        |PA1          |Serial clock line
-SDA        |PA4          |Serial data line
- */
 #include <stdlib.h>
 #include <string.h>
 #include "main.h"

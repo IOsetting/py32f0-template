@@ -39,6 +39,8 @@ static void APP_SystemClockConfig(void)
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
   /* Update global SystemCoreClock(or through SystemCoreClockUpdate function) */
   LL_SetSystemCoreClock(24000000);
+  /* Re-init frequency of SysTick source */
+  LL_InitTick(24000000, 1000U);
 }
 
 static void APP_GPIOConfig(void)

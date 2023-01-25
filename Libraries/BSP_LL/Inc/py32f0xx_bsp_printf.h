@@ -57,8 +57,13 @@ extern "C" {
 
 /************************************************************/
 
-void             BSP_USART_Config(uint32_t baudRate);
+void            BSP_USART_Config(uint32_t baudRate);
 
+void            BSP_UART_TxChar(char ch);
+void            BSP_UART_TxHex8(uint8_t hex);
+void            BSP_UART_TxHex16(uint16_t hex);
+void            BSP_UART_TxHex32(uint32_t hex);
+void            BSP_UART_TxString(char *str);
 
 #ifdef __cplusplus
 }

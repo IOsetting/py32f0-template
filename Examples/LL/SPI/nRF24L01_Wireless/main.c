@@ -17,13 +17,15 @@
 #include "py32f0xx_bsp_printf.h"
 #include "nrf24l01.h"
 
+/* MODE_TX, MODE_RX, MODE_RX_INT */
+#define MODE_TX         0
+#define MODE_RX         2
+#define MODE_RX_INT     3
+#define NRF24_MODE      MODE_TX
+
 uint8_t RX_ADDRESS[NRF24L01_ADDR_WIDTH] = {0x32,0x4E,0x6F,0x64,0x65};
 uint8_t TX_ADDRESS[NRF24L01_ADDR_WIDTH] = {0x32,0x4E,0x6F,0x64,0x22};
 
-/*-----------------------------------------------------*/
-/* Mode: sending:1 or receiving:0 */
-uint8_t Mode = 1;
-/*-----------------------------------------------------*/
 extern uint8_t RX_BUF[];
 extern uint8_t TX_BUF[];
 
@@ -50,42 +52,58 @@ int main(void)
 
   while (NRF24L01_Check() != 0)
   {
-    printf("nRF24L01 check failed\r\n");
+    printf("nRF24L01 check: error\r\n");
     LL_mDelay(2000);
   }
-  printf("nRF24L01 check succeeded\r\n");
+  printf("nRF24L01 check: succ\r\n");
 
-  if (Mode == 1)
+#if (NRF24_MODE == MODE_RX)
+  printf("nRF24L01 in RX polling mode\r\n");
+  NRF24L01_RX_Mode(TX_ADDRESS, RX_ADDRESS);
+  NRF24L01_DumpConfig();
+  while(1)
   {
-    printf("nRF24L01 in SEND mode\r\n");
-    NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
-  }
-  else if (Mode == 0)
-  {
-    printf("nRF24L01 in RECEIVE mode\r\n");
-    NRF24L01_RX_Mode(TX_ADDRESS, RX_ADDRESS);
+    NRF24L01_RxPacket(RX_BUF);
   }
 
-  while (1)
-  {
-    NRF24L01_DumpConfig();
+#elif (NRF24_MODE == MODE_RX_INT)
+  printf("nRF24L01 in RX interrupt mode\r\n");
+  NRF24L01_RX_Mode(TX_ADDRESS, RX_ADDRESS);
+  NRF24L01_ClearIRQFlags();
+  NRF24L01_DumpConfig();
 
-    if (Mode == 1)
-    {
-      uint8_t tmp[] = {0x1f,
-                       0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-                       0x21, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x28,
-                       0x31, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x38,
-                       0x41, 0x12, 0x13, 0x14, 0x15, 0x16, 0x47, 0x48};
-      NRF24L01_TxPacket(tmp, 32);
-      LL_mDelay(1000);
-    }
-    else if (Mode == 0)
-    {
-      NRF24L01_RxPacket(RX_BUF);
-    }
+
+  while(1);
+
+#elif (NRF24_MODE == MODE_TX)
+  uint8_t tmp[] = {0x1f,
+                  0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+                  0x21, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x28,
+                  0x31, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x38,
+                  0x41, 0x12, 0x13, 0x14, 0x15, 0x16, 0x47, 0x48};
+  printf("nRF24L01 in TX mode\r\n");
+  NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
+  NRF24L01_DumpConfig();
+
+  while(1)
+  {
+    NRF24L01_TxPacket(tmp, 32);
+    LL_mDelay(500);
+  }
+
+#endif
+}
+
+#if (NRF24_MODE == MODE_RX_INT)
+void EXTI4_15_IRQHandler(void)
+{
+  if(LL_EXTI_IsActiveFlag(LL_EXTI_LINE_4))
+  {
+    NRF24L01_IntRxPacket(RX_BUF);
+    LL_EXTI_ClearFlag(LL_EXTI_LINE_4);
   }
 }
+#endif
 
 uint8_t SPI_TxRxByte(uint8_t data)
 {
@@ -108,6 +126,10 @@ uint8_t SPI_TxRxByte(uint8_t data)
 static void APP_GPIOConfig(void)
 {
   LL_GPIO_InitTypeDef GPIO_InitStruct;
+#if (NRF24_MODE == MODE_RX_INT)
+  LL_EXTI_InitTypeDef EXTI_InitStruct;
+#endif
+
   // PA6 CSN
   LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_OUTPUT);
   // PA5 CE
@@ -117,6 +139,18 @@ static void APP_GPIOConfig(void)
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+#if (NRF24_MODE == MODE_RX_INT)
+  /* Triggerred by falling edge */
+  EXTI_InitStruct.Line = LL_EXTI_LINE_4;
+  EXTI_InitStruct.LineCommand = ENABLE;
+  EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+  EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_FALLING;
+  LL_EXTI_Init(&EXTI_InitStruct);
+
+  NVIC_SetPriority(EXTI4_15_IRQn, 1);
+  NVIC_EnableIRQ(EXTI4_15_IRQn);
+#endif
 }
 
 /**

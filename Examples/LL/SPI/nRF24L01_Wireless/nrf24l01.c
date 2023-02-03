@@ -190,6 +190,7 @@ void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
     */
     NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_CONFIG, 0x0f); //RX,PWR_UP,CRC16,EN_CRC
     CE(1);
+    NRF24L01_FlushRX();
 }
 
 /**
@@ -215,20 +216,48 @@ uint8_t NRF24L01_RxPacket(uint8_t *rx_buf)
     while(IRQ);
     CE(0);
     status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
-    printf("Interrupted, status: %02X\r\n", status);
+    BSP_UART_TxHex8(status);
+    BSP_UART_TxChar(':');
 
     if(status & NRF24L01_FLAG_RX_DREADY) 
     {
         NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
         for (int i = 0; i < 32; i++) 
         {
-            printf("%02X ", RX_BUF[i]);
+            BSP_UART_TxHex8(RX_BUF[i]);
         }
+        BSP_UART_TxString("\r\n");
         result = 1;
         NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DREADY);
     }
     CE(1);
     return result;
+}
+
+/**
+* Read in interrupt
+*/
+void NRF24L01_IntRxPacket(uint8_t *rx_buf)
+{
+    uint8_t status;
+    CE(0);
+    status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
+    BSP_UART_TxHex8(status);
+    BSP_UART_TxChar(':');
+
+    if(status & NRF24L01_FLAG_RX_DREADY) 
+    {
+        NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
+        for (int i = 0; i < 32; i++) 
+        {
+            BSP_UART_TxHex8(RX_BUF[i]);
+        }
+        BSP_UART_TxString("\r\n");
+        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DREADY);
+    }
+    status |= NRF24L01_MASK_STATUS_IRQ;
+    NRF24L01_Write_Reg(NRF24L01_REG_STATUS, status);
+    CE(1);
 }
 
 /**
@@ -245,20 +274,20 @@ uint8_t NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len)
 
     CE(0);
     status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
-    printf("Interrupted, status: %02X\r\n", status);
+    BSP_UART_TxHex8(status);
+    BSP_UART_TxChar(':');
     if(status & NRF24L01_FLAG_TX_DSENT)
     {
-        printf("Data sent: ");
+        BSP_UART_TxString("Data sent: ");
         for (uint8_t i = 0; i < len; i++) {
-          printf("%02X ", tx_buf[i]);
+            BSP_UART_TxHex8(tx_buf[i]);
         }
-        printf("\r\n");
+        BSP_UART_TxString("\r\n");
         NRF24L01_ClearIRQFlag(NRF24L01_FLAG_TX_DSENT);
-
     } 
     else if(status & NRF24L01_FLAG_MAX_RT) 
     {
-        printf("Sending exceeds max retries\r\n");
+        BSP_UART_TxString("Sending exceeds max retries\r\n");
         NRF24L01_FlushTX();
         NRF24L01_ClearIRQFlag(NRF24L01_FLAG_MAX_RT);
     }

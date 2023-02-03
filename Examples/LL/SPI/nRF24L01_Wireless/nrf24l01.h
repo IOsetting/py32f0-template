@@ -124,6 +124,7 @@ uint8_t   NRF24L01_Write_From_Buf(uint8_t reg,uint8_t *pBuf,uint8_t len);
 * Hold till data received and written to rx_buf
 */
 uint8_t   NRF24L01_RxPacket(uint8_t *rx_buf);
+void      NRF24L01_IntRxPacket(uint8_t *rx_buf);
 
 /**
 * Send data in tx_buf and wait till data is sent or max re-tr reached

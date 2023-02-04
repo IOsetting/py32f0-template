@@ -31,12 +31,11 @@ uint8_t NRF24L01_Write_Reg(uint8_t reg, uint8_t value)
 {
     uint8_t status;
     CSN_LOW;
-    if (reg < NRF24L01_CMD_REGISTER_W) 
+    if (reg < NRF24L01_CMD_W_REGISTER)
     {
         // This is a register access
-        status = SPI_TxRxByte(NRF24L01_CMD_REGISTER_W | (reg & NRF24L01_MASK_REG_MAP));
+        status = SPI_TxRxByte(NRF24L01_CMD_W_REGISTER | (reg & NRF24L01_MASK_REG_MAP));
         SPI_TxRxByte(value);
-
     }
     else
     {
@@ -98,8 +97,8 @@ uint8_t NRF24L01_Check(void)
     uint8_t *ptr = (uint8_t *)NRF24L01_TEST_ADDR;
 
     // Write test TX address and read TX_ADDR register
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W | NRF24L01_REG_TX_ADDR, ptr, 5);
-    NRF24L01_Read_To_Buf(NRF24L01_CMD_REGISTER_R | NRF24L01_REG_TX_ADDR, rxbuf, 5);
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_REGISTER | NRF24L01_REG_TX_ADDR, ptr, 5);
+    NRF24L01_Read_To_Buf(NRF24L01_CMD_R_REGISTER | NRF24L01_REG_TX_ADDR, rxbuf, 5);
 
     // Compare buffers, return error on first mismatch
     for (i = 0; i < 5; i++)
@@ -127,7 +126,7 @@ void NRF24L01_FlushTX(void)
 
 void NRF24L01_ResetTX(void)
 {
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_STATUS, NRF24L01_FLAG_MAX_RT); // Clear max retry flag
+    NRF24L01_Write_Reg(NRF24L01_REG_STATUS, NRF24L01_FLAG_MAX_RT); // Clear max retry flag
     CE_LOW;
     CE_HIGH;
 }
@@ -138,14 +137,16 @@ void NRF24L01_ResetTX(void)
 *         NRF24L01_FLAG_TX_DSENT
 *         NRF24L01_FLAG_MAX_RT
 */
-void NRF24L01_ClearIRQFlag(uint8_t reg) {
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_STATUS, reg);
+void NRF24L01_ClearIRQFlag(uint8_t reg)
+{
+    NRF24L01_Write_Reg(NRF24L01_REG_STATUS, reg);
 }
 
 /**
 * Clear RX_DR, TX_DS and MAX_RT bits of the STATUS register
 */
-void NRF24L01_ClearIRQFlags(void) {
+void NRF24L01_ClearIRQFlags(void) 
+{
     uint8_t reg;
     reg  = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
     reg |= NRF24L01_MASK_STATUS_IRQ;
@@ -158,21 +159,21 @@ void NRF24L01_ClearIRQFlags(void) {
 void _NRF24L01_Config(uint8_t *tx_addr)
 {
     // TX Address
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_TX_ADDR, tx_addr, NRF24L01_ADDR_WIDTH);
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_REGISTER + NRF24L01_REG_TX_ADDR, tx_addr, NRF24L01_ADDR_WIDTH);
     // RX P0 Payload Width
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RX_PW_P0, NRF24L01_PLOAD_WIDTH);
+    NRF24L01_Write_Reg(NRF24L01_REG_RX_PW_P0, NRF24L01_PLOAD_WIDTH);
     // Enable Auto ACK
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_EN_AA, 0x3f);
+    NRF24L01_Write_Reg(NRF24L01_REG_EN_AA, 0x3f);
     // Enable RX channels
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_EN_RXADDR, 0x3f);
+    NRF24L01_Write_Reg(NRF24L01_REG_EN_RXADDR, 0x3f);
     // RF channel: 2.400G  + 0.001 * x
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RF_CH, 40);
-    // 000+0+[0:1Mbps,1:2Mbps]+[00:-18dbm,01:-12dbm,10:-6dbm,11:0dbm]+[0:LNA_OFF,1:LNA_ON]
+    NRF24L01_Write_Reg(NRF24L01_REG_RF_CH, 40);
+    // Format: 000+0+[0:1Mbps,1:2Mbps]+[00:-18dbm,01:-12dbm,10:-6dbm,11:0dbm]+[0:LNA_OFF,1:LNA_ON]
     // 01:1Mbps,-18dbm; 03:1Mbps,-12dbm; 05:1Mbps,-6dbm; 07:1Mbps,0dBm
     // 09:2Mbps,-18dbm; 0b:2Mbps,-12dbm; 0d:2Mbps,-6dbm; 0f:2Mbps,0dBm, 
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RF_SETUP, 0x03);
+    NRF24L01_Write_Reg(NRF24L01_REG_RF_SETUP, 0x03);
     // 0A:delay=250us,count=10, 1A:delay=500us,count=10
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_SETUP_RETR, 0x0a);
+    NRF24L01_Write_Reg(NRF24L01_REG_SETUP_RETR, 0x0a);
 }
 
 /**
@@ -183,7 +184,7 @@ void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
     CE_LOW;
     _NRF24L01_Config(tx_addr);
     // RX Address of P0
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RX_ADDR_P0, rx_addr, NRF24L01_ADDR_WIDTH);
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_REGISTER + NRF24L01_REG_RX_ADDR_P0, rx_addr, NRF24L01_ADDR_WIDTH);
     /**
     REG 0x00: 
     0)PRIM_RX     0:TX             1:RX
@@ -195,7 +196,7 @@ void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
     6)MASK_RX_DR  0:IRQ low        1:NO IRQ
     7)Reserved    0
     */
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_CONFIG, 0x0f); //RX,PWR_UP,CRC16,EN_CRC
+    NRF24L01_Write_Reg(NRF24L01_REG_CONFIG, 0x0f); //RX,PWR_UP,CRC16,EN_CRC
     CE_HIGH;
     NRF24L01_FlushRX();
 }
@@ -209,62 +210,61 @@ void NRF24L01_TX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
     _NRF24L01_Config(tx_addr);
     // On the PTX the **TX_ADDR** must be the same as the **RX_ADDR_P0** and as the pipe address for the designated pipe
     // RX_ADDR_P0 will be used for receiving ACK
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RX_ADDR_P0, tx_addr, NRF24L01_ADDR_WIDTH);
-    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_CONFIG, 0x0e); //TX,PWR_UP,CRC16,EN_CRC
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_REGISTER + NRF24L01_REG_RX_ADDR_P0, tx_addr, NRF24L01_ADDR_WIDTH);
+    NRF24L01_Write_Reg(NRF24L01_REG_CONFIG, 0x0e); //TX,PWR_UP,CRC16,EN_CRC
     CE_HIGH;
 }
 
-/**
-* Hold till data received and written to rx_buf
-*/
-uint8_t NRF24L01_RxPacket(uint8_t *rx_buf)
+uint8_t NRF24L01_RX_GetPayloadWidth(void)
 {
-    uint8_t status, result = 0;
-    while(IRQ);
-    CE_LOW;
-    status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
-    BSP_UART_TxHex8(status);
-    BSP_UART_TxChar(':');
-
-    if(status & NRF24L01_FLAG_RX_DR) 
-    {
-        NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
-        for (int i = 0; i < 32; i++) 
-        {
-            BSP_UART_TxHex8(RX_BUF[i]);
-        }
-        BSP_UART_TxString("\r\n");
-        result = 1;
-        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DR);
-    }
-    CE_HIGH;
-    return result;
+    uint8_t value;
+    CSN_LOW;
+    value = NRF24L01_Read_Reg(NRF24L01_CMD_R_RX_PL_WID);
+    CSN_HIGH;
+    return value;
 }
 
-/**
-* Read in interrupt
-*/
-void NRF24L01_IntRxPacket(uint8_t *rx_buf)
+uint8_t NRF24L01_RXFIFO_GetStatus(void)
 {
-    uint8_t status;
-    CE_LOW;
-    status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
-    BSP_UART_TxHex8(status);
-    BSP_UART_TxChar(':');
+    uint8_t reg = NRF24L01_Read_Reg(NRF24L01_REG_FIFO_STATUS);
+	return (reg & NRF24L01_MASK_RXFIFO);
+}
 
-    if(status & NRF24L01_FLAG_RX_DR) 
+uint8_t NRF24L01_ReadPayload(uint8_t *pBuf, uint8_t *length, uint8_t dpl)
+{
+    uint8_t status, pipe;
+
+    // Extract a payload pipe number from the STATUS register
+    status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
+    pipe = (status & NRF24L01_MASK_RX_P_NO) >> 1;
+    // RX FIFO empty?
+    if (pipe < 6)
     {
-        NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
-        for (int i = 0; i < 32; i++) 
+        if (dpl)
         {
-            BSP_UART_TxHex8(RX_BUF[i]);
+            // Get payload width
+            *length = NRF24L01_RX_GetPayloadWidth();
+            if (*length > 32)
+            {
+                // Error
+                *length = 0;
+                NRF24L01_FlushRX();
+            }
         }
-        BSP_UART_TxString("\r\n");
-        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DR);
+        else
+        {
+            *length = NRF24L01_Read_Reg(NRF24L01_REG_RX_PW_P0 + pipe);
+        }
+        // Read a payload from the RX FIFO
+        if (*length)
+        {
+            NRF24L01_Read_To_Buf(NRF24L01_CMD_R_RX_PAYLOAD, pBuf, *length);
+        }
+        return pipe;
     }
-    status |= NRF24L01_MASK_STATUS_IRQ;
-    NRF24L01_Write_Reg(NRF24L01_REG_STATUS, status);
-    CE_HIGH;
+    // pipe value = 110: Not Used, 111: RX FIFO Empty
+    *length = 0;
+    return pipe;
 }
 
 /**
@@ -275,7 +275,7 @@ uint8_t NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len)
     uint8_t status = 0x00;
     CE_LOW;
     len = len > NRF24L01_PLOAD_WIDTH? NRF24L01_PLOAD_WIDTH : len;
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_TX_PLOAD_W, tx_buf, len);
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_TX_PAYLOAD, tx_buf, len);
     CE_HIGH;
     while(IRQ != 0); // Waiting send finish
 
@@ -302,13 +302,13 @@ uint8_t NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len)
     return status;
 }
 
-void NRF24L01_TxPacketFast(const void *txbuf)
+void NRF24L01_TxPacketFast(const void *pBuf, uint8_t len)
 {
-    NRF24L01_Write_From_Buf(NRF24L01_CMD_TX_PLOAD_W, txbuf, NRF24L01_PLOAD_WIDTH);
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_W_TX_PAYLOAD, pBuf, len);
     CE_HIGH;
 }
 
-uint8_t NRF24L01_TxFast(const void *txbuf)
+uint8_t NRF24L01_TxFast(const void *pBuf, uint8_t len)
 {
     uint8_t status;
     // Blocking only if FIFO is full. This will loop and block until TX is successful or fail
@@ -321,8 +321,80 @@ uint8_t NRF24L01_TxFast(const void *txbuf)
         }
 
     } while (status & NRF24L01_FLAG_TX_FULL);
-    NRF24L01_TxPacketFast(txbuf);
+    NRF24L01_TxPacketFast(pBuf, len);
     return 0;
+}
+
+void NRF24L01_ToggleFeatures(void)
+{
+    CSN_LOW;
+    NRF24L01_Write_Reg(NRF24L01_CMD_ACTIVATE, 0x73);
+    CSN_HIGH;
+}
+
+void NRF24L01_SetEnableDynamicPayloads(uint8_t mode)
+{
+    uint8_t reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+    if (mode == 0)
+    {
+        // Disable dynamic payload throughout the system
+        NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg & (~NRF24L01_FEATURE_EN_DPL));
+        // If it didn't work, the features are not enabled
+        reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+        if ((reg & NRF24L01_FEATURE_EN_DPL) != 0)
+        {
+            // Enable them and try again
+            NRF24L01_ToggleFeatures();
+            NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg & (~NRF24L01_FEATURE_EN_DPL));
+        }
+        // Disable dynamic payload on all pipes
+        NRF24L01_Write_Reg(NRF24L01_REG_DYNPD, 0);
+    }
+    else
+    {
+        NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg | NRF24L01_FEATURE_EN_DPL);
+        reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+        if ((reg & NRF24L01_FEATURE_EN_DPL) != NRF24L01_FEATURE_EN_DPL)
+        {
+            NRF24L01_ToggleFeatures();
+            NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg | NRF24L01_FEATURE_EN_DPL);
+        }
+        // Enable dynamic payload on all pipes
+        NRF24L01_Write_Reg(NRF24L01_REG_DYNPD, NRF24L01_DYNPD_DPL_P0 | NRF24L01_DYNPD_DPL_P1
+            | NRF24L01_DYNPD_DPL_P2 | NRF24L01_DYNPD_DPL_P3 | NRF24L01_DYNPD_DPL_P4 | NRF24L01_DYNPD_DPL_P5);
+    }
+    
+}
+
+void NRF24L01_SetEnableAckPayload(uint8_t mode)
+{
+    uint8_t reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+    if (mode == 0)
+    {
+        // Disable ack payload and dynamic payload features
+        NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg &(~NRF24L01_FEATURE_EN_ACK_PAY));
+        // If it didn't work, the features are not enabled
+        reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+        if ((reg & NRF24L01_FEATURE_EN_ACK_PAY) != NRF24L01_FEATURE_EN_ACK_PAY)
+        {
+            // Enable them and try again
+            NRF24L01_ToggleFeatures();
+            NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg &(~NRF24L01_FEATURE_EN_ACK_PAY));
+        }
+    }
+    else
+    {
+        NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg | NRF24L01_FEATURE_EN_ACK_PAY);
+        reg = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+        if ((reg & NRF24L01_FEATURE_EN_ACK_PAY) != NRF24L01_FEATURE_EN_ACK_PAY)
+        {
+            NRF24L01_ToggleFeatures();
+            NRF24L01_Write_Reg(NRF24L01_REG_FEATURE, reg | NRF24L01_FEATURE_EN_ACK_PAY);
+        }
+        // Enable dynamic payload on pipes 0 & 1
+        reg = NRF24L01_Read_Reg(NRF24L01_REG_DYNPD);
+        NRF24L01_Write_Reg(NRF24L01_REG_DYNPD, reg | NRF24L01_DYNPD_DPL_P0 | NRF24L01_DYNPD_DPL_P1);
+    }
 }
 
 /**
@@ -502,4 +574,16 @@ void NRF24L01_DumpConfig(void) {
     // RX_PW_P5
     i = NRF24L01_Read_Reg(NRF24L01_REG_RX_PW_P5);
     printf("[0x%02X] RX_PW_P5=%u\r\n",NRF24L01_REG_RX_PW_P5,i);
+
+    // NRF24L01_REG_FIFO_STATUS
+    i = NRF24L01_Read_Reg(NRF24L01_REG_FIFO_STATUS);
+    printf("[0x%02X] FIFO_STATUS=0x%02x\r\n",NRF24L01_REG_FIFO_STATUS,i);
+
+    // NRF24L01_REG_DYNPD
+    i = NRF24L01_Read_Reg(NRF24L01_REG_DYNPD);
+    printf("[0x%02X] DYNPD=0x%02x\r\n",NRF24L01_REG_DYNPD,i);
+
+    // NRF24L01_REG_FEATURE
+    i = NRF24L01_Read_Reg(NRF24L01_REG_FEATURE);
+    printf("[0x%02X] FEATURE=0x%02x\r\n",NRF24L01_REG_FEATURE,i);
 }

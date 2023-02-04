@@ -17,12 +17,20 @@
 #include "py32f0xx_bsp_printf.h"
 #include "nrf24l01.h"
 
-/* MODE_TX, MODE_RX, MODE_RX_INT */
+/* Mode options: MODE_TX, MODE_RX, MODE_RX_INT */
 #define MODE_TX         0
 #define MODE_TX_FAST    1
 #define MODE_RX         2
 #define MODE_RX_INT     3
-#define NRF24_MODE      MODE_TX_FAST
+
+#define NRF24_MODE      MODE_RX
+
+/* Payload width options: fixed or dynamic */
+#define PAYLOAD_WIDTH_MODE_FIXED    0
+#define PAYLOAD_WIDTH_MODE_DYNAMIC  1
+
+#define NRF24_PAYLOAD_WIDTH_MODE    PAYLOAD_WIDTH_MODE_DYNAMIC
+
 
 #if (NRF24_MODE == MODE_TX || NRF24_MODE == MODE_TX_FAST)
 uint8_t payload[] = {
@@ -66,13 +74,38 @@ int main(void)
   }
   printf("nRF24L01 check: succ\r\n");
 
+#if (NRF24_PAYLOAD_WIDTH_MODE == PAYLOAD_WIDTH_MODE_DYNAMIC)
+  NRF24L01_SetEnableDynamicPayloads(1);
+  NRF24L01_SetEnableAckPayload(1);
+#endif
+
 #if (NRF24_MODE == MODE_RX)
+  uint8_t pipe, length;
   printf("nRF24L01 in RX polling mode\r\n");
   NRF24L01_RX_Mode(TX_ADDRESS, RX_ADDRESS);
+
   NRF24L01_DumpConfig();
-  while(1)
+  while (1)
   {
-    NRF24L01_RxPacket(RX_BUF);
+    if (NRF24L01_RXFIFO_GetStatus() != NRF24L01_RXFIFO_STATUS_EMPTY)
+    {
+#if (NRF24_PAYLOAD_WIDTH_MODE == PAYLOAD_WIDTH_MODE_DYNAMIC)
+      pipe = NRF24L01_ReadPayload(RX_BUF, &length, 1);
+#else
+      pipe = NRF24L01_ReadPayload(RX_BUF, &length, 0);
+#endif
+      BSP_UART_TxString("P:");
+      BSP_UART_TxHex8(pipe);
+      BSP_UART_TxString(",L:");
+      BSP_UART_TxHex8(length);
+      BSP_UART_TxChar(':');
+      for (int i = 0; i < length; i++)
+      {
+        BSP_UART_TxHex8(RX_BUF[i]);
+      }
+      BSP_UART_TxString("\r\n");
+      NRF24L01_ClearIRQFlags();
+    }
   }
 
 #elif (NRF24_MODE == MODE_RX_INT)
@@ -83,18 +116,28 @@ int main(void)
   while(1);
 
 #elif (NRF24_MODE == MODE_TX)
-
+  uint8_t length = 0;
   printf("nRF24L01 in TX mode\r\n");
   NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
   NRF24L01_DumpConfig();
 
   while(1)
   {
-    NRF24L01_TxPacket(payload, 32);
-    LL_mDelay(100);
+#if (NRF24_PAYLOAD_WIDTH_MODE == PAYLOAD_WIDTH_MODE_DYNAMIC)
+    length++;
+#else
+    length = NRF24L01_PLOAD_WIDTH;
+#endif
+    NRF24L01_TxPacket(payload, length);
+    if (length == 32)
+    {
+      length = 0;
+    }
+    LL_mDelay(200);
   }
 
 #elif (NRF24_MODE == MODE_TX_FAST)
+  uint8_t length = 0;
   printf("nRF24L01 in fast TX mode\r\n");
   NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
   NRF24L01_DumpConfig();
@@ -102,7 +145,12 @@ int main(void)
   uint8_t succ = 0, err = 0;
   while (1)
   {
-    if (NRF24L01_TxFast(payload) != 0)
+#if (NRF24_PAYLOAD_WIDTH_MODE == PAYLOAD_WIDTH_MODE_DYNAMIC)
+    length++;
+#else
+    length = NRF24L01_PLOAD_WIDTH;
+#endif
+    if (NRF24L01_TxFast(payload, length) != 0)
     {
       NRF24L01_ResetTX();
       err++;
@@ -117,7 +165,11 @@ int main(void)
       err = 0;
       succ = 0;
     }
-    LL_mDelay(5);
+    if (length == 32)
+    {
+      length = 0;
+    }
+    LL_mDelay(50);
   }
 
 #endif
@@ -126,9 +178,25 @@ int main(void)
 #if (NRF24_MODE == MODE_RX_INT)
 void EXTI4_15_IRQHandler(void)
 {
+  uint8_t pipe, length;
   if(LL_EXTI_IsActiveFlag(LL_EXTI_LINE_4))
   {
-    NRF24L01_IntRxPacket(RX_BUF);
+#if (NRF24_PAYLOAD_WIDTH_MODE == PAYLOAD_WIDTH_MODE_DYNAMIC)
+      pipe = NRF24L01_ReadPayload(RX_BUF, &length, 1);
+#else
+      pipe = NRF24L01_ReadPayload(RX_BUF, &length, 0);
+#endif
+    BSP_UART_TxString("P:");
+    BSP_UART_TxHex8(pipe);
+    BSP_UART_TxString(",L:");
+    BSP_UART_TxHex8(length);
+    BSP_UART_TxChar(':');
+    for (int i = 0; i < length; i++) 
+    {
+        BSP_UART_TxHex8(RX_BUF[i]);
+    }
+    BSP_UART_TxString("\r\n");
+    NRF24L01_ClearIRQFlags();
     LL_EXTI_ClearFlag(LL_EXTI_LINE_4);
   }
 }

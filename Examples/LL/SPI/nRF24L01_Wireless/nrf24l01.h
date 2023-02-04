@@ -11,14 +11,21 @@
 #define IRQ         READ_BIT(GPIOA->IDR, LL_GPIO_PIN_4)
 
 // SPI(nRF24L01) commands
-#define NRF24L01_CMD_REGISTER_R     0x00 // Register read
-#define NRF24L01_CMD_REGISTER_W     0x20 // Register write
+#define NRF24L01_CMD_R_REGISTER     0x00 // Register read
+#define NRF24L01_CMD_W_REGISTER     0x20 // Register write
+/**
+ * ACTIVATE. For NRF24L01 only, removed from NRF24L01+ product specs
+ * - https://github.com/nRF24/RF24/issues/401
+ * 
+ * This write command followed by data 0x73 activates the following features: R_RX_PL_WID, W_ACK_PAYLOAD, W_TX_PAYLOAD_NOACK. 
+ * A new ACTIVATE command with the same data deactivates them again. This is executable in power down or stand by modes only.
+*/
 #define NRF24L01_CMD_ACTIVATE       0x50 // (De)Activates R_RX_PL_WID, W_ACK_PAYLOAD, W_TX_PAYLOAD_NOACK features
-#define NRF24L01_CMD_RX_PLOAD_WID_R 0x60 // Read RX-payload width for the top R_RX_PAYLOAD in the RX FIFO.
-#define NRF24L01_CMD_RX_PLOAD_R     0x61 // Read RX payload
-#define NRF24L01_CMD_TX_PLOAD_W     0xA0 // Write TX payload
-#define NRF24L01_CMD_ACK_PAYLOAD_W  0xA8 // Write ACK payload
-#define NRF24L01_CMD_TX_PAYLOAD_NOACK_W 0xB0 //Write TX payload and disable AUTOACK
+#define NRF24L01_CMD_R_RX_PL_WID    0x60 // Read RX-payload width for the top R_RX_PAYLOAD in the RX FIFO. Flush RX FIFO if the read value is larger than 32 bytes
+#define NRF24L01_CMD_R_RX_PAYLOAD   0x61 // Read RX payload
+#define NRF24L01_CMD_W_TX_PAYLOAD   0xA0 // Write TX payload
+#define NRF24L01_CMD_W_ACK_PAYLOAD  0xA8 // 1010 1PPP, Used in RX mode. Write Payload to be transmitted together with ACK packet on PIPE PPP. (PPP valid in the range from 000 to 101)
+#define NRF24L01_CMD_W_TX_PAYLOAD_NOACK 0xB0 // Used in TX mode. Disables AUTOACK on this specific packet
 #define NRF24L01_CMD_FLUSH_TX       0xE1 // Flush TX FIFO
 #define NRF24L01_CMD_FLUSH_RX       0xE2 // Flush RX FIFO
 #define NRF24L01_CMD_REUSE_TX_PL    0xE3 // Reuse TX payload
@@ -56,16 +63,41 @@
 // Register bits definitions
 #define NRF24L01_CONFIG_PRIM_RX     0x01 // PRIM_RX bit in CONFIG register
 #define NRF24L01_CONFIG_PWR_UP      0x02 // PWR_UP bit in CONFIG register
+
+// Enable dynamic payload length on data pipes
+#define NRF24L01_DYNPD_DPL_P5	    0x20
+#define NRF24L01_DYNPD_DPL_P4	    0x10
+#define NRF24L01_DYNPD_DPL_P3	    0x08
+#define NRF24L01_DYNPD_DPL_P2	    0x04
+#define NRF24L01_DYNPD_DPL_P1	    0x02
+#define NRF24L01_DYNPD_DPL_P0	    0x01
+
+/**
+ * EN_DYN_ACK - this bit enables the W_TX_PAYLOAD_NOACK command
+ * 
+ * The PTX can set the NO_ACK flag bit in the Packet Control Field with this command: W_TX_PAYLOAD_NOACK
+ * However, the function must first be enabled in the FEATURE register by setting the EN_DYN_ACK bit.
+ * When you use this option the PTX goes directly to standby-I mode after transmitting the packet. The PRX
+ * does not transmit an ACK packet when it receives the packet.
+*/
 #define NRF24L01_FEATURE_EN_DYN_ACK 0x01 // EN_DYN_ACK bit in FEATURE register
+/**
+ * EN_ACK_PAY - Enables Payload with ACK
+ * If ACK packet payload is activated, ACK packets have dynamic payload lengths and the Dynamic Payload
+ * Length feature should be enabled for pipe 0 on the PTX and PRX. This is to ensure that they receive the
+ * ACK packets with payloads. If the ACK payload is more than 15 byte in 2Mbps mode the ARD must be
+ * 500µS or more, and if the ACK payload is more than 5 byte in 1Mbps mode the ARD must be 500µS or
+ * more. In 250kbps mode (even when the payload is not in ACK) the ARD must be 500µS or more.
+*/
 #define NRF24L01_FEATURE_EN_ACK_PAY 0x02 // EN_ACK_PAY bit in FEATURE register
-#define NRF24L01_FEATURE_EN_DPL     0x04 // EN_DPL bit in FEATURE register
+#define NRF24L01_FEATURE_EN_DPL     0x04 // EN_DPL bit in FEATURE register, enables Dynamic Payload Length
+
+// Status Flags
 #define NRF24L01_FLAG_RX_DR         0x40 // RX_DR bit (data ready RX FIFO interrupt)
 #define NRF24L01_FLAG_TX_DS         0x20 // TX_DS bit (data sent TX FIFO interrupt)
 #define NRF24L01_FLAG_MAX_RT        0x10 // MAX_RT bit (maximum number of TX re-transmits interrupt)
 #define NRF24L01_FLAG_IT_BITS       0x70 // RX_DR|TX_DS|MAX_RT
 #define NRF24L01_FLAG_TX_FULL       0x01 // TX FIFO full flag. 1: TX FIFO full. 0: Available locations in TX FIFO
-
-
 
 // Register masks definitions
 #define NRF24L01_MASK_REG_MAP       0x1F // Mask bits[4:0] for CMD_RREG and CMD_WREG commands
@@ -86,6 +118,11 @@
 // Register masks definitions
 #define NRF24L01_MASK_REG_MAP       0x1F // Mask bits[4:0] for CMD_RREG and CMD_WREG commands
 
+// RXFIFO status
+#define NRF24L01_RXFIFO_STATUS_DATA  0x00 // The RX FIFO contains data and available locations
+#define NRF24L01_RXFIFO_STATUS_EMPTY 0x01 // The RX FIFO is empty
+#define NRF24L01_RXFIFO_STATUS_FULL  0x02 // The RX FIFO is full
+#define NRF24L01_RXFIFO_STATUS_ERROR 0x03 // Impossible state: RX FIFO cannot be empty and full at the same time
 
 #define NRF24L01_ADDR_WIDTH         5    // RX/TX address width
 #define NRF24L01_PLOAD_WIDTH        32   // Payload width
@@ -126,15 +163,19 @@ uint8_t   NRF24L01_Read_To_Buf(uint8_t reg,uint8_t *pBuf,uint8_t len);
 */
 uint8_t   NRF24L01_Write_From_Buf(uint8_t reg, const uint8_t *pBuf,uint8_t len);
 
-/**
-* Hold till data received and written to rx_buf
-*/
-uint8_t   NRF24L01_RxPacket(uint8_t *rx_buf);
+void NRF24L01_SetEnableDynamicPayloads(uint8_t mode);
+
+void NRF24L01_SetEnableAckPayload(uint8_t mode);
 
 /**
- * Receive data in interrupt
+ * Get status of the RX FIFO
 */
-void      NRF24L01_IntRxPacket(uint8_t *rx_buf);
+uint8_t NRF24L01_RXFIFO_GetStatus(void);
+
+/**
+ * Read received data (no fifo status check, no status clear, just read)
+*/
+uint8_t   NRF24L01_ReadPayload(uint8_t *pBuf, uint8_t *length, uint8_t dpl);
 
 /**
 * Send data in tx_buf and wait till data is sent or max re-tr reached
@@ -144,7 +185,7 @@ uint8_t   NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len);
 /**
  * Send data in FIFO without sync ack
 */
-uint8_t NRF24L01_TxFast(const void *txbuf);
+uint8_t NRF24L01_TxFast(const void *pBuf, uint8_t len);
 
 /**
 * Switch NRF24L01 to RX mode

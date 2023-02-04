@@ -80,12 +80,31 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelay				1
 
 
+/* Cortex-M specific definitions. */
+#ifdef __NVIC_PRIO_BITS
+	/* __BVIC_PRIO_BITS will be specified when CMSIS is being used. */
+	#define configPRIO_BITS       		__NVIC_PRIO_BITS
+#else
+	#define configPRIO_BITS       		2        /* 4 priority levels for Cortex M0/M0+ */
+#endif
+
+/* The lowest interrupt priority that can be used in a call to a "set priority"
+function. */
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY			0x03
+
+/* The highest interrupt priority that can be used by any interrupt service
+routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL
+INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A HIGHER
+PRIORITY THAN THIS! (higher priorities are lower numeric values. */
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	0x01
+
 /* This is the raw value as per the Cortex-M3 NVIC.  Values can be 255
 (lowest) to 0 (1?) (highest). */
-#define configKERNEL_INTERRUPT_PRIORITY 		255
+#define configKERNEL_INTERRUPT_PRIORITY 		( configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
 /* !!!! configMAX_SYSCALL_INTERRUPT_PRIORITY must not be set to zero !!!!
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY 	191 /* equivalent to 10-111111, or priority 2. */
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY 	( configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS) )
+
 
 /* Use MACRO to replace the handlers without changing startup file */
 #define vPortSVCHandler     SVC_Handler

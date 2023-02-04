@@ -19,9 +19,18 @@
 
 /* MODE_TX, MODE_RX, MODE_RX_INT */
 #define MODE_TX         0
+#define MODE_TX_FAST    1
 #define MODE_RX         2
 #define MODE_RX_INT     3
-#define NRF24_MODE      MODE_TX
+#define NRF24_MODE      MODE_TX_FAST
+
+#if (NRF24_MODE == MODE_TX || NRF24_MODE == MODE_TX_FAST)
+uint8_t payload[] = {
+    0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+    0x21, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x28,
+    0x31, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x38,
+    0x41, 0x12, 0x13, 0x14, 0x15, 0x16, 0x47, 0x48};
+#endif
 
 uint8_t RX_ADDRESS[NRF24L01_ADDR_WIDTH] = {0x32,0x4E,0x6F,0x64,0x65};
 uint8_t TX_ADDRESS[NRF24L01_ADDR_WIDTH] = {0x32,0x4E,0x6F,0x64,0x22};
@@ -71,24 +80,44 @@ int main(void)
   NRF24L01_RX_Mode(TX_ADDRESS, RX_ADDRESS);
   NRF24L01_ClearIRQFlags();
   NRF24L01_DumpConfig();
-
-
   while(1);
 
 #elif (NRF24_MODE == MODE_TX)
-  uint8_t tmp[] = {0x1f,
-                  0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-                  0x21, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x28,
-                  0x31, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x38,
-                  0x41, 0x12, 0x13, 0x14, 0x15, 0x16, 0x47, 0x48};
+
   printf("nRF24L01 in TX mode\r\n");
   NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
   NRF24L01_DumpConfig();
 
   while(1)
   {
-    NRF24L01_TxPacket(tmp, 32);
-    LL_mDelay(500);
+    NRF24L01_TxPacket(payload, 32);
+    LL_mDelay(100);
+  }
+
+#elif (NRF24_MODE == MODE_TX_FAST)
+  printf("nRF24L01 in fast TX mode\r\n");
+  NRF24L01_TX_Mode(RX_ADDRESS, TX_ADDRESS);
+  NRF24L01_DumpConfig();
+
+  uint8_t succ = 0, err = 0;
+  while (1)
+  {
+    if (NRF24L01_TxFast(payload) != 0)
+    {
+      NRF24L01_ResetTX();
+      err++;
+    }
+    else
+    {
+      succ++;
+    }
+    if (err == 255 || succ == 255)
+    {
+      printf("Fail/Succ: %d/%d\r\n", err, succ);
+      err = 0;
+      succ = 0;
+    }
+    LL_mDelay(5);
   }
 
 #endif
@@ -192,7 +221,7 @@ static void APP_SPIConfig(void)
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV8;
+  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV4;
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   LL_SPI_Init(SPI1, &SPI_InitStruct);
   LL_SPI_Enable(SPI1);

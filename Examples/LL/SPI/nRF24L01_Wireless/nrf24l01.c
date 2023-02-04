@@ -8,7 +8,7 @@ uint8_t TX_BUF[NRF24L01_PLOAD_WIDTH];
 
 void NRF24L01_Init(void)
 {
-    CSN(1);
+    CSN_HIGH;
 }
 
 /**
@@ -17,10 +17,10 @@ void NRF24L01_Init(void)
 uint8_t NRF24L01_Read_Reg(uint8_t reg)
 {
     uint8_t value;
-    CSN(0);
+    CSN_LOW;
     SPI_TxRxByte(reg);
     value = SPI_TxRxByte(NRF24L01_CMD_NOP);
-    CSN(1);
+    CSN_HIGH;
     return value;
 }
 
@@ -30,7 +30,7 @@ uint8_t NRF24L01_Read_Reg(uint8_t reg)
 uint8_t NRF24L01_Write_Reg(uint8_t reg, uint8_t value)
 {
     uint8_t status;
-    CSN(0);
+    CSN_LOW;
     if (reg < NRF24L01_CMD_REGISTER_W) 
     {
         // This is a register access
@@ -50,7 +50,7 @@ uint8_t NRF24L01_Write_Reg(uint8_t reg, uint8_t value)
             SPI_TxRxByte(value);
         }
     }
-    CSN(1);
+    CSN_HIGH;
     return status; 
 }
 
@@ -62,13 +62,13 @@ uint8_t NRF24L01_Write_Reg(uint8_t reg, uint8_t value)
 */
 uint8_t NRF24L01_Read_To_Buf(uint8_t reg, uint8_t *buf, uint8_t len)
 {
-    CSN(0);
+    CSN_LOW;
     uint8_t status = SPI_TxRxByte(reg);
     while (len--)
     {
         *buf++ = SPI_TxRxByte(NRF24L01_CMD_NOP);
     }
-    CSN(1);
+    CSN_HIGH;
     return status;
 }
 
@@ -78,15 +78,15 @@ uint8_t NRF24L01_Read_To_Buf(uint8_t reg, uint8_t *buf, uint8_t len)
 *  buf - pointer to the buffer with data
 *  len - number of bytes to write
 */
-uint8_t NRF24L01_Write_From_Buf(uint8_t reg, uint8_t *buf, uint8_t len)
+uint8_t NRF24L01_Write_From_Buf(uint8_t reg, const uint8_t *buf, uint8_t len)
 {
-    CSN(0);
+    CSN_LOW;
     uint8_t status = SPI_TxRxByte(reg);
     while (len--)
     {
         SPI_TxRxByte(*buf++);
     }
-    CSN(1);
+    CSN_HIGH;
     return status;
 }
 
@@ -123,6 +123,13 @@ void NRF24L01_FlushRX(void)
 void NRF24L01_FlushTX(void)
 {
     NRF24L01_Write_Reg(NRF24L01_CMD_FLUSH_TX, NRF24L01_CMD_NOP);
+}
+
+void NRF24L01_ResetTX(void)
+{
+    NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_STATUS, NRF24L01_FLAG_MAX_RT); // Clear max retry flag
+    CE_LOW;
+    CE_HIGH;
 }
 
 /**
@@ -173,7 +180,7 @@ void _NRF24L01_Config(uint8_t *tx_addr)
 */
 void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
 {
-    CE(0);
+    CE_LOW;
     _NRF24L01_Config(tx_addr);
     // RX Address of P0
     NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RX_ADDR_P0, rx_addr, NRF24L01_ADDR_WIDTH);
@@ -189,7 +196,7 @@ void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
     7)Reserved    0
     */
     NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_CONFIG, 0x0f); //RX,PWR_UP,CRC16,EN_CRC
-    CE(1);
+    CE_HIGH;
     NRF24L01_FlushRX();
 }
 
@@ -198,13 +205,13 @@ void NRF24L01_RX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
 */
 void NRF24L01_TX_Mode(uint8_t *rx_addr, uint8_t *tx_addr)
 {
-    CE(0);
+    CE_LOW;
     _NRF24L01_Config(tx_addr);
     // On the PTX the **TX_ADDR** must be the same as the **RX_ADDR_P0** and as the pipe address for the designated pipe
     // RX_ADDR_P0 will be used for receiving ACK
     NRF24L01_Write_From_Buf(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_RX_ADDR_P0, tx_addr, NRF24L01_ADDR_WIDTH);
     NRF24L01_Write_Reg(NRF24L01_CMD_REGISTER_W + NRF24L01_REG_CONFIG, 0x0e); //TX,PWR_UP,CRC16,EN_CRC
-    CE(1);
+    CE_HIGH;
 }
 
 /**
@@ -214,12 +221,12 @@ uint8_t NRF24L01_RxPacket(uint8_t *rx_buf)
 {
     uint8_t status, result = 0;
     while(IRQ);
-    CE(0);
+    CE_LOW;
     status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
     BSP_UART_TxHex8(status);
     BSP_UART_TxChar(':');
 
-    if(status & NRF24L01_FLAG_RX_DREADY) 
+    if(status & NRF24L01_FLAG_RX_DR) 
     {
         NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
         for (int i = 0; i < 32; i++) 
@@ -228,9 +235,9 @@ uint8_t NRF24L01_RxPacket(uint8_t *rx_buf)
         }
         BSP_UART_TxString("\r\n");
         result = 1;
-        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DREADY);
+        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DR);
     }
-    CE(1);
+    CE_HIGH;
     return result;
 }
 
@@ -240,12 +247,12 @@ uint8_t NRF24L01_RxPacket(uint8_t *rx_buf)
 void NRF24L01_IntRxPacket(uint8_t *rx_buf)
 {
     uint8_t status;
-    CE(0);
+    CE_LOW;
     status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
     BSP_UART_TxHex8(status);
     BSP_UART_TxChar(':');
 
-    if(status & NRF24L01_FLAG_RX_DREADY) 
+    if(status & NRF24L01_FLAG_RX_DR) 
     {
         NRF24L01_Read_To_Buf(NRF24L01_CMD_RX_PLOAD_R, rx_buf, NRF24L01_PLOAD_WIDTH);
         for (int i = 0; i < 32; i++) 
@@ -253,11 +260,11 @@ void NRF24L01_IntRxPacket(uint8_t *rx_buf)
             BSP_UART_TxHex8(RX_BUF[i]);
         }
         BSP_UART_TxString("\r\n");
-        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DREADY);
+        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_RX_DR);
     }
     status |= NRF24L01_MASK_STATUS_IRQ;
     NRF24L01_Write_Reg(NRF24L01_REG_STATUS, status);
-    CE(1);
+    CE_HIGH;
 }
 
 /**
@@ -266,24 +273,24 @@ void NRF24L01_IntRxPacket(uint8_t *rx_buf)
 uint8_t NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len)
 {
     uint8_t status = 0x00;
-    CE(0);
+    CE_LOW;
     len = len > NRF24L01_PLOAD_WIDTH? NRF24L01_PLOAD_WIDTH : len;
     NRF24L01_Write_From_Buf(NRF24L01_CMD_TX_PLOAD_W, tx_buf, len);
-    CE(1);
+    CE_HIGH;
     while(IRQ != 0); // Waiting send finish
 
-    CE(0);
+    CE_LOW;
     status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
     BSP_UART_TxHex8(status);
     BSP_UART_TxChar(':');
-    if(status & NRF24L01_FLAG_TX_DSENT)
+    if(status & NRF24L01_FLAG_TX_DS)
     {
         BSP_UART_TxString("Data sent: ");
         for (uint8_t i = 0; i < len; i++) {
             BSP_UART_TxHex8(tx_buf[i]);
         }
         BSP_UART_TxString("\r\n");
-        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_TX_DSENT);
+        NRF24L01_ClearIRQFlag(NRF24L01_FLAG_TX_DS);
     } 
     else if(status & NRF24L01_FLAG_MAX_RT) 
     {
@@ -291,10 +298,32 @@ uint8_t NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len)
         NRF24L01_FlushTX();
         NRF24L01_ClearIRQFlag(NRF24L01_FLAG_MAX_RT);
     }
-    CE(1);
+    CE_HIGH;
     return status;
 }
 
+void NRF24L01_TxPacketFast(const void *txbuf)
+{
+    NRF24L01_Write_From_Buf(NRF24L01_CMD_TX_PLOAD_W, txbuf, NRF24L01_PLOAD_WIDTH);
+    CE_HIGH;
+}
+
+uint8_t NRF24L01_TxFast(const void *txbuf)
+{
+    uint8_t status;
+    // Blocking only if FIFO is full. This will loop and block until TX is successful or fail
+    do
+    {
+        status = NRF24L01_Read_Reg(NRF24L01_REG_STATUS);
+        if (status & NRF24L01_FLAG_MAX_RT)
+        {
+            return 1;
+        }
+
+    } while (status & NRF24L01_FLAG_TX_FULL);
+    NRF24L01_TxPacketFast(txbuf);
+    return 0;
+}
 
 /**
 * Dump nRF24L01 configuration

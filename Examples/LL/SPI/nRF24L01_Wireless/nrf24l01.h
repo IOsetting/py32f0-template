@@ -4,8 +4,10 @@
 #include <main.h>
 
 // CE Pin & CSN Pin & IRQ Pin
-#define CSN(x)      x ? LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_6) : LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)
-#define CE(x)       x ? LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_5) : LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5)
+#define CSN_HIGH    LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_6)
+#define CSN_LOW     LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)
+#define CE_HIGH     LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_5)
+#define CE_LOW      LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5)
 #define IRQ         READ_BIT(GPIOA->IDR, LL_GPIO_PIN_4)
 
 // SPI(nRF24L01) commands
@@ -57,9 +59,13 @@
 #define NRF24L01_FEATURE_EN_DYN_ACK 0x01 // EN_DYN_ACK bit in FEATURE register
 #define NRF24L01_FEATURE_EN_ACK_PAY 0x02 // EN_ACK_PAY bit in FEATURE register
 #define NRF24L01_FEATURE_EN_DPL     0x04 // EN_DPL bit in FEATURE register
-#define NRF24L01_FLAG_RX_DREADY     0x40 // RX_DR bit (data ready RX FIFO interrupt)
-#define NRF24L01_FLAG_TX_DSENT      0x20 // TX_DS bit (data sent TX FIFO interrupt)
+#define NRF24L01_FLAG_RX_DR         0x40 // RX_DR bit (data ready RX FIFO interrupt)
+#define NRF24L01_FLAG_TX_DS         0x20 // TX_DS bit (data sent TX FIFO interrupt)
 #define NRF24L01_FLAG_MAX_RT        0x10 // MAX_RT bit (maximum number of TX re-transmits interrupt)
+#define NRF24L01_FLAG_IT_BITS       0x70 // RX_DR|TX_DS|MAX_RT
+#define NRF24L01_FLAG_TX_FULL       0x01 // TX FIFO full flag. 1: TX FIFO full. 0: Available locations in TX FIFO
+
+
 
 // Register masks definitions
 #define NRF24L01_MASK_REG_MAP       0x1F // Mask bits[4:0] for CMD_RREG and CMD_WREG commands
@@ -118,18 +124,27 @@ uint8_t   NRF24L01_Read_To_Buf(uint8_t reg,uint8_t *pBuf,uint8_t len);
 *  buf - pointer to the buffer with data
 *  len - number of bytes to write
 */
-uint8_t   NRF24L01_Write_From_Buf(uint8_t reg,uint8_t *pBuf,uint8_t len);
+uint8_t   NRF24L01_Write_From_Buf(uint8_t reg, const uint8_t *pBuf,uint8_t len);
 
 /**
 * Hold till data received and written to rx_buf
 */
 uint8_t   NRF24L01_RxPacket(uint8_t *rx_buf);
+
+/**
+ * Receive data in interrupt
+*/
 void      NRF24L01_IntRxPacket(uint8_t *rx_buf);
 
 /**
 * Send data in tx_buf and wait till data is sent or max re-tr reached
 */
 uint8_t   NRF24L01_TxPacket(uint8_t *tx_buf, uint8_t len);
+
+/**
+ * Send data in FIFO without sync ack
+*/
+uint8_t NRF24L01_TxFast(const void *txbuf);
 
 /**
 * Switch NRF24L01 to RX mode
@@ -150,6 +165,11 @@ void NRF24L01_FlushRX(void);
 * Flush the TX FIFO
 */
 void NRF24L01_FlushTX(void);
+
+/**
+ * Clear TX error flags
+*/
+void NRF24L01_ResetTX(void);
 
 /**
 * Clear IRQ bit of the STATUS register

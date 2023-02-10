@@ -19,7 +19,7 @@
 
 **Note**
 
-There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, despite all the parts listed, you can simply treat them all as PY32F030 in coding and programming.
+There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, despite all the parts listed, you can treat them all as PY32F030 in coding and programming.
 
 # File Structure
 
@@ -41,8 +41,9 @@ There is high probability that PY32F002A, PY32F003 and PY32F030 share the same c
 ├── Makefile                    # Make config
 ├── Misc
 │   ├── Flash
-│   │   ├── Devices             # FLM files
+│   │   ├── JLinkDevices        # JLink flash loaders
 │   │   └── Sources             # Flash algorithm source code
+│   ├── Puya.PY32F0xx_DFP.x.pack # DFP pack file for PyOCD
 │   └── SVD                     # SVD files
 ├── README.md
 ├── rules.mk                    # Pre-defined rules include in Makefile 
@@ -77,66 +78,18 @@ Download and install JLink from [J-Link / J-Trace Downloads](https://www.segger.
 
 ```bash
 # installation command for .deb
-sudo dpkg -i JLink_Linux_V770a_x86_64.deb
+sudo dpkg -i JLink_Linux_V784f_x86_64.deb
+# uncompression command for .tar.gz
+sudo tar xvf JLink_Linux_V784f_x86_64.tgz -C [target folder]
 ```
 The default installation directory is */opt/SEGGER*
 
-Copy all .FLM files from [Project directory]/Misc/Flash/Devices/Puya to [JLink directory]/Devices/Puya
-
+Copy [Project directory]/Misc/Flash/JLinkDevices to [User home]/.config/SEGGER/JLinkDevices/
 ```bash
 cd py32f0-template
-sudo cp -r Misc/Flash/Devices/* /opt/SEGGER/JLink/Devices/
+cp -r Misc/Flash/JLinkDevices/ ~/.config/SEGGER/
 ```
-
-Edit JLinkDevices.xml 
-
-```bash
-sudo vi /opt/SEGGER/JLink/JLinkDevices.xml
-```
-Add the following lines in `<DataBase>` section
-
-```xml
-  <!--                 -->
-  <!-- Puya            -->
-  <!--                 -->
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F002AX5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="Devices/Puya/PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F002X5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="Devices/Puya/PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F003X4"  WorkRAMAddr="0x20000000" WorkRAMSize="0x800" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_16K" BaseAddr="0x08000000" MaxSize="0x4000" Loader="Devices/Puya/PY32F003xx_16.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F003X6"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1000" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_32K" BaseAddr="0x08000000" MaxSize="0x8000" Loader="Devices/Puya/PY32F003xx_32.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F003X8"  WorkRAMAddr="0x20000000" WorkRAMSize="0x2000" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_64K" BaseAddr="0x08000000" MaxSize="0x10000" Loader="Devices/Puya/PY32F003xx_64.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-    <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F030X4"  WorkRAMAddr="0x20000000" WorkRAMSize="0x800" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_16K" BaseAddr="0x08000000" MaxSize="0x4000" Loader="Devices/Puya/PY32F030xx_16.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F030X6"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1000" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_32K" BaseAddr="0x08000000" MaxSize="0x8000" Loader="Devices/Puya/PY32F030xx_32.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F030X7"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1800" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_48K" BaseAddr="0x08000000" MaxSize="0xC000" Loader="Devices/Puya/PY32F030xx_48.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-  <Device>
-    <ChipInfo Vendor="Puya" Name="PY32F030X8"  WorkRAMAddr="0x20000000" WorkRAMSize="0x2000" Core="JLINK_CORE_CORTEX_M0"/>
-    <FlashBankInfo Name="Flash_64K" BaseAddr="0x08000000" MaxSize="0x10000" Loader="Devices/Puya/PY32F030xx_64.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
-  </Device>
-```
-
+Read more: [https://wiki.segger.com/J-Link_Device_Support_Kit](https://wiki.segger.com/J-Link_Device_Support_Kit)
 
 ## 2. Option #2: Install PyOCD
 
@@ -166,52 +119,67 @@ git clone https://github.com/IOsetting/py32f0-template.git
 ## 4. Edit Makefile
 
 Change the settings in Makefile
-* make sure **ARM_TOOCHAIN** points to the correct path of arm-none-eabi-gcc
-* If you use J-Link, **FLASH_PROGRM** can be jlink or pyocd
-* If you use DAPLink, set **FLASH_PROGRM** to pyocd
-* ST-LINK is not supported yet. ST-LINK works in Windows Keil5, but I failed to make it work in Ubuntu
-* Puya provides two sets of library, HAL lib and LL lib, switch with **USE_LL_LIB** option
-* **ENABLE_PRINTF_FLOAT** will add `-u _printf_float` to link options, which will significantly increase the binary size.
+* **USE_LL_LIB** Puya provides two sets of library, HAL and LL, set `USE_LL_LIB ?= y` to use LL instead of HAL.
+* **ENABLE_PRINTF_FLOAT** set it to `y` to `-u _printf_float` to link options. This will increase the binary size.
+* **USE_FREERTOS** Set `USE_FREERTOS ?= y` will include FreeRTOS in compilation
+* **USE_DSP** Include CMSIS DSP or not
+* **FLASH_PROGRM**
+  * If you use J-Link, `FLASH_PROGRM` can be jlink or pyocd
+  * If you use DAPLink, set `FLASH_PROGRM ?= pyocd`
+  * ST-LINK is not supported yet.
+* **ARM_TOOCHAIN** Make sure it points to the correct path of arm-none-eabi-gcc
 
 ```makefile
 ##### Project #####
 
-PROJECT			?= app
+PROJECT           ?= app
 # The path for generated files
-BUILD_DIR		= Build
+BUILD_DIR         = Build
 
 
 ##### Options #####
 
-# Use LL library instead of HAL
-USE_LL_LIB ?= n
+# Use LL library instead of HAL, y:yes, n:no
+USE_LL_LIB        ?= n
 # Enable printf float %f support, y:yes, n:no
-ENABLE_PRINTF_FLOAT	?= n
+ENABLE_PRINTF_FLOAT ?= n
+# Build with FreeRTOS, y:yes, n:no
+USE_FREERTOS      ?= n
 # Build with CMSIS DSP functions, y:yes, n:no
-USE_DSP			?= n
+USE_DSP           ?= n
 # Programmer, jlink or pyocd
-FLASH_PROGRM	?= pyocd
+FLASH_PROGRM      ?= pyocd
 
 ##### Toolchains #######
-
-ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
+ARM_TOOCHAIN      ?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
 
 # path to JLinkExe
-JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
-# JLink device type, options: PY32F003X4, PY32F003X6, PY32F003X8, PY32F030X6, PY32F030X7, PY32F030X8
-JLINK_DEVICE	?= PY32F003X8
-# path to PyOCD
-PYOCD_EXE		?= pyocd
-# PyOCD device type, options: py32f003x4, py32f003x6, py32f003x8, py32f030x3, py32f030x4, py32f030x6, py32f030x7, py32f030x8
-PYOCD_DEVICE	?= py32f003x8
+JLINKEXE          ?= /opt/SEGGER/JLink/JLinkExe
+# JLink device type, options:
+#   PY32F002AX5, PY32F002X5, 
+#   PY32F003X4, PY32F003X6, PY32F003X8, 
+#   PY32F030X4, PY32F030X6, PY32F030X7, PY32F030X8
+JLINK_DEVICE      ?= PY32F030X6
+# path to PyOCD, 
+PYOCD_EXE         ?= pyocd
+# PyOCD device type, options: 
+#     py32f002ax5, py32f002x5, 
+#   py32f003x4,  py32f003x6, py32f003x8, 
+#   py32f030x3,  py32f030x4, py32f030x6, py32f030x7, py32f030x8
+#   py32f072xb
+PYOCD_DEVICE      ?= py32f030x8
 
 
 ##### Paths ############
 
-# Link descript file: py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
-LDSCRIPT		= Libraries/LDScripts/py32f003x8.ld
-# Library build flags: PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, PY32F003x4, PY32F003x6, PY32F003x8
-LIB_FLAGS       = PY32F003x8
+# Link descript file: py32f002x5.ld, py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
+LDSCRIPT          = Libraries/LDScripts/py32f030x8.ld
+# Library build flags: 
+#   PY32F002x5, PY32F002Ax5, 
+#   PY32F003x4, PY32F003x6, PY32F003x8, 
+#   PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, 
+#   PY32F072xB
+LIB_FLAGS         = PY32F030x6
 ```
 
 ## 5. Compiling And Flashing

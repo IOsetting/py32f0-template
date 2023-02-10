@@ -1,0 +1,41 @@
+<!--                 -->
+<!-- Puya            -->
+<!--                 -->
+<Database>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F002AX5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F002X5"  WorkRAMAddr="0x20000000" WorkRAMSize="0xC00" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_20K" BaseAddr="0x08000000" MaxSize="0x5000" Loader="PY32F0xx_20.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F003X4"  WorkRAMAddr="0x20000000" WorkRAMSize="0x800" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_16K" BaseAddr="0x08000000" MaxSize="0x4000" Loader="PY32F003xx_16.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F003X6"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1000" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_32K" BaseAddr="0x08000000" MaxSize="0x8000" Loader="PY32F003xx_32.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F003X8"  WorkRAMAddr="0x20000000" WorkRAMSize="0x2000" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_64K" BaseAddr="0x08000000" MaxSize="0x10000" Loader="PY32F003xx_64.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+    <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F030X4"  WorkRAMAddr="0x20000000" WorkRAMSize="0x800" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_16K" BaseAddr="0x08000000" MaxSize="0x4000" Loader="PY32F030xx_16.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F030X6"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1000" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_32K" BaseAddr="0x08000000" MaxSize="0x8000" Loader="PY32F030xx_32.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F030X7"  WorkRAMAddr="0x20000000" WorkRAMSize="0x1800" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_48K" BaseAddr="0x08000000" MaxSize="0xC000" Loader="PY32F030xx_48.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+  <Device>
+    <ChipInfo Vendor="Puya" Name="PY32F030X8"  WorkRAMAddr="0x20000000" WorkRAMSize="0x2000" Core="JLINK_CORE_CORTEX_M0"/>
+    <FlashBankInfo Name="Flash_64K" BaseAddr="0x08000000" MaxSize="0x10000" Loader="PY32F030xx_64.FLM" LoaderType="FLASH_ALGO_TYPE_OPEN" AlwaysPresent="1"/>
+  </Device>
+</Database>

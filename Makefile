@@ -7,7 +7,7 @@ BUILD_DIR		= Build
 
 ##### Options #####
 
-# Use LL library instead of HAL
+# Use LL library instead of HAL, y:yes, n:no
 USE_LL_LIB ?= n
 # Enable printf float %f support, y:yes, n:no
 ENABLE_PRINTF_FLOAT	?= n
@@ -73,6 +73,7 @@ CDIRS		+= Libraries/PY32F0xx_LL_Driver/Src \
 		Libraries/BSP_LL/Src
 INCLUDES	+= Libraries/PY32F0xx_LL_Driver/Inc \
 		Libraries/BSP_LL/Inc
+LIB_FLAGS   += USE_FULL_LL_DRIVER
 else
 CDIRS		+= Libraries/PY32F0xx_HAL_Driver/Src \
 		Libraries/BSP/Src

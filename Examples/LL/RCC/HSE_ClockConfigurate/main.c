@@ -7,40 +7,42 @@
 static void APP_SystemClockConfig(void);
 static void APP_GPIOConfig(void);
 
-
 int main(void)
 {
   APP_SystemClockConfig();
 
   APP_GPIOConfig();
 
-  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_SYSCLK,LL_RCC_MCO1_DIV_1);
+  BSP_USART_Config(115200);
+
+  LL_RCC_ConfigMCO(LL_RCC_MCO1SOURCE_SYSCLK, LL_RCC_MCO1_DIV_1);
+
+  printf("Clock: %ld \r\n", SystemCoreClock);
 
   while (1)
   {
-    LL_mDelay(500);
-    LL_GPIO_TogglePin(GPIOB,LL_GPIO_PIN_5);
+    LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_5);
+    printf("echo\r\n");
+    LL_mDelay(1000);
   }
 }
 
 static void APP_SystemClockConfig(void)
 {
-  LL_RCC_HSI_Enable();
-  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz);
-  while(LL_RCC_HSI_IsReady() != 1);
+  LL_RCC_HSE_Enable();
+  LL_RCC_HSE_SetFreqRegion(LL_RCC_HSE_16_32MHz);
+  while(LL_RCC_HSE_IsReady() != 1);
 
   LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
 
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS);
-
-  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSE);
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSE);
 
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
   /* Update global SystemCoreClock(or through SystemCoreClockUpdate function) */
-  LL_SetSystemCoreClock(24000000);
+  LL_SetSystemCoreClock(HSE_VALUE);
   /* Re-init frequency of SysTick source */
-  LL_InitTick(24000000, 1000U);
+  LL_InitTick(HSE_VALUE, 1000U);
 }
 
 static void APP_GPIOConfig(void)

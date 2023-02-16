@@ -18,11 +18,6 @@ extern "C" {
 #include "py32f0xx_ll_utils.h"
 
 
-#if defined(USE_FULL_ASSERT)
-#include "py32_assert.h"
-#endif /* USE_FULL_ASSERT */
-
-
 void APP_ErrorHandler(void);
 
 #ifdef __cplusplus

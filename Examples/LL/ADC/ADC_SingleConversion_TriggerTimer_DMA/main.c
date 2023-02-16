@@ -14,7 +14,7 @@ static void APP_DMAConfig(void);
 
 int main(void)
 {
-  BSP_HSI_48MConfig();
+  BSP_HSI_PLL_48MConfig();
 
   BSP_USART_Config(115200);
   printf("ADC Timer Trigger DMA Demo\r\nClock: %ld\r\n", SystemCoreClock);
@@ -27,6 +27,17 @@ int main(void)
   APP_TimerInit();
 
   while (1);
+}
+
+static void APP_TimerInit(void)
+{
+  LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
+  LL_TIM_SetPrescaler(TIM1, (SystemCoreClock / 6000) - 1);
+  LL_TIM_SetAutoReload(TIM1, 6000 - 1);
+  /* Triggered by update */
+  LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_UPDATE);
+
+  LL_TIM_EnableCounter(TIM1);
 }
 
 static void APP_ADCConfig(void)
@@ -77,18 +88,6 @@ static void APP_ADCConfig(void)
   LL_ADC_REG_SetSequencerChannels(ADC1, LL_ADC_CHANNEL_4);
 
   LL_ADC_Enable(ADC1);
-}
-
-static void APP_TimerInit(void)
-{
-  LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_TIM1);
-  /* Set period to 48000000 for 48MHz clock */
-  LL_TIM_SetPrescaler(TIM1, 6000 - 1);
-  LL_TIM_SetAutoReload(TIM1, 8000 - 1);
-  /* Triggered by update */
-  LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_UPDATE);
-
-  LL_TIM_EnableCounter(TIM1);
 }
 
 static void APP_DMAConfig(void)

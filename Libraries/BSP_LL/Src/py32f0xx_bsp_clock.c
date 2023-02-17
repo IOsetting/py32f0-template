@@ -14,7 +14,7 @@ void BSP_HSI_PLL_48MConfig(void)
   LL_PLL_ConfigSystemClock_HSI(&UTILS_ClkInitStruct);
 
   /* Re-init frequency of SysTick source, reload = freq/ticks = 48000000/1000 = 48000 */
-  LL_InitTick(48000000, 1000U);
+  LL_Init1msTick(48000000);
 }
 
 void BSP_HSI_24MConfig(void)
@@ -34,7 +34,7 @@ void BSP_HSI_24MConfig(void)
   /* Update global SystemCoreClock(or through SystemCoreClockUpdate function) */
   LL_SetSystemCoreClock(24000000);
   /* Re-init frequency of SysTick source */
-  LL_InitTick(24000000, 1000U);
+  LL_Init1msTick(24000000);
 }
 
 void BSP_HSE_PLL_Config(void)
@@ -49,7 +49,7 @@ void BSP_HSE_PLL_Config(void)
   UTILS_ClkInitStruct.APB1CLKDivider = LL_RCC_APB1_DIV_1;
   LL_PLL_ConfigSystemClock_HSE(HSE_VALUE, LL_UTILS_HSEBYPASS_OFF, &UTILS_ClkInitStruct);
   /* Re-init frequency of SysTick source */
-  LL_InitTick(HSE_VALUE * 2, 1000U);
+  LL_Init1msTick(HSE_VALUE * 2);
 }
 
 void BSP_HSE_Config(void)
@@ -67,5 +67,5 @@ void BSP_HSE_Config(void)
   /* Update global SystemCoreClock(or through SystemCoreClockUpdate function) */
   LL_SetSystemCoreClock(HSE_VALUE);
   /* Re-init frequency of SysTick source */
-  LL_InitTick(HSE_VALUE, 1000U);
+  LL_Init1msTick(HSE_VALUE);
 }

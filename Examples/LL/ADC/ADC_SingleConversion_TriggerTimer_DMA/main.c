@@ -14,7 +14,7 @@ static void APP_DMAConfig(void);
 
 int main(void)
 {
-  BSP_HSI_PLL_48MConfig();
+  BSP_RCC_HSI_PLL48MConfig();
 
   BSP_USART_Config(115200);
   printf("ADC Timer Trigger DMA Demo\r\nClock: %ld\r\n", SystemCoreClock);

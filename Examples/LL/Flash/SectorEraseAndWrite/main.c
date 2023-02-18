@@ -24,7 +24,7 @@ static void APP_FlashWriteVerify(void);
 
 int main(void)
 {
-  BSP_HSI_PLL_48MConfig();
+  BSP_RCC_HSI_PLL48MConfig();
 
   BSP_USART_Config(115200);
   printf("Flash Read&Write Demo\r\nClock: %ld\r\n", SystemCoreClock);

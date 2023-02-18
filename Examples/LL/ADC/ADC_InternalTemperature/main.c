@@ -17,7 +17,7 @@ static void APP_ADCConfig(void);
 int main(void)
 {
   // Set system clock to 48MHz
-  BSP_HSI_PLL_48MConfig();
+  BSP_RCC_HSI_PLL48MConfig();
   // Initialize UART on PA2:TX PA3:RX
   BSP_USART_Config(115200);
   printf("PY32F0 Internal Temperature Sensor Demo\r\nClock: %ld\r\n", SystemCoreClock);

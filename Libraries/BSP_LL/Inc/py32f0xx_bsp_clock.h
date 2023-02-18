@@ -24,10 +24,11 @@ extern "C" {
 #include "py32f0xx_ll_gpio.h"
 #include "py32f0xx_ll_usart.h"
 
-void BSP_HSI_PLL_48MConfig(void);
-void BSP_HSI_24MConfig(void);
-void BSP_HSE_PLL_Config(void);
-void BSP_HSE_Config(void);
+void BSP_RCC_HSI_PLL48MConfig(void);
+void BSP_RCC_HSI_24MConfig(void);
+void BSP_RCC_HSI_8MConfig(void);
+void BSP_RCC_HSE_PLLConfig(void);
+void BSP_RCC_HSE_Config(void);
 
 #ifdef __cplusplus
 }

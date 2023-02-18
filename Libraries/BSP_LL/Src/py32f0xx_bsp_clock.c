@@ -1,6 +1,6 @@
 #include "py32f0xx_bsp_clock.h"
 
-void BSP_HSI_PLL_48MConfig(void)
+void BSP_RCC_HSI_PLL48MConfig(void)
 {
   LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
 
@@ -17,7 +17,7 @@ void BSP_HSI_PLL_48MConfig(void)
   LL_Init1msTick(48000000);
 }
 
-void BSP_HSI_24MConfig(void)
+void BSP_RCC_HSI_24MConfig(void)
 {
   LL_RCC_HSI_Enable();
   LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz);
@@ -37,7 +37,22 @@ void BSP_HSI_24MConfig(void)
   LL_Init1msTick(24000000);
 }
 
-void BSP_HSE_PLL_Config(void)
+void BSP_RCC_HSI_8MConfig(void)
+{
+  LL_RCC_HSI_Enable();
+  while(LL_RCC_HSI_IsReady() != 1);
+
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS);
+
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_SetSystemCoreClock(8000000);
+  LL_Init1msTick(8000000);
+}
+
+void BSP_RCC_HSE_PLLConfig(void)
 {
   LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
 
@@ -52,7 +67,7 @@ void BSP_HSE_PLL_Config(void)
   LL_Init1msTick(HSE_VALUE * 2);
 }
 
-void BSP_HSE_Config(void)
+void BSP_RCC_HSE_Config(void)
 {
   LL_RCC_HSE_Enable();
   LL_RCC_HSE_SetFreqRegion(LL_RCC_HSE_16_32MHz);

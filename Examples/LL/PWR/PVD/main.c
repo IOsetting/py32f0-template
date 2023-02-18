@@ -1,5 +1,7 @@
 /**
  * Power Voltage Detector(PVD) Demo
+ * 
+ * - when input(PB7) voltage lower than 1.2V, PB5 output high
 */
 #include "main.h"
 #include "py32f0xx_bsp_clock.h"

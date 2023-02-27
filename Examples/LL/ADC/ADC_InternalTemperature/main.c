@@ -1,7 +1,8 @@
 /**
- * Demo of reading internal temperature sensor
- * - Works on QFN32 packaging
- * - Doesn't work on TSSOP20 packaging, always read 0xFFF
+ * Demo of internal temperature sensor
+ * 
+ * - If the internal sensor reading is always 4095(0xFFF), disconnect the UART RX(A3) pin
+ * 
 */
 #include "main.h"
 #include "py32f0xx_bsp_clock.h"

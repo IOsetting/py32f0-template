@@ -2,12 +2,13 @@
  * Demo: I2C - SSD1306 OLED 
  * 
  * PY32          SSD1306
- *  PA9          SCL
- *  PA10         SDA
+ *  PA9/PF1       SCL
+ *  PA10/PF0      SDA
  */
 #include <string.h>
 #include "main.h"
 #include "py32f0xx_bsp_printf.h"
+#include "py32f0xx_bsp_clock.h"
 #include "ssd1306.h"
 
 #define I2C_ADDRESS        0xA0     /* host/client address */
@@ -18,21 +19,18 @@
 
 __IO uint32_t   i2cState  = I2C_STATE_READY;
 
-
-static void APP_SystemClockConfig(void);
-static void APP_I2cMasterConfig(void);
-
+static void APP_I2C_Config(void);
 
 int main(void)
 {
   int y1, y2;
 
-  APP_SystemClockConfig();
+  BSP_RCC_HSI_24MConfig();
 
   BSP_USART_Config(115200);
   printf("I2C Demo: \r\nClock: %ld\r\n", SystemCoreClock);
 
-  APP_I2cMasterConfig();
+  APP_I2C_Config();
 
   uint8_t res = SSD1306_Init();
   printf("OLED init: %d\n", res);
@@ -123,11 +121,11 @@ int main(void)
   while(1);
 }
 
-static void APP_I2cMasterConfig(void)
+static void APP_I2C_Config(void)
 {
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOF);
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_I2C1);
 
   /**
@@ -137,18 +135,18 @@ static void APP_I2cMasterConfig(void)
    * Change pins to PF1 / PF0 for parts have no PA9 / PA10
   */
   // PA9 SCL
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_1;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_6;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_12;
+  LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   // PA10 SDA
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_6;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0;
+  GPIO_InitStruct.Alternate = LL_GPIO_AF_12;
+  LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   LL_APB1_GRP1_ForceReset(LL_APB1_GRP1_PERIPH_I2C1);
   LL_APB1_GRP1_ReleaseReset(LL_APB1_GRP1_PERIPH_I2C1);
@@ -211,23 +209,6 @@ void APP_I2C_Transmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, ui
   /* Stop */
   LL_I2C_GenerateStopCondition(I2C1);
   i2cState = I2C_STATE_READY;
-}
-
-/**
- * Set system clock to 48MHz
-*/
-static void APP_SystemClockConfig(void)
-{
-  LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
-
-  LL_RCC_HSI_Enable();
-  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz);
-  while (LL_RCC_HSI_IsReady() != 1);
-
-  UTILS_ClkInitStruct.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;
-  UTILS_ClkInitStruct.APB1CLKDivider = LL_RCC_APB1_DIV_1;
-  LL_PLL_ConfigSystemClock_HSI(&UTILS_ClkInitStruct);
-  LL_InitTick(48000000, 1000U);
 }
 
 void APP_ErrorHandler(void)

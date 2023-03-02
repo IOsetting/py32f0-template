@@ -1,6 +1,6 @@
 # py32f0-template
 
-* Puya PY32F0 template project for GNU Arm Embedded Toolchain
+* Puya PY32F0 serie template project for GNU Arm Embedded Toolchain
 * Supported programmers: J-Link, DAPLink/PyOCD
 * Supported IDE: VSCode
 
@@ -19,7 +19,7 @@
 
 **Note**
 
-There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, despite all the parts listed, you can treat them all as PY32F030 in coding and programming.
+There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, you can treat them all as PY32F030 in coding and programming.
 
 # File Structure
 

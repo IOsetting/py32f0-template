@@ -2,8 +2,8 @@
  * Demo: I2C - SSD1306 OLED 
  * 
  * PY32          SSD1306
- *  PA9/PF1       SCL
- *  PA10/PF0      SDA
+ *  PF1/PA9       SCL
+ *  PF0/PA10      SDA
  */
 #include <string.h>
 #include "main.h"
@@ -134,7 +134,7 @@ static void APP_I2C_Config(void)
    * 
    * Change pins to PF1 / PF0 for parts have no PA9 / PA10
   */
-  // PA9 SCL
+  // PF1 SCL
   GPIO_InitStruct.Pin = LL_GPIO_PIN_1;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
@@ -143,7 +143,7 @@ static void APP_I2C_Config(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_12;
   LL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  // PA10 SDA
+  // PF0 SDA
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_12;
   LL_GPIO_Init(GPIOF, &GPIO_InitStruct);

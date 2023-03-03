@@ -92,9 +92,9 @@ int main(void)
     // Shift display test
     LCD_SendCommand(LCD1602_I2C_ADDR, LCD1602_CMD_CLEAR_DISPLAY);
     LL_mDelay(500);
-    LCD_SendCommand(LCD1602_I2C_ADDR, LCD1602_DDRAM_ROW0|8);
+    LCD_SendCommand(LCD1602_I2C_ADDR, LCD1602_DDRAM_ROW0|9);
     LCD_SendString(LCD1602_I2C_ADDR, "Shift");
-    LCD_SendCommand(LCD1602_I2C_ADDR, LCD1602_DDRAM_ROW1|7);
+    LCD_SendCommand(LCD1602_I2C_ADDR, LCD1602_DDRAM_ROW1|8);
     LCD_SendString(LCD1602_I2C_ADDR, "<<<->>>");
     LL_mDelay(500);
     for (i = 0; i < 8; i++)

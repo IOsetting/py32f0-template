@@ -73,6 +73,8 @@ void LCD_Init(uint8_t lcd_addr)
   LCD_SendCommand(lcd_addr, LCD1602_CMD_HOME);
   // display on, right shift, underline off, blink off
   LCD_SendCommand(lcd_addr, LCD1602_CMD_MODE_ON_CURSOR_BLNK);
+  // move direction right
+  LCD_SendCommand(lcd_addr, LCD1602_CMD_DIRECTION_RIGHT);
   // clear display (optional here)
   LCD_SendCommand(lcd_addr, LCD1602_CMD_CLEAR_DISPLAY);
 }

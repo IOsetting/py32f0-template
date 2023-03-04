@@ -14,6 +14,8 @@ __IO uint32_t   i2cState  = I2C_STATE_READY;
 void BSP_I2C_Config(void)
 {
   LL_I2C_InitTypeDef I2C_InitStruct;
+
+  LL_I2C_DeInit(I2C1);
   /* 
    * Clock speed:
    * - standard = 100khz, if PLL is on, set system clock <= 16MHz, or I2C might not work

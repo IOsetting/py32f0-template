@@ -65,9 +65,30 @@ void LCD_SetCGRAM(uint8_t lcd_addr, uint8_t char_addr, const uint8_t *char_font)
   LCD_SendCommand(lcd_addr, LCD1602_CMD_CGRAM_ADDR);
 }
 
+/**
+ * Initialize LCD
+ * 
+ * Described in HD44780 datasheet P45, procedures on 4-bit initializations,
+ * - Wait for more than 40 ms after VCC rises to 2.7 V
+ * - Function set (Interface is 8 bits long), Wait for more than 4.1 ms
+ * - Function set (Interface is 8 bits long), Wait for more than 100 µs
+ * - Function set (Interface is 8 bits long)
+ * - Function set (Set interface to be 4 bits long.) Interface is 8 bits in length
+ * - Function set (Interface is 4 bits long. Specify the number of display lines and character font.)
+ *   The number of display lines and character font cannot be changed after this point.
+*/
 void LCD_Init(uint8_t lcd_addr)
 {
-  // 4-bit mode, 2 lines, 5x8 format
+  // need at least 40ms after power rises above 2.7V
+  LL_mDelay(50);
+  // start in 8-bit mode, 3 commands
+  LCD_SendCommand(lcd_addr, LCD1602_CMD_FUNC_8B_1L_5X8);
+  LCD_SendCommand(lcd_addr, LCD1602_CMD_FUNC_8B_1L_5X8);
+  LCD_SendCommand(lcd_addr, LCD1602_CMD_FUNC_8B_1L_5X8);
+  // set it to 4-bit mode, interface is still 8-bit
+  LCD_SendCommand(lcd_addr, LCD1602_CMD_FUNC_4B_1L_5X8);
+
+  // now interface is 4-bit, set it to 2 lines and 5x8 font
   LCD_SendCommand(lcd_addr, LCD1602_CMD_FUNC_4B_2L_5X8);
   // display & cursor home
   LCD_SendCommand(lcd_addr, LCD1602_CMD_HOME);

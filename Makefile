@@ -15,6 +15,8 @@ ENABLE_PRINTF_FLOAT	?= n
 USE_FREERTOS	?= n
 # Build with CMSIS DSP functions, y:yes, n:no
 USE_DSP			?= n
+# Build with Waveshare e-paper lib, y:yes, n:no
+USE_EPAPER		?= y
 # Programmer, jlink or pyocd
 FLASH_PROGRM	?= pyocd
 
@@ -109,7 +111,18 @@ CFILES 		+= Libraries/CMSIS/DSP/Source/BasicMathFunctions/BasicMathFunctions.c \
 		Libraries/CMSIS/DSP/Source/TransformFunctions/TransformFunctions.c
 INCLUDES	+= Libraries/CMSIS/DSP/Include \
 		Libraries/CMSIS/DSP/PrivateInclude
+endif
 
+ifeq ($(USE_EPAPER),y)
+CDIRS		+= Libraries/EPaper/Lib \
+			Libraries/EPaper/Examples \
+			Libraries/EPaper/Fonts \
+			Libraries/EPaper/GUI
+
+INCLUDES	+= Libraries/EPaper/Lib \
+			Libraries/EPaper/Examples \
+			Libraries/EPaper/Fonts \
+			Libraries/EPaper/GUI
 endif
 
 include ./rules.mk

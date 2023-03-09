@@ -16,7 +16,7 @@ USE_FREERTOS	?= n
 # Build with CMSIS DSP functions, y:yes, n:no
 USE_DSP			?= n
 # Build with Waveshare e-paper lib, y:yes, n:no
-USE_EPAPER		?= y
+USE_EPAPER		?= n
 # Programmer, jlink or pyocd
 FLASH_PROGRM	?= pyocd
 

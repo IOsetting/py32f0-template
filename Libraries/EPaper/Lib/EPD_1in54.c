@@ -126,6 +126,7 @@ static void EPD_1IN54_SendCommand(UBYTE Reg)
     EPD_Digital_Write(EPD_DC_PIN, 0);
     EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_SPI_WriteByte(Reg);
+    EPD_Delay_ms(1);
     EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
@@ -148,11 +149,12 @@ parameter:
 ******************************************************************************/
 void EPD_1IN54_ReadBusy(void)
 {
-    EPD_Printf("e-Paper busy\r\n");
+    EPD_Printf("e-Paper check... ");
     while(EPD_Digital_Read(EPD_BUSY_PIN) == 1) {      //LOW: idle, HIGH: busy
+        EPD_Printf("busy ");
         EPD_Delay_ms(100);
     }
-    EPD_Printf("e-Paper busy release\r\n");
+    EPD_Printf("idle\r\n");
 }
 
 /******************************************************************************

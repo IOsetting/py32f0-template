@@ -124,10 +124,8 @@ parameter:
 static void EPD_1IN54_SendCommand(UBYTE Reg)
 {
     EPD_Digital_Write(EPD_DC_PIN, 0);
-    EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_SPI_WriteByte(Reg);
     EPD_Delay_ms(1);
-    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
@@ -138,31 +136,25 @@ parameter:
 static void EPD_1IN54_SendData(UBYTE Data)
 {
     EPD_Digital_Write(EPD_DC_PIN, 1);
-    EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_SPI_WriteByte(Data);
-    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 static void EPD_1IN54_SendDataArray(const UBYTE *Data, UWORD len)
 {
     EPD_Digital_Write(EPD_DC_PIN, 1);
-    EPD_Digital_Write(EPD_CS_PIN, 0);
     while (len--)
     {
         EPD_SPI_WriteByte(*Data++);
     }
-    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 static void EPD_1IN54_SendDataBurst(const UBYTE Data, UWORD len)
 {
     EPD_Digital_Write(EPD_DC_PIN, 1);
-    EPD_Digital_Write(EPD_CS_PIN, 0);
     while (len--)
     {
         EPD_SPI_WriteByte(Data);
     }
-    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
@@ -232,6 +224,7 @@ void EPD_1IN54_Init(UBYTE Mode)
 {
     EPD_1IN54_Reset();
 
+    EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_1IN54_SendCommand(0x01); // DRIVER_OUTPUT_CONTROL
     EPD_1IN54_SendData((EPD_1IN54_HEIGHT - 1) & 0xFF);
     EPD_1IN54_SendData(((EPD_1IN54_HEIGHT - 1) >> 8) & 0xFF);
@@ -263,7 +256,7 @@ void EPD_1IN54_Init(UBYTE Mode)
     }else{
         EPD_Printf("error, the Mode is EPD_1IN54_FULL or EPD_1IN54_PART");
     }
-    
+    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
@@ -275,6 +268,7 @@ void EPD_1IN54_Clear(void)
     UWORD Width, Height;
     Width = (EPD_1IN54_WIDTH % 8 == 0)? (EPD_1IN54_WIDTH / 8 ): (EPD_1IN54_WIDTH / 8 + 1);
     Height = EPD_1IN54_HEIGHT;
+    EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_1IN54_SetWindow(0, 0, EPD_1IN54_WIDTH, EPD_1IN54_HEIGHT);
     for (UWORD j = 0; j < Height; j++) {
         EPD_1IN54_SetCursor(0, j);
@@ -282,6 +276,7 @@ void EPD_1IN54_Clear(void)
         EPD_1IN54_SendDataBurst(0xFF, Width);
     }
     EPD_1IN54_TurnOnDisplay();
+    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
@@ -294,6 +289,7 @@ void EPD_1IN54_Display(UBYTE *Image)
     Width = (EPD_1IN54_WIDTH % 8 == 0)? (EPD_1IN54_WIDTH / 8 ): (EPD_1IN54_WIDTH / 8 + 1);
     Height = EPD_1IN54_HEIGHT;
 
+    EPD_Digital_Write(EPD_CS_PIN, 0);
     // UDOUBLE Offset = ImageName;
     EPD_1IN54_SetWindow(0, 0, EPD_1IN54_WIDTH, EPD_1IN54_HEIGHT);
     for (UWORD j = 0; j < Height; j++) {
@@ -306,6 +302,7 @@ void EPD_1IN54_Display(UBYTE *Image)
         // }
     }
     EPD_1IN54_TurnOnDisplay();
+    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 /******************************************************************************
@@ -314,8 +311,10 @@ parameter:
 ******************************************************************************/
 void EPD_1IN54_Sleep(void)
 {
+    EPD_Digital_Write(EPD_CS_PIN, 0);
     EPD_1IN54_SendCommand(0x10);
     EPD_1IN54_SendData(0x01);
+    EPD_Digital_Write(EPD_CS_PIN, 1);
 }
 
 #endif

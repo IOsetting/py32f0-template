@@ -53,7 +53,7 @@
 #include "EPD_Config.h"
 
 #if EPD_DEBUG
-    #define EPD_Printf(__info,...) printf("Debug: " __info,##__VA_ARGS__)
+    #define EPD_Printf(__info,...) printf(__info,##__VA_ARGS__)
 #else
     #define EPD_Printf(__info,...)  
 #endif

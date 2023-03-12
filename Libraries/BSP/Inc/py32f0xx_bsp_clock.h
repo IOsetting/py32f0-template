@@ -22,6 +22,7 @@ HAL_StatusTypeDef BSP_HSE_ClockConfig(void);
 
 #if defined(RCC_PLL_SUPPORT)
 HAL_StatusTypeDef BSP_HSI_PLL_48MHzClockConfig(void);
+HAL_StatusTypeDef BSP_HSI_PLL_32MHzClockConfig(void);
 HAL_StatusTypeDef BSP_HSE_PLL_ClockConfig(void);
 #endif
 

@@ -74,9 +74,39 @@ HAL_StatusTypeDef BSP_HSI_PLL_48MHzClockConfig(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;                            /* HSI ON */
   RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;                            /* No division */
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_24MHz;   /* HSI =16MHz */
+  RCC_OscInitStruct.HSEState = RCC_HSE_OFF;                           /* OFF */
+  RCC_OscInitStruct.LSIState = RCC_LSI_OFF;                           /* OFF */
+  RCC_OscInitStruct.LSEState = RCC_LSE_OFF;                           /* OFF */
+  RCC_OscInitStruct.LSEDriver = RCC_ECSCR_LSE_DRIVER_1;               /* LSE default */
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;                        /* PLL ON */
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;                /* PLL clock source (freq >= 12MHz) */
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    return HAL_ERROR;
+  }
+
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;           /* Set PLL as SYSCLK source */
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;                  /* APH no division */
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;                   /* APB no division */
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  {
+    return HAL_ERROR;
+  }
+  return HAL_OK;
+}
+
+HAL_StatusTypeDef BSP_HSI_PLL_32MHzClockConfig(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;                            /* HSI ON */
+  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;                            /* No division */
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_16MHz;   /* HSI =16MHz */
   RCC_OscInitStruct.HSEState = RCC_HSE_OFF;                           /* OFF */
-  RCC_OscInitStruct.HSEFreq = RCC_HSE_16_32MHz;
   RCC_OscInitStruct.LSIState = RCC_LSI_OFF;                           /* OFF */
   RCC_OscInitStruct.LSEState = RCC_LSE_OFF;                           /* OFF */
   RCC_OscInitStruct.LSEDriver = RCC_ECSCR_LSE_DRIVER_1;               /* LSE default */

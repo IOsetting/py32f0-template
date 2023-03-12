@@ -137,6 +137,7 @@ static void EPD_1IN54_SendData(UBYTE Data)
 {
     EPD_Digital_Write(EPD_DC_PIN, 1);
     EPD_SPI_WriteByte(Data);
+    __NOP();
 }
 
 static void EPD_1IN54_SendDataArray(const UBYTE *Data, UWORD len)
@@ -145,6 +146,7 @@ static void EPD_1IN54_SendDataArray(const UBYTE *Data, UWORD len)
     while (len--)
     {
         EPD_SPI_WriteByte(*Data++);
+        __NOP();
     }
 }
 
@@ -154,6 +156,7 @@ static void EPD_1IN54_SendDataBurst(const UBYTE Data, UWORD len)
     while (len--)
     {
         EPD_SPI_WriteByte(Data);
+        __NOP();
     }
 }
 

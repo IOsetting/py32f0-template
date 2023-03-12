@@ -1,6 +1,8 @@
 /***
  * Demo: Waveshare 1.54' E-Paper
  * 
+ * This demo requires 7.1 KByte RAM
+ * 
  * PY32          E-Paper
  * PA0   ------> Reset 
  * PA1   ------> SCL/SCK
@@ -27,7 +29,7 @@ static void APP_SPI_Config(void);
 int main(void)
 {
   HAL_Init();
-  BSP_HSI_PLL_48MHzClockConfig();
+  BSP_HSI_24MHzClockConfig();
   BSP_USART_Config();
   printf("SystemClk:%ld\r\n", SystemCoreClock);
 

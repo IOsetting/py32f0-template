@@ -32,6 +32,8 @@
 
 #ifdef EPD_1IN54
 
+UBYTE BlackImage[(EPD_1IN54_WIDTH / 8) * EPD_1IN54_HEIGHT];
+
 int EPD_test(void)
 {
     printf("EPD_1IN54_test Demo\r\n");
@@ -42,14 +44,6 @@ int EPD_test(void)
     EPD_1IN54_Clear();
     EPD_Delay_ms(500);
 
-    //Create a new image cache
-    UBYTE *BlackImage;
-    /* you have to edit the startup_stm32fxxx.s file and set a big enough heap size */
-    UWORD Imagesize = ((EPD_1IN54_WIDTH % 8 == 0)? (EPD_1IN54_WIDTH / 8 ): (EPD_1IN54_WIDTH / 8 + 1)) * EPD_1IN54_HEIGHT;
-    if((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL) {
-        printf("Failed to apply for black memory...\r\n");
-        return -1;
-    }
     printf("Paint_NewImage\r\n");
     Paint_NewImage(BlackImage, EPD_1IN54_WIDTH, EPD_1IN54_HEIGHT, 270, WHITE);
 
@@ -137,8 +131,6 @@ int EPD_test(void)
 
     printf("Goto Sleep...\r\n");
     EPD_1IN54_Sleep();
-    free(BlackImage);
-    BlackImage = NULL;
 
     // close 5V
     printf("close 5V, Module enters 0 power consumption ...\r\n");

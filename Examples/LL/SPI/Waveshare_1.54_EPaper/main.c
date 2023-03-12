@@ -1,6 +1,8 @@
 /***
  * Demo: Waveshare 1.54' E-Paper
  * 
+ * This demo requires 7.1 KByte RAM
+ * 
  * PY32          E-Paper
  * PA0   ------> Reset 
  * PA1   ------> CLK/SCK

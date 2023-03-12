@@ -18,10 +18,12 @@ extern "C" {
 #include "py32f0xx_hal_rcc.h"
 
 HAL_StatusTypeDef BSP_HSI_24MHzClockConfig(void);
-HAL_StatusTypeDef BSP_HSI_PLL_48MHzClockConfig(void);
-
 HAL_StatusTypeDef BSP_HSE_ClockConfig(void);
+
+#if defined(RCC_PLL_SUPPORT)
+HAL_StatusTypeDef BSP_HSI_PLL_48MHzClockConfig(void);
 HAL_StatusTypeDef BSP_HSE_PLL_ClockConfig(void);
+#endif
 
 
 #ifdef __cplusplus

@@ -24,40 +24,6 @@ extern "C" {
 //debug printf redirect config
 #define DEBUG_USART_BAUDRATE                    115200
 
-#if (defined(PY32F003PRE)|| defined(PY32F030PRE) || defined(PY32F072PRE))
-
-#define DEBUG_USART                             USART2
-#define DEBUG_USART_CLK_ENABLE()                do { \
-                                                     __IO uint32_t tmpreg = 0x00U; \
-                                                     SET_BIT(RCC->APBENR1, RCC_APBENR1_USART2EN);\
-                                                     /* Delay after an RCC peripheral clock enabling */ \
-                                                     tmpreg = READ_BIT(RCC->APBENR1, RCC_APBENR1_USART2EN);\
-                                                     UNUSED(tmpreg); \
-                                                   } while(0U)
-
-#define __GPIOA_CLK_ENABLE()                    do { \
-                                                     __IO uint32_t tmpreg = 0x00U; \
-                                                     SET_BIT(RCC->IOPENR, RCC_IOPENR_GPIOAEN);\
-                                                     /* Delay after an RCC peripheral clock enabling */ \
-                                                     tmpreg = READ_BIT(RCC->IOPENR, RCC_IOPENR_GPIOAEN);\
-                                                     UNUSED(tmpreg); \
-                                                   } while(0U)
-
-#define DEBUG_USART_RX_GPIO_PORT                GPIOA
-#define DEBUG_USART_RX_GPIO_CLK_ENABLE()        __HAL_RCC_GPIOA_CLK_ENABLE()
-#define DEBUG_USART_RX_PIN                      GPIO_PIN_3
-#define DEBUG_USART_RX_AF                       GPIO_AF4_USART2
-
-#define DEBUG_USART_TX_GPIO_PORT                GPIOA
-#define DEBUG_USART_TX_GPIO_CLK_ENABLE()        __HAL_RCC_GPIOA_CLK_ENABLE()
-#define DEBUG_USART_TX_PIN                      GPIO_PIN_2
-#define DEBUG_USART_TX_AF                       GPIO_AF4_USART2
-
-#define DEBUG_USART_IRQHandler                  USART2_IRQHandler
-#define DEBUG_USART_IRQ                         USART2_IRQn
-
-#else
-
 #define DEBUG_USART                             USART1
 #define DEBUG_USART_CLK_ENABLE()                do { \
                                                      __IO uint32_t tmpreg = 0x00U; \
@@ -87,8 +53,6 @@ extern "C" {
 
 #define DEBUG_USART_IRQHandler                  USART1_IRQHandler
 #define DEBUG_USART_IRQ                         USART1_IRQn
-
-#endif
 
 extern UART_HandleTypeDef DebugUartHandle;
 #endif

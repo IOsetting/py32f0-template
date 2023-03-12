@@ -1,3 +1,9 @@
+/***
+ * Demo: LED Toggle
+ * 
+ * PA0   ------> LED+
+ * GND   ------> LED-
+ */
 #include "py32f0xx_bsp_printf.h"
 
 
@@ -8,8 +14,8 @@ int main(void)
   HAL_Init();                                 
   APP_GPIO_Config();
   BSP_USART_Config();
-  printf("SystemClk:%ld\r\n", SystemCoreClock);
-
+  printf("PY32F0xx LED Toggle Demo\r\nSystem Clock: %ld\r\n", SystemCoreClock);
+  
   while (1)
   {
     HAL_Delay(1000);                            
@@ -28,7 +34,6 @@ static void APP_GPIO_Config(void)
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 

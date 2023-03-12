@@ -28,11 +28,9 @@ extern "C" {
 #include "py32f0xx_ll_usart.h"
 
 
-
-
 //debug printf redirect config
-#define DEBUG_USART                             USART2
-#define DEBUG_USART_CLK_ENABLE()                LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2)
+#define DEBUG_USART                             USART1
+#define DEBUG_USART_CLK_ENABLE()                LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_USART1)
 
 #define __GPIOA_CLK_ENABLE()                    do { \
                                                      __IO uint32_t tmpreg = 0x00U; \
@@ -45,15 +43,15 @@ extern "C" {
 #define DEBUG_USART_RX_GPIO_PORT                GPIOA
 #define DEBUG_USART_RX_GPIO_CLK_ENABLE()        LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA)
 #define DEBUG_USART_RX_PIN                      LL_GPIO_PIN_3
-#define DEBUG_USART_RX_AF                       LL_GPIO_AF_4
+#define DEBUG_USART_RX_AF                       LL_GPIO_AF_1
 
 #define DEBUG_USART_TX_GPIO_PORT                GPIOA
 #define DEBUG_USART_TX_GPIO_CLK_ENABLE()        LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA)
 #define DEBUG_USART_TX_PIN                      LL_GPIO_PIN_2
-#define DEBUG_USART_TX_AF                       LL_GPIO_AF_4
+#define DEBUG_USART_TX_AF                       LL_GPIO_AF_1
 
-#define DEBUG_USART_IRQHandler                  USART2_IRQHandler
-#define DEBUG_USART_IRQ                         USART2_IRQn
+#define DEBUG_USART_IRQHandler                  USART1_IRQHandler
+#define DEBUG_USART_IRQ                         USART1_IRQn
 
 /************************************************************/
 

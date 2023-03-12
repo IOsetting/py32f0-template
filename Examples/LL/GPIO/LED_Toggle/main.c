@@ -20,30 +20,27 @@
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "py32f0xx_bsp_led.h"
 #include "py32f0xx_bsp_printf.h"
 
-/* Private define ------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private user code ---------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
+
 static void APP_SystemClockConfig(void);
-static void APP_GpioConfig(void);
+static void APP_GPIOConfig(void);
 
 
 int main(void)
 {
   APP_SystemClockConfig();
+  APP_GPIOConfig();
 
-  APP_GpioConfig();
+  BSP_USART_Config(115200);
+  printf("PY32F0xx GPIO Example\r\nClock: %ld\r\n", SystemCoreClock);
 
   while (1)
   {
+    LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_0);
+    printf("echo\r\n");
     LL_mDelay(500);
-    LL_GPIO_TogglePin(GPIOB,LL_GPIO_PIN_5);
   }
 }
 
@@ -61,15 +58,12 @@ static void APP_SystemClockConfig(void)
   LL_SetSystemCoreClock(8000000);
 }
 
-/**
-  * @brief  配置GPIO
-  * @param  无
-  * @retval 无
-  */
-static void APP_GpioConfig(void)
+
+static void APP_GPIOConfig(void)
 {
-  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-  LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+  // PA0
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_0, LL_GPIO_MODE_OUTPUT);
 }
 
 void APP_ErrorHandler(void)
@@ -83,5 +77,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   while (1);
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT Puya *****END OF FILE******************/

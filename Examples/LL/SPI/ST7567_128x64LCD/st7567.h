@@ -19,24 +19,24 @@
 #define ST7567_BUF_SIZE         1024
 #define ST7567_HARDWARE_SPI     1
 
-// CS: PB2
-#define ST7567_CS_LOW       LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_2)
-#define ST7567_CS_HIGH      LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_2)
-// SCK: PB3
-#define ST7567_SCK_PORT     GPIOB
-#define ST7567_SCK_PIN      LL_GPIO_PIN_3
-// MOSI: PB5
-#define ST7567_MOSI_PORT    GPIOB
-#define ST7567_MOSI_PIN     LL_GPIO_PIN_5
-// Reset: PA8
-#define ST7567_RESET_LOW    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_8)
-#define ST7567_RESET_HIGH   LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_8)
-// DC: PA9
-#define ST7567_DC_LOW       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_9)
-#define ST7567_DC_HIGH      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_9)
-// Black Light: PA10
-#define ST7567_BL_LOW       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_10)
-#define ST7567_BL_HIGH      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_10)
+// CS: PA6
+#define ST7567_CS_LOW       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)
+#define ST7567_CS_HIGH      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_6)
+// SCK: PA1
+#define ST7567_SCK_PORT     GPIOA
+#define ST7567_SCK_PIN      LL_GPIO_PIN_1
+// MOSI: PA7
+#define ST7567_MOSI_PORT    GPIOA
+#define ST7567_MOSI_PIN     LL_GPIO_PIN_7
+// Reset: PA0
+#define ST7567_RESET_LOW    LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_0)
+#define ST7567_RESET_HIGH   LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_0)
+// DC: PA5
+#define ST7567_DC_LOW       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5)
+#define ST7567_DC_HIGH      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_5)
+// Black Light: PA4
+#define ST7567_BL_LOW       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4)
+#define ST7567_BL_HIGH      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4)
 
 // X width
 #define ST7567_WIDTH  128

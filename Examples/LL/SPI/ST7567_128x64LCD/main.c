@@ -2,28 +2,30 @@
  * Demo: ST7567 LCD
  * 
  * PY32          ST7567
- * PB2   ------> CS
- * PB3   ------> CLK/SCK
- * PB5   ------> DIN/MOSI
- * PA8   ------> Reset
- * PA9   ------> DC/A0
- * PA10  ------> Back Light
+ * PA0   ------> Reset
+ * PA1   ------> CLK/SCK
+ * PA4   ------> Backlight
+ * PA5   ------> DC/AO
+ * PA6   ------> CSN/CE
+ * PA7   ------> MOSI
+ * 
+ * PA2   ------> UART TX
  */
 #include <string.h>
 #include "main.h"
+#include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_bsp_printf.h"
 #include "st7567.h"
 
 
 static void APP_SPIConfig(void);
-static void APP_SystemClockConfig(void);
 
 int main(void)
 {
   int y1, y2;
   uint8_t d1, d2;
 
-  APP_SystemClockConfig();
+  BSP_RCC_HSI_24MConfig();
 
   BSP_USART_Config(115200);
   printf("SPI Demo: ST7567 LCD\r\nClock: %ld\r\n", SystemCoreClock);
@@ -227,29 +229,28 @@ static void APP_SPIConfig(void)
   LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_SPI1);
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA | LL_IOP_GRP1_PERIPH_GPIOB);
 
-  // PB2 CS
-  LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_2, LL_GPIO_MODE_OUTPUT);
-  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
-  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT);
-  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_OUTPUT);
-  // PB3 SCK
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_3;
+  // PA6 CS
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_OUTPUT);
+  // PA5 DC/AO
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+  // PA0 RESET
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_0, LL_GPIO_MODE_OUTPUT);
+  // PA4   ------> Backlight
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
+
+  // PA1 SCK
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_1;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  // PB4 MISO (not connected)
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  // PA7 MOSI
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  // PB5 MOSI
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_0;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
@@ -261,23 +262,6 @@ static void APP_SPIConfig(void)
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   LL_SPI_Init(SPI1, &SPI_InitStruct);
   LL_SPI_Enable(SPI1);
-}
-
-static void APP_SystemClockConfig(void)
-{
-  LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
-
-  LL_RCC_HSI_Enable();
-  /* Change this value to adjust clock frequency, larger is faster */
-  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz + 15);
-  while (LL_RCC_HSI_IsReady() != 1);
-
-  UTILS_ClkInitStruct.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;
-  UTILS_ClkInitStruct.APB1CLKDivider = LL_RCC_APB1_DIV_1;
-  LL_PLL_ConfigSystemClock_HSI(&UTILS_ClkInitStruct);
-
-  /* Re-init frequency of SysTick source, reload = freq/ticks = 48000000/1000 = 48000 */
-  LL_InitTick(48000000, 1000U);
 }
 
 void APP_ErrorHandler(void)

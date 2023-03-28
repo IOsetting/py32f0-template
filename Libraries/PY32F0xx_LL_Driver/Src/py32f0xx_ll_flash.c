@@ -88,7 +88,7 @@
 
 #endif
 
-#define __HAL_LOCK(__HANDLE__)                                           \
+#define __LL_FLASH_LOCK(__HANDLE__)                                           \
                                 do{                                        \
                                     if((__HANDLE__)->Lock == LL_LOCKED)   \
                                     {                                      \
@@ -100,7 +100,7 @@
                                     }                                      \
                                   }while (0U)
 
-#define __HAL_UNLOCK(__HANDLE__)                                          \
+#define __LL_FLASH_UNLOCK(__HANDLE__)                                          \
                                   do{                                       \
                                       (__HANDLE__)->Lock = LL_UNLOCKED;    \
                                     }while (0U)
@@ -395,7 +395,7 @@ ErrorStatus LL_FLASH_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t *PageSec
   uint32_t address = 0U;
 
   /* Process Locked */
-  __HAL_LOCK(&pFlash);
+  __LL_FLASH_LOCK(&pFlash);
     
   /* Config flash timming */
   __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
@@ -485,7 +485,7 @@ ErrorStatus LL_FLASH_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t *PageSec
   }
 
   /* Process Unlocked */
-  __HAL_UNLOCK(&pFlash);
+  __LL_FLASH_UNLOCK(&pFlash);
 
   return status;
 }
@@ -505,7 +505,7 @@ ErrorStatus LL_FLASH_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit)
   assert_param(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
 
   /* Process Locked */
-  __HAL_LOCK(&pFlash);
+  __LL_FLASH_LOCK(&pFlash);
     
   /* Config flash timming */
   __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
@@ -522,7 +522,7 @@ ErrorStatus LL_FLASH_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit)
   if (status != SUCCESS)
   {
     /* Process Unlocked */
-    __HAL_UNLOCK(&pFlash);
+    __LL_FLASH_UNLOCK(&pFlash);
   }
   else
   {
@@ -584,7 +584,7 @@ ErrorStatus LL_FLASH_Program(uint32_t TypeProgram, uint32_t Address, uint32_t * 
   ErrorStatus status = ERROR;
 
   /* Process Locked */
-  __HAL_LOCK(&pFlash);
+  __LL_FLASH_LOCK(&pFlash);
     
   /* Config flash timming */
   __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
@@ -618,7 +618,7 @@ ErrorStatus LL_FLASH_Program(uint32_t TypeProgram, uint32_t Address, uint32_t * 
   }
 
   /* Process Unlocked */
-  __HAL_UNLOCK(&pFlash);
+  __LL_FLASH_UNLOCK(&pFlash);
 
   return status;
 }
@@ -653,7 +653,7 @@ ErrorStatus LL_FLASH_Program_IT(uint32_t TypeProgram, uint32_t Address, uint32_t
   assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
 
   /* Process Locked */
-  __HAL_LOCK(&pFlash);
+  __LL_FLASH_LOCK(&pFlash);
     
   /* Config flash timming */
   __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
@@ -667,7 +667,7 @@ ErrorStatus LL_FLASH_Program_IT(uint32_t TypeProgram, uint32_t Address, uint32_t
   if (status != SUCCESS)
   {
     /* Process Unlocked */
-    __HAL_UNLOCK(&pFlash);
+    __LL_FLASH_UNLOCK(&pFlash);
   }else
   {
     /* Set internal variables used by the IRQ handler */
@@ -707,7 +707,7 @@ ErrorStatus LL_FLASH_OB_RDP_LevelConfig(uint8_t ReadProtectLevel)
   if(status == SUCCESS)
   {
     /* Process Locked */
-    __HAL_LOCK(&pFlash);
+    __LL_FLASH_LOCK(&pFlash);
 
     /* Clean the error context */
     pFlash.ErrorCode = LL_FLASH_ERROR_NONE;
@@ -728,7 +728,7 @@ ErrorStatus LL_FLASH_OB_RDP_LevelConfig(uint8_t ReadProtectLevel)
     status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
 
     /* Process Unlocked */
-    __HAL_UNLOCK(&pFlash);
+    __LL_FLASH_UNLOCK(&pFlash);
   }
 
   return status;
@@ -822,7 +822,7 @@ ErrorStatus LL_FLASH_OBProgram(FLASH_OBProgramInitTypeDef *pOBInit)
   ErrorStatus status = ERROR;
 
   /* Process Locked */
-  __HAL_LOCK(&pFlash);
+  __LL_FLASH_LOCK(&pFlash);
     
   /* Config flash timming */
   __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
@@ -880,7 +880,7 @@ ErrorStatus LL_FLASH_OBProgram(FLASH_OBProgramInitTypeDef *pOBInit)
   status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
 
   /* Process Unlocked */
-  __HAL_UNLOCK(&pFlash);
+  __LL_FLASH_UNLOCK(&pFlash);
 
   return status;
 }
@@ -1028,7 +1028,7 @@ void LL_FLASH_IRQHandler(void)
     __LL_FLASH_DISABLE_IT(FLASH_IT_EOP | FLASH_IT_OPERR);
 
     /* Process Unlocked */
-    __HAL_UNLOCK(&pFlash);
+    __LL_FLASH_UNLOCK(&pFlash);
   }
 }
 

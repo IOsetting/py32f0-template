@@ -25,7 +25,7 @@ static void APP_SPIConfig(void);
 
 int main(void)
 {
-  BSP_RCC_HSI_PLL48MConfig();
+  BSP_RCC_HSI_24MConfig();
 
   BSP_USART_Config(115200);
   printf("SPI Demo: Waveshare 1.54' E-Paper\r\nClock: %ld\r\n", SystemCoreClock);

@@ -13,12 +13,16 @@
 // limitations under the License.
 
 /***
- * Demo: I2C - PCF8574 1602 LCD
+ * Demo: PY32F003Wx(SOP16) I2C - PCF8574 1602 LCD
  * 
  * PY32F003W(SOP16)   PCF8574 1602 LCD
  *  PA3               SCL
  *  PA2               SDA
+ * 
+ * Note: 
+ *    This demo is specific for PY32F003Wx of SOP16 packaging
  */
+
 #include <string.h>
 #include "main.h"
 #include "py32f0xx_bsp_printf.h"

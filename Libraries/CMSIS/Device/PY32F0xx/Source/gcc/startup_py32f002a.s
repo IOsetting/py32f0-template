@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file      startup_py32f002.s
+  * @file      startup_py32f002a.s
   * @brief     PY32F002 devices vector table for GCC toolchain.
   *            This module performs:
   *                - Set the initial SP

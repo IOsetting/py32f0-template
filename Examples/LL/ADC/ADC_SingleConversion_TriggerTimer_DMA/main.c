@@ -1,3 +1,12 @@
+/***
+ * Demo: ADC With DMA Triggered by TIM1
+ * 
+ * PY32          
+ * PA4      ------> Input voltage between 0V ~ 3.3V
+ * 
+ * PA2(TX)  ------> RX
+ * PA3(RX)  ------> TX
+ */
 #include "main.h"
 #include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_bsp_printf.h"

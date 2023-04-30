@@ -2,16 +2,16 @@
  * Demo: TIM1 Update Interrupt
  */
 #include "main.h"
+#include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_bsp_printf.h"
 
 
 static void APP_GPIOConfig(void);
-static void APP_SystemClockConfig(void);
 static void APP_TIM1Config(void);
 
 int main(void)
 {
-  APP_SystemClockConfig();
+  BSP_RCC_HSI_8MConfig();
   APP_GPIOConfig();
   BSP_USART_Config(115200);
   printf("TIM1 Interrupt Demo\r\nClock: %ld\r\n", SystemCoreClock);
@@ -38,20 +38,6 @@ static void APP_TIM1Config(void)
 
   NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
   NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn,0);
-}
-
-static void APP_SystemClockConfig(void)
-{
-  LL_RCC_HSI_Enable();
-  while(LL_RCC_HSI_IsReady() != 1);
-
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS);
-  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
-
-  LL_Init1msTick(8000000);
-  LL_SetSystemCoreClock(8000000);
 }
 
 static void APP_GPIOConfig(void)

@@ -15,7 +15,6 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
 #include "py32f0xx_ll_rcc.h"
 #include "py32f0xx_ll_bus.h"
 #include "py32f0xx_ll_system.h"

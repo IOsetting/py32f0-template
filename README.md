@@ -1,8 +1,9 @@
 # py32f0-template
 
-* Puya PY32F0 serie template project for GNU Arm Embedded Toolchain
-* Supported programmers: J-Link, DAPLink/PyOCD
-* Supported IDE: VSCode
+* Template project for Puya PY32F0 MCU
+* Supports GNU Arm Embedded Toolchain
+* Supports J-Link and DAPLink/PyOCD programmers
+* Supports IDE: VSCode
 
 # Puya PY32F0 Family
 
@@ -17,7 +18,7 @@
 
 **Note**
 
-There is high probability that PY32F002A, PY32F003 and PY32F030 share the same core, you can treat them all as PY32F030 in coding and programming.
+PY32F002A, PY32F003 and PY32F030 are highly likely to share the same core. Therefore, when it comes to coding and programming, you can treat all of them as PY32F030.
 
 # File Structure
 
@@ -70,7 +71,17 @@ sudo tar xvf arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi.tar.xz -C /opt/gcc
 cd /opt/gcc-arm/
 sudo chown -R root:root arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/
 ```
-## 2. Option #1: Install SEGGER J-Link
+
+## 2. Clone This Repository
+
+Clone this repository to local workspace
+```bash
+git clone https://github.com/IOsetting/py32f0-template.git
+```
+
+## 3. Install SEGGER J-Link Or PyOCD
+
+### Option 1: Install SEGGER J-Link
 
 Download and install JLink from [J-Link / J-Trace Downloads](https://www.segger.com/downloads/jlink/).
 
@@ -89,7 +100,7 @@ cp -r Misc/Flash/JLinkDevices/ ~/.config/SEGGER/
 ```
 Read more: [https://wiki.segger.com/J-Link_Device_Support_Kit](https://wiki.segger.com/J-Link_Device_Support_Kit)
 
-## 2. Option #2: Install PyOCD
+### Option 2: Install PyOCD
 
 Don't install from apt repository, because the version 0.13.1+dfsg-1 is too low for J-Link probe.
 
@@ -107,16 +118,10 @@ This will install PyOCD into:
 ```
 In Ubuntu, .profile will take care of the PATH, run `source ~/.profile` to make pyocd command available
 
-## 3. Clone This Repository
-
-Clone this repository to local workspace
-```bash
-git clone https://github.com/IOsetting/py32f0-template.git
-```
-
 ## 4. Edit Makefile
 
 Change the settings in Makefile
+
 * **USE_LL_LIB** Puya provides two sets of library, HAL and LL, set `USE_LL_LIB ?= y` to use LL instead of HAL.
 * **ENABLE_PRINTF_FLOAT** set it to `y` to `-u _printf_float` to link options. This will increase the binary size.
 * **USE_FREERTOS** Set `USE_FREERTOS ?= y` will include FreeRTOS in compilation

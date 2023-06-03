@@ -88,8 +88,8 @@ void BSP_USART_Config(uint32_t baudRate)
 
 
 #if defined (__GNUC__) && !defined (__clang__)
-    #define GETCHAR_PROTOTYPE int __io_getchar (void)
-    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+    #define GETCHAR_PROTOTYPE __attribute__((weak)) int __io_getchar (void)
+    #define PUTCHAR_PROTOTYPE __attribute__((weak)) int __io_putchar(int ch)
 #else
     #define GETCHAR_PROTOTYPE int fgetc(FILE * f)
     #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)

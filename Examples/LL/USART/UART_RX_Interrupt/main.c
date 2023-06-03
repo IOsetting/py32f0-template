@@ -2,29 +2,65 @@
  * Demo: RX Interrupts
  */
 #include "main.h"
+#include "py32f0xx_bsp_clock.h"
 
 #define BUF_SIZE    128
 
+extern const char HEX_TABLE[16];
 uint8_t pBuf[BUF_SIZE], ch;
 __IO uint8_t printFlag = 0, pos = 0;
 
-static void APP_SystemClockConfig(void);
 void APP_USART_Config(uint32_t baudRate);
 void APP_USART_IRQCallback(USART_TypeDef *USARTx);
 
+
+/**
+ * Overwrite __io_getchar and __io_putchar to avoid conflicts. 
+ * Both functions are already defined in py32f0xx_bsp_printf.c but use UART1 instead.
+*/
+int __io_getchar(void) 
+{
+    return (0);
+}
+
+int __io_putchar(int ch)
+{
+    return (0);
+}
+
+/**
+ * Send one char to UART port
+*/
+void APP_UART_TxChar(char ch)
+{
+    LL_USART_TransmitData8(USART2, ch);
+    while (!LL_USART_IsActiveFlag_TC(USART2));
+    LL_USART_ClearFlag_TC(USART2);
+}
+
+/**
+ * Send one string (a serial of chars end with '\0') to UART port
+*/
+void APP_UART_TxString(char *str)
+{
+    while (*str) APP_UART_TxChar(*str++);
+}
+
 int main(void)
 {
-  APP_SystemClockConfig();
+  // Set system clock to 48MHz
+  BSP_RCC_HSI_PLL48MConfig();
   APP_USART_Config(115200);
 
-  printf("PY32F0 UART Interrupt RX Demo\r\nClock: %ld\r\n", SystemCoreClock);
+  APP_UART_TxString("PY32F0 UART Interrupt RX Demo\r\n");
 
   while (1)
   {
     if (printFlag == 1)
     {
       LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_5);
-      printf("%s\r\n", pBuf);
+      APP_UART_TxString((char *)pBuf);
+      APP_UART_TxString("\r\n");
       printFlag = 0;
       pos = 0;
     }
@@ -55,12 +91,12 @@ void APP_USART_Config(uint32_t baudRate)
   LL_USART_ClearFlag_TC(USART2);
 
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
-  // PA2     ------> USART1_TX
+  // PA2     ------> USART2_TX
   LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_2, LL_GPIO_MODE_ALTERNATE);
   LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_2, LL_GPIO_SPEED_FREQ_VERY_HIGH);
   LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_2, LL_GPIO_PULL_UP);
   LL_GPIO_SetAFPin_0_7(GPIOA, LL_GPIO_PIN_2, LL_GPIO_AF_4);
-  // PA3     ------> USART1_RX
+  // PA3     ------> USART2_RX
   LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_3, LL_GPIO_MODE_ALTERNATE);
   LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_3, LL_GPIO_SPEED_FREQ_VERY_HIGH);
   LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_3, LL_GPIO_PULL_UP);
@@ -76,11 +112,6 @@ void APP_USART_Config(uint32_t baudRate)
   NVIC_SetPriority(USART2_IRQn, 1);
   NVIC_EnableIRQ(USART2_IRQn);
 
-#if defined (__GNUC__) && !defined (__clang__)
-  // To avoid io buffer
-  setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stdin, NULL, _IONBF, 0);
-#endif
 }
 
 void APP_USART_IRQCallback(USART_TypeDef *USARTx)
@@ -133,19 +164,6 @@ void APP_USART_IRQCallback(USART_TypeDef *USARTx)
   }
 }
 
-static void APP_SystemClockConfig(void)
-{
-  LL_RCC_HSI_Enable();
-  while(LL_RCC_HSI_IsReady() != 1);
-
-  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSISYS);
-  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSISYS);
-
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
-  LL_Init1msTick(8000000);
-  LL_SetSystemCoreClock(8000000);
-}
 
 void APP_ErrorHandler(void)
 {

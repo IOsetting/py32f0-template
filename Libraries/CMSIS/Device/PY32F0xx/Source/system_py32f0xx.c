@@ -30,10 +30,11 @@
 /************************* Miscellaneous Configuration ************************/
 /*!< Uncomment the following line if you need to relocate your vector Table in
      Internal SRAM. */
-/* #define FORBID_VECT_TAB_MIGRATION */
-/* #define VECT_TAB_SRAM */
+//#define VECT_TAB_SRAM
 #define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field.
                                    This value must be a multiple of 0x100. */
+
+//#define FORBID_VECT_TAB_MIGRATION
 /******************************************************************************/
 /*----------------------------------------------------------------------------
   Clock Variable definitions
@@ -51,6 +52,11 @@ uint32_t SystemCoreClock = HSI_VALUE;
 const uint32_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 const uint32_t APBPrescTable[8] =  {0, 0, 0, 0, 1, 2, 3, 4};
 const uint32_t HSIFreqTable[8] = {4000000U, 8000000U, 16000000U, 22120000U, 24000000U, 4000000U, 4000000U, 4000000U};
+
+#ifdef VECT_TAB_SRAM
+extern volatile uint32_t g_pfnVectors[48];
+__attribute__((section(".ram_vector,\"aw\",%nobits @"))) static volatile uint32_t vectors[48];
+#endif
 
 /*----------------------------------------------------------------------------
   Clock functions
@@ -119,6 +125,9 @@ void SystemInit(void)
 
   /* Configure the Vector Table location add offset address ------------------*/
 #ifdef VECT_TAB_SRAM
+  for(uint8_t i=0;i<48;i++)
+    vectors[i] = g_pfnVectors[i];
+
   SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
 #else
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */

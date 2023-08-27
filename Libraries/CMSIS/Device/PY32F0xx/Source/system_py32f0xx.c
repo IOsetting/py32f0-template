@@ -46,7 +46,7 @@
 
 /************************* Miscellaneous Configuration ************************/
 /*!< Uncomment the following line to  avoid the vector being set into the Internal SRAM. */
-#define FORBID_VECT_TAB_MIGRATION
+// #define FORBID_VECT_TAB_MIGRATION
 
 #define VECT_TAB_OFFSET  0x00 /*!< Vector Table base offset field.
                                    This value must be a multiple of 0x100. */

@@ -49,8 +49,13 @@ TGT_ASFLAGS += $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
 TGT_LDFLAGS += $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -static -lc -lm \
 				-Wl,-Map=$(BDIR)/$(PROJECT).map \
 				-Wl,--gc-sections \
-				-Wl,--print-memory-usage \
-				-Wl,--no-warn-rwx-segments
+				-Wl,--print-memory-usage
+
+GCC_VERSION := $(shell $(CC) -dumpversion)
+IS_GCC_ABOVE_12 := $(shell expr "$(GCC_VERSION)" ">=" "12")
+ifeq "$(IS_GCC_ABOVE_12)" "1"
+    TGT_LDFLAGS += -Wl,--no-warn-rwx-segments
+endif
 
 ifeq ($(ENABLE_PRINTF_FLOAT),y)
 TGT_LDFLAGS	+= -u _printf_float

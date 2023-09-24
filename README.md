@@ -14,13 +14,19 @@
 * PY32F003
   * PY32F003x4(16KB Flash/2KB RAM), PY32F003x6(32KB Flash/4KB RAM), PY32F003x8(64KB Flash/8KB RAM)
 * PY32F030
-  * PY32F030x4(16KB Flash/2KB RAM), PY32F030x6(32KB Flash/4KB RAM), PY32F030x7(48KB Flash/6KB RAM), PY32F030x8(64KB Flash/8KB RAM)
+  * PY32F030x4(16KB Flash/2KB RAM), PY32F030x6(32KB Flash/4KB RAM), PY32F030x8(64KB Flash/8KB RAM)
+* PY32F040
+  * PY32F040xB(128KB Flash/16KB RAM)
+* PY32F071
+  * PY32F071xB(128KB Flash/16KB RAM)
 * PY32F072
   * PY32F072xB(128KB Flash/16KB RAM)
 
 **Note**
 
-PY32F002A, PY32F003 and PY32F030 are highly likely to share the same core. Therefore, when it comes to coding and programming, you can treat all of them as PY32F030.
+* PY32F002A, PY32F003 and PY32F030 highly likely share the same core.
+* PY32F002B is different.
+* PY32F040, PY32F071 and PY32F072 might share the same core too, to be checked.
 
 # File Structure
 

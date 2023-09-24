@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    py32f072xb.h
+  * @file    py32f072x9.h
   * @brief   CMSIS Cortex-M0+ Device Peripheral Access Layer Header File.
     *          This file contains all the peripheral register's definitions, bits
   *          definitions and memory mapping for PY32F072 devices.
@@ -27,12 +27,12 @@
   * @{
   */
 
-/** @addtogroup py32f072xb
+/** @addtogroup py32f072x9
   * @{
   */
 
-#ifndef __PY32F072XB_H
-#define __PY32F072XB_H
+#ifndef __PY32F072X9_H
+#define __PY32F072X9_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -617,14 +617,14 @@ typedef struct
   * @{
   */
 #define FLASH_BASE            (0x08000000UL)                      /*!< FLASH base address */
-#define FLASH_END             (0x0801FFFFUL)                      /*!< FLASH end address */
+#define FLASH_END             (0x08017FFFUL)                      /*!< FLASH end address */
 #define FLASH_SIZE            (FLASH_END - FLASH_BASE + 1)
 #define FLASH_PAGE_SIZE       0x00000100U                         /*!< FLASH Page Size, 256 Bytes */
 #define FLASH_PAGE_NB         (FLASH_SIZE / FLASH_PAGE_SIZE)
 #define FLASH_SECTOR_SIZE     0x00002000U                         /*!< FLASH Sector Size, 8192 Bytes */
 #define FLASH_SECTOR_NB       (FLASH_SIZE / FLASH_SECTOR_SIZE)
 #define SRAM_BASE             (0x20000000UL)                      /*!< SRAM base address */
-#define SRAM_END              (0x20003FFFUL)                      /*!< SRAM end address */
+#define SRAM_END              (0x20002FFFUL)                      /*!< SRAM end address */
 #define PERIPH_BASE           (0x40000000UL)                      /*!< Peripheral base address */
 #define IOPORT_BASE           (0x50000000UL)                      /*!< IOPORT base address */
 
@@ -7265,7 +7265,7 @@ typedef struct
 }
 #endif /* __cplusplus */
 
-#endif /* __PY32F072XB_H */
+#endif /* __PY32F072X9_H */
 
 /**
   * @}

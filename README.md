@@ -9,6 +9,8 @@
 
 * PY32F002A
   * PY32F002Ax5(20KB Flash/3KB RAM)
+* PY32F002B
+  * PY32F002Bx(24KB Flash/3KB RAM)(Not supported yet)
 * PY32F003
   * PY32F003x4(16KB Flash/2KB RAM), PY32F003x6(32KB Flash/4KB RAM), PY32F003x8(64KB Flash/8KB RAM)
 * PY32F030
@@ -93,7 +95,7 @@ sudo tar xvf JLink_Linux_V784f_x86_64.tgz -C [target folder]
 ```
 The default installation directory is */opt/SEGGER*
 
-Copy [Project directory]/Misc/Flash/JLinkDevices to [User home]/.config/SEGGER/JLinkDevices/
+Copy [Project directory]/Misc/Flash/JLinkDevices to [User home]/.config/SEGGER/
 ```bash
 cd py32f0-template
 cp -r Misc/Flash/JLinkDevices/ ~/.config/SEGGER/
@@ -122,7 +124,9 @@ In Ubuntu, .profile will take care of the PATH, run `source ~/.profile` to make 
 
 Change the settings in Makefile
 
+* **MCU_TYPE** The MCU type you are using
 * **USE_LL_LIB** Puya provides two sets of library, HAL and LL, set `USE_LL_LIB ?= y` to use LL instead of HAL.
+  * No LL Library for PY32F07x
 * **ENABLE_PRINTF_FLOAT** set it to `y` to `-u _printf_float` to link options. This will increase the binary size.
 * **USE_FREERTOS** Set `USE_FREERTOS ?= y` will include FreeRTOS in compilation
 * **USE_DSP** Include CMSIS DSP or not
@@ -135,10 +139,16 @@ Change the settings in Makefile
 ```makefile
 ##### Project #####
 
-PROJECT           ?= app
+PROJECT			?= app
 # The path for generated files
-BUILD_DIR         = Build
+BUILD_DIR		= Build
 
+# MCU types: 
+#   PY32F002Ax5
+#   PY32F003x6, PY32F003x8, 
+#   PY32F030x6, PY32F030x8, 
+#   PY32F072xB
+MCU_TYPE		= PY32F072xB
 
 ##### Options #####
 
@@ -157,32 +167,9 @@ FLASH_PROGRM      ?= pyocd
 ARM_TOOCHAIN      ?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
 
 # path to JLinkExe
-JLINKEXE          ?= /opt/SEGGER/JLink/JLinkExe
-# JLink device type, options:
-#   PY32F002AX5, 
-#   PY32F003X4, PY32F003X6, PY32F003X8, 
-#   PY32F030X4, PY32F030X6, PY32F030X7, PY32F030X8
-JLINK_DEVICE      ?= PY32F030X6
-# path to PyOCD, 
-PYOCD_EXE         ?= pyocd
-# PyOCD device type, options: 
-#   py32f002ax5, 
-#   py32f003x4,  py32f003x6, py32f003x8, 
-#   py32f030x3,  py32f030x4, py32f030x6, py32f030x7, py32f030x8
-#   py32f072xb
-PYOCD_DEVICE      ?= py32f030x8
-
-
-##### Paths ############
-
-# Link descript file: py32f002ax5.ld, py32f003x6.ld, py32f003x8.ld, py32f030x6.ld, py32f030x8.ld
-LDSCRIPT          = Libraries/LDScripts/py32f030x8.ld
-# Library build flags: 
-#   PY32F002Ax5, 
-#   PY32F003x4, PY32F003x6, PY32F003x8, 
-#   PY32F030x3, PY32F030x4, PY32F030x6, PY32F030x7, PY32F030x8, 
-#   PY32F072xB
-LIB_FLAGS         = PY32F030x6
+JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe
+# path to PyOCD
+PYOCD_EXE		?= pyocd
 ```
 
 ## 5. Compiling And Flashing

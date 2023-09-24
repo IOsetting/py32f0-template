@@ -21,76 +21,76 @@
   ******************************************************************************
   */
 
-/** @addtogroup CMSIS
-  * @{
-  */
-
-/** @addtogroup py32f0xx
-  * @{
-  */
-
-#ifndef __PY32F0XX_H
-#define __PY32F0XX_H
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-/** @addtogroup Library_configuration_section
+/** @addtogroup py32f0xx
   * @{
   */
+#ifndef __PY32F0XX_H
+#define __PY32F0XX_H
 
 /**
-  * @brief PY32 Family
+  * @brief PY32F0 Family
   */
-#if !defined  (PY32F0)
+#if !defined (PY32F0)
 #define PY32F0
 #endif /* PY32F0 */
 
-#if (defined(PY32F030x3) || defined(PY32F030x4) || defined(PY32F030x6) || defined(PY32F030x7) || defined(PY32F030x8))
+/**  Uncomment the line below according to the target PY32 device used in your
+  *  application.
+  */
+
+#if !defined (PY32F002Ax5) && !defined (PY32F002x6) && \
+    !defined (PY32F003x4) && !defined (PY32F003x6) && !defined (PY32F003x8) && \
+    !defined (PY32F030x3) && !defined (PY32F030x4) && !defined (PY32F030x6) && !defined (PY32F030x7) && !defined (PY32F030x8) && !defined (PY32F030xx) && \
+    !defined (PY32F031x3) && !defined (PY32F031x4) && !defined (PY32F031x6) && !defined (PY32F031x7) && !defined (PY32F031x8) && \
+    !defined (PY32F071x6) && !defined (PY32F071x8) && !defined (PY32F071x9) && !defined (PY32F071xB) && \
+    !defined (PY32F072x6) && !defined (PY32F072x8) && !defined (PY32F072x9) && !defined (PY32F072xB)
+/* #define PY32F002Ax5 */  /*!< PY32F002Ax5 Devices (PY32F002Ax5 microcontrollers where the Flash memory is 20  Kbytes) */
+/* #define PY32F002x6  */  /*!< PY32F002x6  Devices (PY32F002x6  microcontrollers where the Flash memory is 24  Kbytes) */
+/* #define PY32F003x4  */  /*!< PY32F003x4  Devices (PY32F003x4  microcontrollers where the Flash memory is 16  Kbytes) */
+/* #define PY32F003x6  */  /*!< PY32F003x6  Devices (PY32F003x6  microcontrollers where the Flash memory is 32  Kbytes) */
+/* #define PY32F003x8  */  /*!< PY32F003x8  Devices (PY32F003x8  microcontrollers where the Flash memory is 64  Kbytes) */
+/* #define PY32F030x3  */  /*!< PY32F030x3  Devices (PY32F030x3  microcontrollers where the Flash memory is 8   Kbytes) */
+/* #define PY32F030x4  */  /*!< PY32F030x4  Devices (PY32F030x4  microcontrollers where the Flash memory is 16  Kbytes) */
+/* #define PY32F030x6  */  /*!< PY32F030x6  Devices (PY32F030x6  microcontrollers where the Flash memory is 32  Kbytes) */
+/* #define PY32F030x7  */  /*!< PY32F030x7  Devices (PY32F030x7  microcontrollers where the Flash memory is 48  Kbytes) */
+/* #define PY32F030x8  */  /*!< PY32F030x8  Devices (PY32F030x8  microcontrollers where the Flash memory is 64  Kbytes) */
+/* #define PY32F031x3  */  /*!< PY32F031x3  Devices (PY32F031x3  microcontrollers where the Flash memory is 8   Kbytes) */
+/* #define PY32F031x4  */  /*!< PY32F031x4  Devices (PY32F031x4  microcontrollers where the Flash memory is 16  Kbytes) */
+/* #define PY32F031x6  */  /*!< PY32F031x6  Devices (PY32F031x6  microcontrollers where the Flash memory is 32  Kbytes) */
+/* #define PY32F031x7  */  /*!< PY32F031x7  Devices (PY32F031x7  microcontrollers where the Flash memory is 48  Kbytes) */
+/* #define PY32F031x8  */  /*!< PY32F031x8  Devices (PY32F031x8  microcontrollers where the Flash memory is 64  Kbytes) */
+/* #define PY32F071x6  */  /*!< PY32F071x6  Devices (PY32F071x6  microcontrollers where the Flash memory is 32  Kbytes) */
+/* #define PY32F071x8  */  /*!< PY32F071x8  Devices (PY32F071x8  microcontrollers where the Flash memory is 64  Kbytes) */
+/* #define PY32F071x9  */  /*!< PY32F071x9  Devices (PY32F071x9  microcontrollers where the Flash memory is 96  Kbytes) */
+/* #define PY32F071xB  */  /*!< PY32F071xB  Devices (PY32F071xB  microcontrollers where the Flash memory is 128 Kbytes) */
+/* #define PY32F072x6  */  /*!< PY32F072x6  Devices (PY32F072x6  microcontrollers where the Flash memory is 32  Kbytes) */
+/* #define PY32F072x8  */  /*!< PY32F072x8  Devices (PY32F072x8  microcontrollers where the Flash memory is 64  Kbytes) */
+/* #define PY32F072x9  */  /*!< PY32F072x9  Devices (PY32F072x9  microcontrollers where the Flash memory is 96  Kbytes) */
+/* #define PY32F072xB  */  /*!< PY32F072xB  Devices (PY32F072xB  microcontrollers where the Flash memory is 128 Kbytes) */
+#endif
+/**  Tip: To avoid modifying this file each time you need to switch between these
+  *       devices, you can define the device in your toolchain compiler preprocessor.
+  */
+
+#if (defined(PY32F002Ax5))
+#define PY32F002APRE
+#elif (defined(PY32F002Bx5))
+#define PY32F002BPRE
+#elif (defined(PY32F030x3) || defined(PY32F030x4) || defined(PY32F030x6) || defined(PY32F030x7) || defined(PY32F030x8))
 #define PY32F030PRE
+#elif (defined(PY32F031x3) || defined(PY32F031x4) || defined(PY32F031x6) || defined(PY32F031x7) || defined(PY32F031x8))
+#define PY32F031PRE
 #elif (defined(PY32F003x4) || defined(PY32F003x6) || defined(PY32F003x8))
 #define PY32F003PRE
-#elif (defined(PY32F072xB))
+#elif (defined(PY32F071x6) || defined(PY32F071x8) || defined(PY32F071x9) || defined(PY32F071xB))
+#define PY32F071PRE
+#elif (defined(PY32F072x6) || defined(PY32F072x8) || defined(PY32F072x9) || defined(PY32F072xB))
 #define PY32F072PRE
-#elif (defined(PY32F002x5))
-#define PY32F002PRE
-#elif (defined(PY32F002Ax5))
-#define PY32F002APRE
 #endif
-
-/* Uncomment the line below according to the target PY32 device used in your
-   application
-  */
-
-#if !defined (PY32F030x3) && !defined (PY32F030x4) && !defined (PY32F030x6) && !defined (PY32F030x7) && !defined (PY32F030x8) && !defined (PY32F030xx) && \
-    !defined (PY32F003x4) && !defined (PY32F003x6) && !defined (PY32F003x8) && \
-    !defined (PY32F072xB) && \
-    !defined (PY32F002x5) && !defined (PY32F002Ax5)
-/* #define PY32F030x3  */  /*!< PY32F030x3  Devices (PY32F030xx  microcontrollers where the Flash memory is 8 Kbytes)               */
-/* #define PY32F030x4  */  /*!< PY32F030x4  Devices (PY32F030xx  microcontrollers where the Flash memory is 16 Kbytes)              */
-/* #define PY32F030x6  */  /*!< PY32F030x6  Devices (PY32F030xx  microcontrollers where the Flash memory is 32 Kbytes)              */
-/* #define PY32F030x7  */  /*!< PY32F030x7  Devices (PY32F030xx  microcontrollers where the Flash memory is 48 Kbytes)              */
-/* #define PY32F030x8  */  /*!< PY32F030x8  Devices (PY32F030xx  microcontrollers where the Flash memory is 64 Kbytes)              */
-/* #define PY32F003x4  */  /*!< PY32F003x4  Devices (PY32F003xx  microcontrollers where the Flash memory is 16 Kbytes)              */
-/* #define PY32F003x6  */  /*!< PY32F003x6  Devices (PY32F003xx  microcontrollers where the Flash memory is 32 Kbytes)              */
-/* #define PY32F003x8  */  /*!< PY32F003x8  Devices (PY32F003xx  microcontrollers where the Flash memory is 64 Kbytes)              */
-/* #define PY32F072xB  */  /*!< PY32F072xB  Devices (PY32F072xx  microcontrollers where the Flash memory is 128 Kbytes)             */
-/* #define PY32F002x5  */  /*!< PY32F002x5  Devices (PY32F002x5  microcontrollers where the Flash memory is 20 Kbytes)              */
-/* #define PY32F002Ax5 */  /*!< PY32F002Ax5 Devices (PY32F002Ax5 microcontrollers where the Flash memory is 20 Kbytes)              */
-#endif
-
-/*  Tip: To avoid modifying this file each time you need to switch between these
-        devices, you can define the device in your toolchain compiler preprocessor.
-  */
-#if !defined  (USE_HAL_DRIVER)
-/**
- * @brief Comment the line below if you will not use the peripherals drivers.
-   In this case, these drivers will not be included and the application code will
-   be based on direct access to peripherals registers
-   */
-/*#define USE_HAL_DRIVER */
-#endif /* USE_HAL_DRIVER */
 
 /**
   * @brief CMSIS Device version number V1.0.0
@@ -105,14 +105,19 @@ extern "C" {
                                         |(__PY32F0_DEVICE_VERSION_RC))
 
 /**
-  * @}
+  * @brief Device_Included
   */
-
-/** @addtogroup Device_Included
-  * @{
-  */
-
-#if defined(PY32F030x3)
+#if defined(PY32F002Ax5)
+#include "py32f002ax5.h"
+#elif defined(PY32F00Bx5)
+#include "py32f002bx5.h"
+#elif defined(PY32F003x4)
+#include "py32f003x4.h"
+#elif defined(PY32F003x6)
+#include "py32f003x6.h"
+#elif defined(PY32F003x8)
+#include "py32f003x8.h"
+#elif defined(PY32F030x3)
 #include "py32f030x3.h"
 #elif defined(PY32F030x4)
 #include "py32f030x4.h"
@@ -122,28 +127,38 @@ extern "C" {
 #include "py32f030x7.h"
 #elif defined(PY32F030x8)
 #include "py32f030x8.h"
-#elif defined(PY32F003x4)
-#include "py32f003x4.h"
-#elif defined(PY32F003x6)
-#include "py32f003x6.h"
-#elif defined(PY32F003x8)
-#include "py32f003x8.h"
+#elif defined(PY32F031x3)
+#include "py32f031x3.h"
+#elif defined(PY32F031x4)
+#include "py32f031x4.h"
+#elif defined(PY32F031x6)
+#include "py32f031x6.h"
+#elif defined(PY32F031x7)
+#include "py32f031x7.h"
+#elif defined(PY32F031x8)
+#include "py32f031x8.h"
+#elif defined(PY32F071x6)
+#include "py32f071x6.h"
+#elif defined(PY32F071x8)
+#include "py32f071x8.h"
+#elif defined(PY32F071x9)
+#include "py32f071x9.h"
+#elif defined(PY32F071xB)
+#include "py32f071xB.h"
+#elif defined(PY32F072x6)
+#include "py32f072x6.h"
+#elif defined(PY32F072x8)
+#include "py32f072x8.h"
+#elif defined(PY32F072x9)
+#include "py32f072x9.h"
 #elif defined(PY32F072xB)
 #include "py32f072xB.h"
-#elif defined(PY32F002x5)
-#include "py32f002x5.h"
-#elif defined(PY32F002Ax5)
-#include "py32f002ax5.h"
 #else
 #error "Please select first the target PY32F0xx device used in your application (in py32f0xx.h file)"
-#endif
+#endif /* Device_Included */
 
 /**
-  * @}
-  */
-
-/** @addtogroup Exported_types
-  * @{
+  * @brief Exported_types
   */
 typedef enum
 {
@@ -165,12 +180,7 @@ typedef enum
 } ErrorStatus;
 
 /**
-  * @}
-  */
-
-
-/** @addtogroup Exported_macros
-  * @{
+  * @brief Exported_macros
   */
 #define SET_BIT(REG, BIT)     ((REG) |= (BIT))
 
@@ -193,27 +203,27 @@ typedef enum
 #define HW8_REG(ADDRESS)      ( * ((volatile unsigned          char * )(ADDRESS)))
 
 /**
-  * @}
+  * @brief Comment the line below if you will not use the peripherals drivers.
+  *        In this case, these drivers will not be included and the application code will
+  *        be based on direct access to peripherals registers
   */
-
-#if defined (USE_HAL_DRIVER)
- #include "py32f0xx_hal.h"
+#if !defined  (USE_HAL_DRIVER)
+/*#define USE_HAL_DRIVER */
 #endif /* USE_HAL_DRIVER */
 
+#if defined (USE_HAL_DRIVER)
+#if (defined(PY32F071PRE) || defined(PY32F072PRE))
+#include "py32f07x_hal.h"
+#else
+#include "py32f0xx_hal.h"
+#endif /* Device_Included */
+#endif /* USE_HAL_DRIVER */
+
+#endif /* __PY32F0xx_H */
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
-#endif /* __PY32F0xx_H */
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
 
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/
 

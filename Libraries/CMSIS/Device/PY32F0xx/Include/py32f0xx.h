@@ -42,14 +42,14 @@ extern "C" {
   *  application.
   */
 
-#if !defined (PY32F002Ax5) && !defined (PY32F002x6) && \
+#if !defined (PY32F002Ax5) && !defined (PY32F002Bx5) && \
     !defined (PY32F003x4) && !defined (PY32F003x6) && !defined (PY32F003x8) && \
     !defined (PY32F030x3) && !defined (PY32F030x4) && !defined (PY32F030x6) && !defined (PY32F030x7) && !defined (PY32F030x8) && !defined (PY32F030xx) && \
     !defined (PY32F031x3) && !defined (PY32F031x4) && !defined (PY32F031x6) && !defined (PY32F031x7) && !defined (PY32F031x8) && \
     !defined (PY32F071x6) && !defined (PY32F071x8) && !defined (PY32F071x9) && !defined (PY32F071xB) && \
     !defined (PY32F072x6) && !defined (PY32F072x8) && !defined (PY32F072x9) && !defined (PY32F072xB)
 /* #define PY32F002Ax5 */  /*!< PY32F002Ax5 Devices (PY32F002Ax5 microcontrollers where the Flash memory is 20  Kbytes) */
-/* #define PY32F002x6  */  /*!< PY32F002x6  Devices (PY32F002x6  microcontrollers where the Flash memory is 24  Kbytes) */
+/* #define PY32F002Bx5 */  /*!< PY32F002Bx5 Devices (PY32F002Bx5 microcontrollers where the Flash memory is 24  Kbytes) */
 /* #define PY32F003x4  */  /*!< PY32F003x4  Devices (PY32F003x4  microcontrollers where the Flash memory is 16  Kbytes) */
 /* #define PY32F003x6  */  /*!< PY32F003x6  Devices (PY32F003x6  microcontrollers where the Flash memory is 32  Kbytes) */
 /* #define PY32F003x8  */  /*!< PY32F003x8  Devices (PY32F003x8  microcontrollers where the Flash memory is 64  Kbytes) */
@@ -109,7 +109,7 @@ extern "C" {
   */
 #if defined(PY32F002Ax5)
 #include "py32f002ax5.h"
-#elif defined(PY32F00Bx5)
+#elif defined(PY32F002Bx5)
 #include "py32f002bx5.h"
 #elif defined(PY32F003x4)
 #include "py32f003x4.h"
@@ -173,10 +173,10 @@ typedef enum
 } FunctionalState;
 #define IS_FUNCTIONAL_STATE(STATE) (((STATE) == DISABLE) || ((STATE) == ENABLE))
 
-typedef enum
+typedef enum 
 {
-  ERROR = 0,
-  SUCCESS = !ERROR
+  SUCCESS = 0U,
+  ERROR = !SUCCESS
 } ErrorStatus;
 
 /**
@@ -196,11 +196,61 @@ typedef enum
 
 #define MODIFY_REG(REG, CLEARMASK, SETMASK)  WRITE_REG((REG), (((READ_REG(REG)) & (~(CLEARMASK))) | (SETMASK)))
 
+/* Use of interrupt control for register exclusive access */
+/* Atomic 32-bit register access macro to set one or several bits */
+#define ATOMIC_SET_BIT(REG, BIT)                             \
+  do {                                                       \
+    uint32_t primask;                                        \
+    primask = __get_PRIMASK();                               \
+    __set_PRIMASK(1);                                        \
+    SET_BIT((REG), (BIT));                                   \
+    __set_PRIMASK(primask);                                  \
+  } while(0)
+
+/* Atomic 32-bit register access macro to clear one or several bits */
+#define ATOMIC_CLEAR_BIT(REG, BIT)                           \
+  do {                                                       \
+    uint32_t primask;                                        \
+    primask = __get_PRIMASK();                               \
+    __set_PRIMASK(1);                                        \
+    CLEAR_BIT((REG), (BIT));                                 \
+    __set_PRIMASK(primask);                                  \
+  } while(0)
+
+/* Atomic 32-bit register access macro to clear and set one or several bits */
+#define ATOMIC_MODIFY_REG(REG, CLEARMSK, SETMASK)            \
+  do {                                                       \
+    uint32_t primask;                                        \
+    primask = __get_PRIMASK();                               \
+    __set_PRIMASK(1);                                        \
+    MODIFY_REG((REG), (CLEARMSK), (SETMASK));                \
+    __set_PRIMASK(primask);                                  \
+  } while(0)
+
+/* Atomic 16-bit register access macro to set one or several bits */
+#define ATOMIC_SETH_BIT(REG, BIT) ATOMIC_SET_BIT(REG, BIT)                                   \
+
+/* Atomic 16-bit register access macro to clear one or several bits */
+#define ATOMIC_CLEARH_BIT(REG, BIT) ATOMIC_CLEAR_BIT(REG, BIT)                               \
+
+/* Atomic 16-bit register access macro to clear and set one or several bits */
+#define ATOMIC_MODIFYH_REG(REG, CLEARMSK, SETMASK) ATOMIC_MODIFY_REG(REG, CLEARMSK, SETMASK) \
+
 #define HW32_REG(ADDRESS)     ( * ((volatile unsigned           int * )(ADDRESS)))
 
 #define HW16_REG(ADDRESS)     ( * ((volatile unsigned short     int * )(ADDRESS)))
 
 #define HW8_REG(ADDRESS)      ( * ((volatile unsigned          char * )(ADDRESS)))
+
+#define M32(ADDRESS)          HW32_REG(ADDRESS)
+
+#define M16(ADDRESS)          HW16_REG(ADDRESS)
+
+#define M8(ADDRESS)           HW8_REG(ADDRESS)
+
+/**
+  * @}
+  */
 
 /**
   * @brief Comment the line below if you will not use the peripherals drivers.

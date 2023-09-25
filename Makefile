@@ -6,6 +6,7 @@ BUILD_DIR		= Build
 
 # MCU types: 
 #   PY32F002Ax5
+#   PY32F002Bx5
 #   PY32F003x6, PY32F003x8, 
 #   PY32F030x6, PY32F030x8, 
 #   PY32F072xB
@@ -40,8 +41,7 @@ PYOCD_EXE		?= pyocd
 ##### Paths ############
 
 # C source folders
-CDIRS	:= User \
-		Libraries/CMSIS/Device/PY32F0xx/Source
+CDIRS	:= User 
 # C source files (if there are any single ones)
 CFILES := 
 
@@ -66,9 +66,33 @@ PYOCD_DEVICE	?= $(shell echo $(MCU_TYPE) | tr '[:upper:]' '[:lower:]')
 # Link descript file: 
 LDSCRIPT		= Libraries/LDScripts/$(PYOCD_DEVICE).ld
 
-ifneq (,$(findstring PY32F07,$(MCU_TYPE)))
+
+ifneq (,$(findstring PY32F002B,$(MCU_TYPE)))
+
+# PY32F002B >>>
+CFILES		+= Libraries/CMSIS/Device/PY32F0xx/Source/system_py32f002b.c
+
+ifeq ($(USE_LL_LIB),y)
+CDIRS		+= Libraries/PY32F002B_LL_Driver/Src \
+		Libraries/PY32F002B_LL_BSP/Src
+INCLUDES	+= Libraries/PY32F002B_LL_Driver/Inc \
+		Libraries/PY32F002B_LL_BSP/Inc
+LIB_FLAGS   += USE_FULL_LL_DRIVER
+else
+CDIRS		+= Libraries/PY32F002B_HAL_Driver/Src \
+		Libraries/PY32F002B_HAL_BSP/Src
+INCLUDES	+= Libraries/PY32F002B_HAL_Driver/Inc \
+		Libraries/PY32F002B_HAL_BSP/Inc
+endif
+# Startup file
+AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f002b.s
+# PY32F002B <<<
+
+else ifneq (,$(findstring PY32F07,$(MCU_TYPE)))
 
 #  PY32F07x >>>
+CFILES		+= Libraries/CMSIS/Device/PY32F0xx/Source/system_py32f0xx.c
+
 CDIRS		+= Libraries/PY32F07x_HAL_Driver/Src \
 		Libraries/PY32F07x_HAL_BSP/Src
 INCLUDES	+= Libraries/PY32F07x_HAL_Driver/Inc \
@@ -79,7 +103,9 @@ AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f072.s
 
 else
 
-# PY32F002,003,030 >>>
+# PY32F002A,003,030 >>>
+CFILES		+= Libraries/CMSIS/Device/PY32F0xx/Source/system_py32f0xx.c
+
 ifeq ($(USE_LL_LIB),y)
 CDIRS		+= Libraries/PY32F0xx_LL_Driver/Src \
 		Libraries/PY32F0xx_LL_BSP/Src
@@ -102,7 +128,7 @@ endif
 ifneq (,$(findstring PY32F030,$(LIB_FLAGS)))
 AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f030.s
 endif
-# PY32F002,003,030 <<<
+# PY32F002A,003,030 <<<
 
 endif
 

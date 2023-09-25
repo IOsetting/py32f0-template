@@ -70,11 +70,6 @@ TGT_INCFLAGS := $(addprefix -I $(TOP)/, $(INCLUDES))
 all: fullcheck $(BDIR)/$(PROJECT).elf $(BDIR)/$(PROJECT).bin $(BDIR)/$(PROJECT).hex
 
 fullcheck:
-	@if [ '$(findstring PY32F002B,$(MCU_TYPE))' = 'PY32F002B' ]; then \
-		echo "PY32F002B is not supported yet"; \
-		return 1; \
-	fi
-
 	@if [ '$(findstring PY32F07,$(MCU_TYPE))' = 'PY32F07' ] && [ '$(USE_LL_LIB)' = 'y' ]; then \
 		echo "LL for PY32F07x is not supported yet"; \
 		return 1; \

@@ -7,14 +7,17 @@
 
 # Puya PY32F0 Family
 
+## PY32F0xx
+
 * PY32F002A
   * PY32F002Ax5(20KB Flash/3KB RAM)
-* PY32F002B
-  * PY32F002Bx(24KB Flash/3KB RAM)(Not supported yet)
 * PY32F003
   * PY32F003x4(16KB Flash/2KB RAM), PY32F003x6(32KB Flash/4KB RAM), PY32F003x8(64KB Flash/8KB RAM)
 * PY32F030
   * PY32F030x4(16KB Flash/2KB RAM), PY32F030x6(32KB Flash/4KB RAM), PY32F030x8(64KB Flash/8KB RAM)
+
+## PY32F07x
+
 * PY32F040
   * PY32F040xB(128KB Flash/16KB RAM)
 * PY32F071
@@ -22,11 +25,12 @@
 * PY32F072
   * PY32F072xB(128KB Flash/16KB RAM)
 
-**Note**
+## PY32F002B
 
-* PY32F002A, PY32F003 and PY32F030 highly likely share the same core.
-* PY32F002B is different.
-* PY32F040, PY32F071 and PY32F072 might share the same core too, to be checked.
+* PY32F001
+  * ?
+* PY32F002B
+  * PY32F002Bx(24KB Flash/3KB RAM)
 
 # File Structure
 
@@ -151,6 +155,7 @@ BUILD_DIR		= Build
 
 # MCU types: 
 #   PY32F002Ax5
+#   PY32F002Bx5
 #   PY32F003x6, PY32F003x8, 
 #   PY32F030x6, PY32F030x8, 
 #   PY32F072xB

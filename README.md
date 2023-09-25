@@ -38,17 +38,31 @@
 ├── Build                       # Build results
 ├── Docs                        # Datesheets and User Manuals
 ├── Examples
-│   ├── FreeRTOS                # FreeRTOS examples
-│   ├── HAL                     # HAL library examples
-│   └── LL                      # LL(Low Layer) library examples
+│   ├── PY32F002B               # PY32F002B examples
+│   │   ├── HAL                 # HAL library examples
+│   │   └── LL                  # LL(Low Layer) library examples
+│   ├── PY32F07x                # PY32F07x examples
+│   │   └── HAL
+│   └── PY32F0xx
+│       ├── FreeRTOS            # FreeRTOS examples
+│       ├── HAL
+│       └── LL
 ├── Libraries
-│   ├── BSP                     # SysTick delay and printf for debug
-│   ├── BSP_LL                  # SysTick delay and printf for debug
 │   ├── CMSIS
+│   ├── EPaper                  # Waveshare e-paper library
 │   ├── FreeRTOS                # FreeRTOS library
 │   ├── LDScripts               # LD files
-│   ├── PY32F0xx_HAL_Driver     # MCU peripheral driver
-│   └── PY32F0xx_LL_Driver      # MCU low layer peripheral driver
+│   ├── PY32F002B_HAL_BSP       # PY32F002B HAL BSP
+│   ├── PY32F002B_HAL_Driver    # PY32F002B HAL library
+│   ├── PY32F002B_LL_BSP        # PY32F002B LL(low layer) BSP
+│   ├── PY32F002B_LL_Driver     # PY32F002B LL library
+│   ├── PY32F07x_HAL_BSP        # PY32F040/071/072 HAL BSP
+│   ├── PY32F07x_HAL_Driver     # PY32F040/071/072 HAL library
+│   ├── PY32F0xx_HAL_BSP        # PY32F002A/003/030 HAL BSP
+│   ├── PY32F0xx_HAL_Driver     # PY32F002A/003/030 HAL library
+│   ├── PY32F0xx_LL_BSP         # PY32F002A/003/030 LL BSP
+│   └── PY32F0xx_LL_Driver      # PY32F002A/003/030 LL library
+|
 ├── Makefile                    # Make config
 ├── Misc
 │   ├── Flash

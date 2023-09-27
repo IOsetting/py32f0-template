@@ -1,13 +1,13 @@
 #include "py32f07x_hal.h"
 
-static void APP_GpioConfig(void);
+static void APP_GPIO_Config(void);
 
 int main(void)
 {
   HAL_Init();                                  
   
   /* GPIO Initialization */
-  APP_GpioConfig();
+  APP_GPIO_Config();
 
   while (1)
   {
@@ -18,17 +18,17 @@ int main(void)
   }
 }
 
-static void APP_GpioConfig(void)
+static void APP_GPIO_Config(void)
 {
   GPIO_InitTypeDef  GPIO_InitStruct;
 
-  __HAL_RCC_GPIOC_CLK_ENABLE();                          /* Enable GPIOB Clock */
+  __HAL_RCC_GPIOC_CLK_ENABLE();                          /* Enable GPIOC Clock */
 
   GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);                
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 
 void APP_ErrorHandler(void)

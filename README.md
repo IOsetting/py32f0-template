@@ -7,7 +7,11 @@
 
 # Puya PY32F0 Family
 
-## PY32F0xx
+PY32F0 are cost-effective Arm Cortex-M0+ microcontrollers featured with wide range operating voltage from 1.7V to 5.5V. Datesheets and Reference Manuals can be found at [WIKI](https://github.com/IOsetting/py32f0-template/wiki).
+
+## PY32F002A/003/030
+
+Frequency up to 48 MHz, 16 to 64 Kbytes of Flash memory, 3 to 8 Kbytes of SRAM.
 
 * PY32F002A
   * PY32F002Ax5(20KB Flash/3KB RAM)
@@ -16,7 +20,18 @@
 * PY32F030
   * PY32F030x4(16KB Flash/2KB RAM), PY32F030x6(32KB Flash/4KB RAM), PY32F030x8(64KB Flash/8KB RAM)
 
-## PY32F07x
+## PY32F002B
+
+Frequency up to 24 MHz, 24 Kbytes of Flash memory, 3 Kbytes of SRAM.
+
+* PY32F001
+  * ?
+* PY32F002B
+  * PY32F002Bx(24KB Flash/3KB RAM)
+
+## PY32F040/071/072
+
+Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more peripherals(CAN, USB)
 
 * PY32F040
   * PY32F040xB(128KB Flash/16KB RAM)
@@ -24,13 +39,6 @@
   * PY32F071xB(128KB Flash/16KB RAM)
 * PY32F072
   * PY32F072xB(128KB Flash/16KB RAM)
-
-## PY32F002B
-
-* PY32F001
-  * ?
-* PY32F002B
-  * PY32F002Bx(24KB Flash/3KB RAM)
 
 # File Structure
 

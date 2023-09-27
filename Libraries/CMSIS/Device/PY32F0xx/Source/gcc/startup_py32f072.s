@@ -129,14 +129,14 @@ g_pfnVectors:
   .word  PVD_IRQHandler                 /* 1PVD through EXTI Line detect */
   .word  RTC_IRQHandler                 /* 2RTC through EXTI Line */
   .word  FLASH_IRQHandler               /* 3FLASH */
-  .word  RCC_CTC_IRQHandler             /* 4RCC, CTC */
+  .word  RCC_IRQHandler                 /* 4RCC */
   .word  EXTI0_1_IRQHandler             /* 5EXTI Line 0 and 1 */
   .word  EXTI2_3_IRQHandler             /* 6EXTI Line 2 and 3 */
   .word  EXTI4_15_IRQHandler            /* 7EXTI Line 4 to 15 */
   .word  LCD_IRQHandler                 /* 8LCD  */
   .word  DMA1_Channel1_IRQHandler       /* 9DMA1 Channel 1 */
   .word  DMA1_Channel2_3_IRQHandler     /* 10DMA1 Channel 2 and Channel 3 */
-  .word  0                              /* 11Reserved  */
+  .word  DMA1_Channel4_5_6_7_IRQHandler /* 11DMA1 Channel 4, 5, 6, 7 */
   .word  ADC_COMP_IRQHandler            /* 12ADC&COMP1  */
   .word  TIM1_BRK_UP_TRG_COM_IRQHandler /* 13TIM1 Break, Update, Trigger and Commutation */
   .word  TIM1_CC_IRQHandler             /* 14TIM1 Capture Compare */
@@ -155,7 +155,7 @@ g_pfnVectors:
   .word  USART1_IRQHandler              /* 27USART1 */
   .word  USART2_IRQHandler              /* 28USART2 */
   .word  USART3_4_IRQHandler            /* 29USART3, USART4 */
-  .word  0                              /* 30Reserved */
+  .word  CAN_IRQHandler                 /* 30CAN */
   .word  USB_IRQHandler                 /* 31USB */
 
 /*******************************************************************************
@@ -193,8 +193,8 @@ g_pfnVectors:
   .weak      FLASH_IRQHandler                
   .thumb_set FLASH_IRQHandler,Default_Handler
 
-  .weak      RCC_CTC_IRQHandler                
-  .thumb_set RCC_CTC_IRQHandler,Default_Handler
+  .weak      RCC_IRQHandler                
+  .thumb_set RCC_IRQHandler,Default_Handler
 
   .weak      EXTI0_1_IRQHandler                
   .thumb_set EXTI0_1_IRQHandler,Default_Handler
@@ -213,6 +213,9 @@ g_pfnVectors:
 
   .weak      DMA1_Channel2_3_IRQHandler                
   .thumb_set DMA1_Channel2_3_IRQHandler,Default_Handler
+
+  .weak      DMA1_Channel4_5_6_7_IRQHandler                
+  .thumb_set DMA1_Channel4_5_6_7_IRQHandler,Default_Handler
 
   .weak      ADC_COMP_IRQHandler                
   .thumb_set ADC_COMP_IRQHandler,Default_Handler
@@ -267,6 +270,9 @@ g_pfnVectors:
 
   .weak      USART3_4_IRQHandler
   .thumb_set USART3_4_IRQHandler,Default_Handler
+
+  .weak      CAN_IRQHandler
+  .thumb_set CAN_IRQHandler,Default_Handler
 
   .weak      USB_IRQHandler
   .thumb_set USB_IRQHandler,Default_Handler

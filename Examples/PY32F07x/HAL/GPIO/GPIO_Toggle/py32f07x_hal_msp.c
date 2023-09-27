@@ -32,7 +32,7 @@
 /* External functions --------------------------------------------------------*/
 
 /**
-  * @brief 初始化全局MSP
+  * @brief Global MSP Initialization
   */
 void HAL_MspInit(void)
 {

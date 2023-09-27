@@ -91,12 +91,13 @@ AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f002b.s
 else ifneq (,$(findstring PY32F07,$(MCU_TYPE)))
 
 #  PY32F07x >>>
-CFILES		+= Libraries/CMSIS/Device/PY32F0xx/Source/system_py32f0xx.c
+CFILES		+= Libraries/CMSIS/Device/PY32F0xx/Source/system_py32f07x.c
 
 CDIRS		+= Libraries/PY32F07x_HAL_Driver/Src \
 		Libraries/PY32F07x_HAL_BSP/Src
 INCLUDES	+= Libraries/PY32F07x_HAL_Driver/Inc \
 		Libraries/PY32F07x_HAL_BSP/Inc
+LIB_FLAGS   += USE_HAL_DRIVER
 # Startup file
 AFILES	:= Libraries/CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f072.s
 #  PY32F07 <<<

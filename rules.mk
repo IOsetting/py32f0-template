@@ -100,7 +100,7 @@ $(BDIR)/%.o: %.s
 
 # Link object files to elf
 $(BDIR)/$(PROJECT).elf: $(OBJS) $(TOP)/$(LDSCRIPT)
-	@printf "  LD\t$@\n"
+	@printf "  LD\t$@ - $(LDSCRIPT)\n"
 	$(Q)$(CC) $(TGT_LDFLAGS) -T$(TOP)/$(LDSCRIPT) $(OBJS) -o $@
 
 # Convert elf to bin

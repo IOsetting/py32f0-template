@@ -36,12 +36,6 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
-  /* SRAM vector table */
-  .ram_vector :
-  {
-    *(.ram_vector)
-  } >RAM
-
   /* The startup code goes first into FLASH */
   .isr_vector :
   {

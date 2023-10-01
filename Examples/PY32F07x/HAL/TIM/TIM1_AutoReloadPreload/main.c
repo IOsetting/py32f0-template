@@ -43,12 +43,12 @@ int main(void)
   
   /* TIM1, initial frequency = 32,000,000 / 10,000 / 1,600 = 2 Hz */
   TimHandle.Instance = TIM1;
-  TimHandle.Init.Period            = 1600 - 1;                         /* 自动重装载值 */
-  TimHandle.Init.Prescaler         = 10000 - 1;                        /* 预分频为1000-1 */
-  TimHandle.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;           /* 时钟不分频 */
-  TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;               /* 向上计数 */
-  TimHandle.Init.RepetitionCounter = 1 - 1;                            /* 不重复计数 */
-  TimHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;   /* 自动重装载寄存器没有缓冲 */
+  TimHandle.Init.Period            = 1600 - 1;
+  TimHandle.Init.Prescaler         = 10000 - 1;
+  TimHandle.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+  TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+  TimHandle.Init.RepetitionCounter = 1 - 1;
+  TimHandle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&TimHandle) != HAL_OK)
   {
     APP_ErrorHandler();
@@ -98,17 +98,17 @@ static void APP_SystemClockConfig(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /* Enable HSI, DIV=1, 16MHz */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE | RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE; /* 选择振荡器HSE,HSI,LSI,LSE */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE | RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_16MHz;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_16MHz; /* Set HSI = 16MHz */
   RCC_OscInitStruct.HSEState = RCC_HSE_OFF;
   /*RCC_OscInitStruct.HSEFreq = RCC_HSE_16_32MHz;*/
   RCC_OscInitStruct.LSIState = RCC_LSI_OFF;
   RCC_OscInitStruct.LSEState = RCC_LSE_OFF;
   /*RCC_OscInitStruct.LSEDriver = RCC_LSEDRIVE_MEDIUM;*/
 
-  /* Set PLL = 2, source = HSI */
+  /* Set PLL = 2, PLL clock source = HSI */
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL2;
@@ -123,6 +123,7 @@ static void APP_SystemClockConfig(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  /* 1 wait when 24MHz<SYSCLK<=48MHz */
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     APP_ErrorHandler();

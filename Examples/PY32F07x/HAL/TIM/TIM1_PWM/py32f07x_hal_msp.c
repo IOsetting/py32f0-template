@@ -38,16 +38,32 @@ void HAL_MspInit(void)
 {
 }
 
-/**
-  * @brief 初始TIM相关MSP
-  */
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 {
-  /* 使能TIM1时钟 */
+  GPIO_InitTypeDef   GPIO_InitStruct;
   __HAL_RCC_TIM1_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+ 
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   
-  /* TIM1 priority */
-  HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0, 0);
-  /* Enable TIM1 interrupt */
-  HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+  /* PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /* PA9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /* PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /* PA11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
+
+/************************ (C) COPYRIGHT Puya *****END OF FILE******************/

@@ -16,8 +16,8 @@
 #include "py32f0xx_bsp_clock.h"
 #include "xl2400.h"
 
-// 0:TX, 1:RX
-#define XL2400_MODE 1
+// 0:RX, 1:TX, 2:TX_FAST
+#define XL2400_MODE 0
 
 const uint8_t TX_ADDRESS[5] = {0x11,0x33,0x33,0x33,0x11};
 const uint8_t RX_ADDRESS[5] = {0x33,0x55,0x33,0x44,0x33};
@@ -34,7 +34,8 @@ extern uint8_t xbuf[XL2400_PL_WIDTH_MAX + 1];
 
 int main(void)
 {
-  uint8_t i = 0, j = 0, status;
+  uint16_t i = 0;
+  uint8_t j = 0;
 
   /* Set clock = 48MHz */
   BSP_RCC_HSI_PLL48MConfig();
@@ -58,18 +59,35 @@ int main(void)
   XL2400_SetPower(XL2400_RF_0DB);
 
 #if XL2400_MODE == 0
+  // RX
+  XL2400_SetChannel(77);
+  XL2400_SetTxAddress(RX_ADDRESS);
+  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_WakeUp();
+  XL2400_SetRxMode();
+  printf("XL2400 RX Mode\r\n");
+
+  while (1)
+  {
+    i++;
+    if (XL2400_Rx() & XL2400_FLAG_RX_DR)
+    {
+      printf("%03d %02X%02x...%02X\r\n", i, *xbuf, *(xbuf + 1), *(xbuf + 31));
+      i = 0;
+    }
+  }
+
+#elif XL2400_MODE == 1
   XL2400_SetChannel(78);
   XL2400_SetTxAddress(RX_ADDRESS);
   XL2400_SetRxAddress(TX_ADDRESS);
   XL2400_SetTxMode();
-  printf("XL2400 TX Initialized\r\n");
+  printf("XL2400 TX Mode\r\n");
 
   while(1)
   {
-    //XL2400_PrintStatus();
-    status = XL2400_Tx(tmp, XL2400_PLOAD_WIDTH);
     i++;
-    if (status == 0x20)
+    if (XL2400_Tx(tmp, XL2400_PLOAD_WIDTH) == 0x20)
     {
       j++;
     }
@@ -81,28 +99,31 @@ int main(void)
     }
   }
 #else
-  // RX
-  XL2400_SetChannel(77);
+  XL2400_SetChannel(78);
   XL2400_SetTxAddress(RX_ADDRESS);
   XL2400_SetRxAddress(TX_ADDRESS);
-  XL2400_WakeUp();
-  XL2400_SetRxMode();
-  printf("XL2400 RX Initialized\r\n");
+  XL2400_SetTxMode();
+  printf("XL2400 TX Fast Mode\r\n");
 
-  while (1)
+  while(1)
   {
-    status = XL2400_Rx();
-    if (status & RX_DR_FLAG)
+    i++;
+    // Around 10% performance improvement comparing to XL2400_Tx()
+    if (XL2400_TxFast(tmp, XL2400_PLOAD_WIDTH) == SUCCESS)
     {
-      for (i = 0; i < 32; i++)
-      {
-        printf("%02X", *(xbuf + i));
-      }
-      printf("\r\n");
+      j++;
     }
     else
     {
-      printf(".");
+      XL2400_ReuseTX();
+    }
+
+    if (i == 0xFF)
+    {
+      // Indicate success rate on 255 times of tx
+      printf("%02X\r\n", j);
+      i = 0;
+      j = 0;
     }
   }
 #endif

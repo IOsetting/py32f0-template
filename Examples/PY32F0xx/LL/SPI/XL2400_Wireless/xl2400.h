@@ -95,16 +95,17 @@
 #define XL2400_RF_DR_1M          0x02 // 1Mbps
 #define XL2400_RF_DR_250K        0x22 // 250Kbps
 
-#define RX_DR_FLAG               0X40   // Data ready
-#define TX_DS_FLAG               0X20   // Data sent
-#define RX_TX_CMP_FLAG           0X60   // Data sent & acked
-#define MAX_RT_FLAG              0X10   // Max retried
+#define XL2400_FLAG_RX_DR        0X40   // Data ready
+#define XL2400_FLAG_TX_DS        0X20   // Data sent
+#define XL2400_FLAG_RX_TX_CMP    0X60   // Data sent & acked
+#define XL2400_FLAG_MAX_RT       0X10   // Max retried
+#define XL2400_FLAG_TX_FULL      0x01 // 1:TX FIFO full
 
 #define XL2400_TEST_ADDR         "XL240"
 
 
 /******************* FUNCTION DECLARE *******************/
-void XL2400_WriteReg(uint8_t reg, uint8_t value);
+uint8_t XL2400_WriteReg(uint8_t reg, uint8_t value);
 uint8_t XL2400_ReadReg(uint8_t reg);
 
 void XL2400_WriteFromBuf(uint8_t reg, const uint8_t *pBuf, uint8_t len);
@@ -130,7 +131,9 @@ ErrorStatus XL2400_RxCalibrate(void);
 void XL2400_SetTxMode(void);
 void XL2400_SetRxMode(void);
 
-uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length);
+uint8_t XL2400_Tx(const uint8_t *ucPayload, uint8_t length);
+ErrorStatus XL2400_TxFast(const uint8_t *ucPayload, uint8_t length);
+void XL2400_ReuseTX(void);
 uint8_t XL2400_Rx(void);
 
 uint8_t XL2400_ReadStatus(void);

@@ -15,14 +15,16 @@
 #include <stdio.h>
 #include "xl2400.h"
 
-uint8_t cbuf[2], xbuf[XL2400_PL_WIDTH_MAX + 1];
+uint8_t xl2400_state, cbuf[2], xbuf[XL2400_PL_WIDTH_MAX + 1];
 
-void XL2400_WriteReg(uint8_t reg,uint8_t value)
+uint8_t XL2400_WriteReg(uint8_t reg, uint8_t value)
 {
+    uint8_t reg_val;
     XL2400_NSS_LOW();
     SPI_TxRxByte(reg);
-    SPI_TxRxByte(value);
+    reg_val = SPI_TxRxByte(value);
     XL2400_NSS_HIGH();
+    return reg_val;
 }
 
 uint8_t XL2400_ReadReg(uint8_t reg)
@@ -103,8 +105,8 @@ void XL2400_Init(void)
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_SETUP_AW, 0xAF);
     // Retries and interval
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_SETUP_RETR, 0x33);
-    // RF Data Rate 1Mbps
-    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_RF_SETUP, 0x22);
+    // RF Data Rate: 04:2Mbps, 00:1Mbps, 20:250Kbps, 24:125Kbps
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_RF_SETUP, 0x04);
     // Number of bytes in RX payload, pipe 0 and pipe 1
     *(cbuf + 0) = XL2400_PLOAD_WIDTH;
     *(cbuf + 1) = XL2400_PLOAD_WIDTH;
@@ -230,7 +232,27 @@ void XL2400_SetRxMode(void)
     LL_mDelay(1);
 }
 
-uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length)
+ErrorStatus XL2400_TxFast(const uint8_t *ucPayload, uint8_t length)
+{
+    //Blocking only if FIFO is full. This will loop and block until TX is successful or fail
+    while ((XL2400_ReadStatus() & XL2400_FLAG_TX_FULL)) {
+        if (xl2400_state & XL2400_FLAG_MAX_RT) {
+            return ERROR;
+        }
+    }
+    XL2400_WriteFromBuf(XL2400_CMD_W_TX_PAYLOAD, ucPayload, length);
+    XL2400_CE_High();
+    return SUCCESS;
+}
+
+void XL2400_ReuseTX(void)
+{
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_STATUS, XL2400_FLAG_MAX_RT); //Clear max retry flag
+    XL2400_CE_Low();
+    XL2400_CE_High();
+}
+
+uint8_t XL2400_Tx(const uint8_t *ucPayload, uint8_t length)
 {
     uint8_t y = 16, status = 0;
     XL2400_ClearStatus();
@@ -241,7 +263,7 @@ uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length)
     {
         status = XL2400_ReadStatus();
         // If TX successful or retry timeout, exit
-        if ((status & (MAX_RT_FLAG | TX_DS_FLAG)) != 0)
+        if ((status & (XL2400_FLAG_MAX_RT | XL2400_FLAG_TX_DS)) != 0)
         {
             break;
         }
@@ -253,26 +275,28 @@ uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length)
 
 uint8_t XL2400_Rx(void)
 {
-    uint8_t i, status, rxplWidth;
+    uint8_t status, rxplWidth;
+    /*
+     * Use XL2400_WriteReg() can get status and clear it at the same time
+       but in the test this method takes much longer, so I still use XL2400_ReadStatus()
+       
+       status = XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_STATUS, 0x70);
+    */
     status = XL2400_ReadStatus();
-    if (status & RX_DR_FLAG)
+    if (status & XL2400_FLAG_RX_DR)
     {
         //XL2400_CE_Low();
         XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_STATUS, status);
         rxplWidth = XL2400_ReadReg(XL2400_CMD_R_RX_PL_WID);
         XL2400_ReadToBuf(XL2400_CMD_R_RX_PAYLOAD, xbuf, rxplWidth);
-        // printf("size: %d\r\n", rxplWidth);
-        // for (i = 0; i < rxplWidth; i++)
-        // {
-        //     printf("%02X", *(xbuf + i));
-        // }
     }
     return status;
 }
 
 uint8_t XL2400_ReadStatus(void)
 {
-    return XL2400_ReadReg(XL2400_CMD_R_REGISTER | XL2400_REG_STATUS);
+    xl2400_state = XL2400_ReadReg(XL2400_CMD_R_REGISTER | XL2400_REG_STATUS);
+    return xl2400_state;
 }
 
 void XL2400_ClearStatus(void)

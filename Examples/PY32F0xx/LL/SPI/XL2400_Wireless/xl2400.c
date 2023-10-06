@@ -232,22 +232,22 @@ void XL2400_SetRxMode(void)
 
 uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length)
 {
-    uint8_t y = 100, status = 0;
+    uint8_t y = 16, status = 0;
     XL2400_ClearStatus();
     XL2400_WriteFromBuf(XL2400_CMD_W_TX_PAYLOAD, ucPayload, length);
     XL2400_CE_High();
-    // Retry until timeout
+    // Retry until timeout, usually status will be retrievable in 10 ms 
     while (y--)
     {
-        LL_mDelay(1);
         status = XL2400_ReadStatus();
         // If TX successful or retry timeout, exit
         if ((status & (MAX_RT_FLAG | TX_DS_FLAG)) != 0)
         {
             break;
         }
+        // delay actually 1ms
+        LL_mDelay(0);
     }
-    XL2400_CE_Low();
     return status;
 }
 

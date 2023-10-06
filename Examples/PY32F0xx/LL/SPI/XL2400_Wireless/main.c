@@ -58,30 +58,28 @@ int main(void)
   XL2400_SetPower(XL2400_RF_0DB);
 
 #if XL2400_MODE == 0
-    XL2400_SetChannel(78);
-    XL2400_SetTxAddress(RX_ADDRESS);
-    XL2400_SetRxAddress(TX_ADDRESS);
-    XL2400_SetTxMode();
-    printf("XL2400 TX Initialized\r\n");
+  XL2400_SetChannel(78);
+  XL2400_SetTxAddress(RX_ADDRESS);
+  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_SetTxMode();
+  printf("XL2400 TX Initialized\r\n");
 
-    while(1)
+  while(1)
+  {
+    //XL2400_PrintStatus();
+    status = XL2400_Tx(tmp, XL2400_PLOAD_WIDTH);
+    i++;
+    if (status == 0x20)
     {
-        //XL2400_PrintStatus();
-        status = XL2400_Tx(tmp, XL2400_PLOAD_WIDTH);
-        
-        i++;
-        if (status == 0x20)
-        {
-            j++;
-        }
-        if (i == 0)
-        {
-            printf("%02X\r\n", j);
-            j = 0;
-        }
-        // >= 2ms
-        LL_mDelay(3);
+      j++;
     }
+    if (i == 0xFF)
+    {
+      printf("%02X\r\n", j);
+      i = 0;
+      j = 0;
+    }
+  }
 #else
   // RX
   XL2400_SetChannel(77);
@@ -98,7 +96,7 @@ int main(void)
     {
       for (i = 0; i < 32; i++)
       {
-          printf("%02X", *(xbuf + i));
+        printf("%02X", *(xbuf + i));
       }
       printf("\r\n");
     }
@@ -166,22 +164,22 @@ static void APP_SPI_Config(void)
 
 uint8_t SPI_TxRxByte(uint8_t data)
 {
-    uint8_t SPITimeout = 0xFF;
-    /* Check the status of Transmit buffer Empty flag */
-    while (READ_BIT(SPI1->SR, SPI_SR_TXE) == RESET)
-    {
-        if (SPITimeout-- == 0)
-            return 0;
-    }
-    LL_SPI_TransmitData8(SPI1, data);
-    SPITimeout = 0xFF;
-    while (READ_BIT(SPI1->SR, SPI_SR_RXNE) == RESET)
-    {
-        if (SPITimeout-- == 0)
-            return 0;
-    }
-    // Read from RX buffer
-    return LL_SPI_ReceiveData8(SPI1);
+  uint8_t SPITimeout = 0xFF;
+  /* Check the status of Transmit buffer Empty flag */
+  while (READ_BIT(SPI1->SR, SPI_SR_TXE) == RESET)
+  {
+    if (SPITimeout-- == 0)
+      return 0;
+  }
+  LL_SPI_TransmitData8(SPI1, data);
+  SPITimeout = 0xFF;
+  while (READ_BIT(SPI1->SR, SPI_SR_RXNE) == RESET)
+  {
+    if (SPITimeout-- == 0)
+      return 0;
+  }
+  // Read from RX buffer
+  return LL_SPI_ReceiveData8(SPI1);
 }
 
 void APP_ErrorHandler(void)

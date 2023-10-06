@@ -55,30 +55,31 @@ int main(void)
   XL2400_SetPower(XL2400_RF_0DB);
 
 #if XL2400_MODE == 0
-    XL2400_SetChannel(78);
-    XL2400_SetTxAddress(RX_ADDRESS);
-    XL2400_SetRxAddress(TX_ADDRESS);
-    XL2400_SetTxMode();
-    printf("XL2400 TX Initialized\r\n");
+  XL2400_SetChannel(78);
+  XL2400_SetTxAddress(RX_ADDRESS);
+  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_SetTxMode();
+  printf("XL2400 TX Initialized\r\n");
 
-    while(1)
+  while (1)
+  {
+    // XL2400_PrintStatus();
+    status = XL2400_Tx(tmp, XL2400_PLOAD_WIDTH);
+
+    i++;
+    if (status == 0x20)
     {
-        //XL2400_PrintStatus();
-        status = XL2400_Tx(tmp, XL2400_PLOAD_WIDTH);
-        
-        i++;
-        if (status == 0x20)
-        {
-            j++;
-        }
-        if (i == 0)
-        {
-            printf("%02X\r\n", j);
-            j = 0;
-        }
-        // >= 2ms
-        LL_mDelay(3);
+      j++;
     }
+    if (i == 0xFF)
+    {
+      printf("%02X\r\n", j);
+      i = 0;
+      j = 0;
+    }
+    // >= 2ms
+    LL_mDelay(3);
+  }
 #else
   // RX
   XL2400_SetChannel(77);
@@ -98,7 +99,7 @@ int main(void)
         printf(".");
         for (i = 0; i < 32; i++)
         {
-            printf("%02X", *(xbuf + i));
+          printf("%02X", *(xbuf + i));
         }
       }
       //LL_mDelay(1);

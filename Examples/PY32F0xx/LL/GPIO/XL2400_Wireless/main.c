@@ -6,8 +6,9 @@
  * PA6   ------> CSN/NSS
  * PA7   ------> DATA/MOSI
  * 
- * PA2   ------> TX
- * PA3   ------> RX
+ *               USB2TTL
+ * PA2(TX) ----> RX
+ * PA3(RX) ----> TX
  */
 #include <string.h>
 #include "main.h"

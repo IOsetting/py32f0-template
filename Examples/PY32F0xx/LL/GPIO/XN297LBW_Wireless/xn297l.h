@@ -74,7 +74,6 @@
 #define XN297L_REG_RX_ADDR_P4    0x0E // Receive address data pipe 4, 40 bits
 #define XN297L_REG_RX_ADDR_P5    0x0F // Receive address data pipe 5, 40 bits
 
-
 #define XN297L_REG_TX_ADDR       0x10 // Transmit address, 40 bits
 #define XN297L_REG_RX_PW_P0      0x11 // Number of bytes in RX payload in data pipe 0
 #define XN297L_REG_RX_PW_P1      0x12 // Number of bytes in RX payload in data pipe 1
@@ -84,25 +83,25 @@
 #define XN297L_REG_RX_PW_P5      0x16 // Number of bytes in RX payload in data pipe 5
 
 #define XN297L_REG_FIFO_STATUS   0x17 // FIFO status, 20 bits
-#define XN297L_REG_DEM_CAL       0x19 // 
-#define XN297L_REG_RF_CAL2       0x1A // 
-#define XN297L_REG_DEM_CAL2      0x1B // 
+#define XN297L_REG_DEM_CAL       0x19 // 8bit
+#define XN297L_REG_RF_CAL2       0x1A // 48bit
+#define XN297L_REG_DEM_CAL2      0x1B // 24bit
 #define XN297L_REG_DYNPD         0x1C // Enable dynamic payload length
 #define XN297L_REG_FEATURE       0x1D // Feature config
-#define XN297L_REG_RF_CAL        0x1E //
-#define XN297L_REG_BB_CAL        0x1F //
+#define XN297L_REG_RF_CAL        0x1E // 24bit
+#define XN297L_REG_BB_CAL        0x1F // 40bit
 
 /**************************** CONFIGs ************************************/
 
-#define XN297L_RF_POWER_P_11     0x27  // 11dbm
-#define XN297L_RF_POWER_P_10     0x26  // 10dbm
-#define XN297L_RF_POWER_P_9      0x15  // 9dbm
-#define XN297L_RF_POWER_P_5      0x2c  // 5dbm
-#define XN297L_RF_POWER_P_4      0x14  // 4dbm
-#define XN297L_RF_POWER_N_1      0x2A  // -1dbm
-#define XN297L_RF_POWER_N_9      0x29  // -9dbm
-#define XN297L_RF_POWER_N_10     0x19  // -10dbm
-#define XN297L_RF_POWER_N_23     0x30  // -23dbm
+#define XN297L_RF_POWER_P_11     0x27  // 100 111: 11dbm
+#define XN297L_RF_POWER_P_10     0x26  // 100 110: 10dbm
+#define XN297L_RF_POWER_P_9      0x15  // 010 101: 9dbm
+#define XN297L_RF_POWER_P_5      0x2c  // 101 100: 5dbm
+#define XN297L_RF_POWER_P_4      0x14  // 010 100: 4dbm
+#define XN297L_RF_POWER_N_1      0x2A  // 101 010: -1dbm
+#define XN297L_RF_POWER_N_9      0x29  // 101 001: -9dbm
+#define XN297L_RF_POWER_N_10     0x19  // 011 001: -10dbm
+#define XN297L_RF_POWER_N_23     0x30  // 110 000: -23dbm
 
 #define XN297L_RF_DR_2M          0x40  // 2Mbps
 #define XN297L_RF_DR_1M          0X00  // 1Mbps

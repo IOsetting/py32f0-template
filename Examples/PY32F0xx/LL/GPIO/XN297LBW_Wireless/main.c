@@ -68,11 +68,12 @@ int main(void)
       status = XN297L_DumpRxData();
       if (status & XN297L_FLAG_RX_DR)
       {
-        printf(".");
-        for (i = 0; i < 32; i++)
-        {
-          printf("%02X", *(xbuf + i));
-        }
+        // printf(".");
+        // for (i = 0; i < 32; i++)
+        // {
+        //   printf("%02X", *(xbuf + i));
+        // }
+        printf("%02X %02X %02X\r\n", *(xbuf + 0), *(xbuf + 1), *(xbuf + 31));
       }
       //XN297L_PrintStatus();
       //LL_mDelay(500);
@@ -91,7 +92,7 @@ int main(void)
     // XN297L_PrintStatus();
     status = XN297L_TxData(tmp, XN297L_PLOAD_WIDTH);
     i++;
-    if (status == 0x20)
+    if (status & XN297L_FLAG_TX_DS)
     {
       j++;
     }

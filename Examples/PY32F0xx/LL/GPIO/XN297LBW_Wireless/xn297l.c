@@ -124,10 +124,11 @@ void XN297L_Init(void)
 
     XN297L_WriteReg(XN297L_CMD_FLUSH_TX, 0);
     XN297L_WriteReg(XN297L_CMD_FLUSH_RX, 0);
-    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_STATUS, 0x70);    // Clear status flags    
-    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_EN_RXADDR, 0x3F); // Enable all pipes (P0 ~ P5, bit0 ~ bit5)
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_STATUS, 0x70);       // Clear status flags
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_EN_AA, 0x3F);        // AutoAck on all pipes
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_EN_RXADDR, 0x3F);    // Enable all pipes (P0 ~ P5, bit0 ~ bit5)
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_SETUP_AW, XN297L_SETUP_AW_5BYTE); // Address width
-    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RF_CH, 78);   // Channel 78, 2478M HZ
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RF_CH, 78);          // Channel 78, 2478M HZ
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RX_PW_P0, XN297L_PLOAD_WIDTH ); // Payload width of P0
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RX_PW_P1, XN297L_PLOAD_WIDTH ); // Payload width of P1
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RX_PW_P2, XN297L_PLOAD_WIDTH ); // Payload width of P2
@@ -144,8 +145,7 @@ void XN297L_Init(void)
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_RF_SETUP,  XN297L_RF_POWER_P_9|XN297L_RF_DR_1M); // 9dbm 1Mbps
     XN297L_WriteReg(XN297L_CMD_ACTIVATE, 0x73);
 
-    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_SETUP_RETR, 0x00); // Retry off
-    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_EN_AA,      0x00); // AutoAck off
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_SETUP_RETR, 0x10|0x05); // Retry interval 500µs, 5 times
 
     if(XN297L_PLOAD_WIDTH >32)
     {
@@ -223,6 +223,7 @@ uint8_t XN297L_TxData(uint8_t *ucPayload, uint8_t length)
         // If TX successful or retry timeout, exit
         if ((status & (XN297L_FLAG_MAX_RT | XN297L_FLAG_TX_DS)) != 0)
         {
+            //printf(" %d %02x\r\n", y, status);
             break;
         }
     }

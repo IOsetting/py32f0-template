@@ -1,5 +1,7 @@
 /***
  * Demo: XN297LBW 2.4GHz Wireless
+ *   XN297L datasheet and SDK can be downloaded from 
+ *   https://wiki.panchip.com/ble-lite/2-4g-t-rx/xn297l_series/
  * 
  * PY32          XN297LBW SOP8
  * PA1   ------> CLK/SCK

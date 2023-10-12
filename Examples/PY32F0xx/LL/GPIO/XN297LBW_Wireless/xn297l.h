@@ -35,10 +35,8 @@
 #define XN297L_CE_LOW()          XN297L_WriteReg(XN297L_CMD_CE_FSPI_OFF, 0)
 #define XN297L_CE_HIGH()         XN297L_WriteReg(XN297L_CMD_CE_FSPI_ON, 0)
 
-/**
- * REGISTER TABLE
- */
 /****************** SPI  REGISTER  ********************/
+
 #define XN297L_CMD_R_REGISTER    0x00 // [000A AAAA] Register read
 #define XN297L_CMD_W_REGISTER    0x20 // [001A AAAA] Register write
 #define XN297L_CMD_R_RX_PAYLOAD  0x61 // Read RX payload
@@ -57,6 +55,7 @@
 #define XN297L_CMD_NOP           0xFF // No operation (used for reading status register)
 
 /******************CONTROL  REGISTER ******************/
+
 #define XN297L_REG_CONFIG        0x00 // Configuration register
 #define XN297L_REG_EN_AA         0x01 // Enable "Auto acknowledgment"
 #define XN297L_REG_EN_RXADDR     0x02 // Enable RX addresses
@@ -66,7 +65,7 @@
 #define XN297L_REG_RF_SETUP      0x06 // RF setup
 #define XN297L_REG_STATUS        0x07 // Status
 #define XN297L_REG_OBSERVE_TX    0x08 // Transmit observe register
-#define XN297L_REG_RPD           0x09 // 
+#define XN297L_REG_RPD           0x09 // Data output and RSSI
 #define XN297L_REG_RX_ADDR_P0    0x0A // Receive address data pipe 0, 40 bits
 #define XN297L_REG_RX_ADDR_P1    0x0B // Receive address data pipe 1, 40 bits
 #define XN297L_REG_RX_ADDR_P2    0x0C // Receive address data pipe 2, 40 bits
@@ -93,30 +92,107 @@
 
 /**************************** CONFIGs ************************************/
 
+/**
+ * 01 CONFIG BIT[7:0]
+*/
+#define XN297L_CONFIG_EN_PM         0x80  // STB3 Mode(when PWR_UP=1), wait 50us+ before switching to other mode
+#define XN297L_CONFIG_MASK_RX_DR    0x40  // Supress RX_DR interrupt on IRQ pin
+#define XN297L_CONFIG_MASK_TX_DS    0x20  // Supress TX_DS interrupt on IRQ pin
+#define XN297L_CONFIG_MASK_MAX_RT   0x10  // Supress MAX_RT interrupt on IRQ pin
+#define XN297L_CONFIG_EN_CRC        0x08  // Enable CRC (need 2 additional bytes)
+#define XN297L_CONFIG_PWR_UP        0x02  // Enable Chip (Power up)
+#define XN297L_CONFIG_PRIM_RX       0x01  // RX mode
+/**
+ * 01 EN_AA BIT[5:0]
+ *   Each bit stands for one channel
+ * 
+ * 02 EN_RXADDR BIT[5:0]
+ *   Each bit stands for one channel
+ *
+ * 03 SETUP_AW BIT[1:0]
+*/
+#define XN297L_SETUP_AW_3BYTE    0x01  // Address width 3 bytes
+#define XN297L_SETUP_AW_4BYTE    0x10  // Address width 4 bytes
+#define XN297L_SETUP_AW_5BYTE    0x11  // Address width 5 bytes
+/**
+ * 04 SETUP_RETR BIT[7:0]
+ *   ARD BIT[7:4] 0x00:250us, 0x10:500us, ... 0xF0:4000us
+ *   ARC BIT[3:0] 0x00:no retry, 0x01:1 retry, 0x0F:15 retries
+ * 
+ * 05 RF_CH BIT[6:0]
+ *   Channel: 0x00 ~ 0x7F, Frequency(MHz) = 2400 + channel
+ * 
+ * 06 RF_SETUP BIT[5:0]
+*/
 #define XN297L_RF_POWER_P_11     0x27  // 100 111: 11dbm
 #define XN297L_RF_POWER_P_10     0x26  // 100 110: 10dbm
 #define XN297L_RF_POWER_P_9      0x15  // 010 101: 9dbm
-#define XN297L_RF_POWER_P_5      0x2c  // 101 100: 5dbm
+#define XN297L_RF_POWER_P_7      0x0D  // 001 101: 7dbm, incompatible with 250Kbps. Recommend for safety regulations test(in 1Mbps).
+#define XN297L_RF_POWER_P_6      0x06  // 000 110: 6dbm, incompatible with 250Kbps. Recommend for safety regulations test(in 1Mbps).
+#define XN297L_RF_POWER_P_5      0x2C  // 101 100: 5dbm
+#define XN297L_RF_POWER_P_5L     0x05  // 000 101: 5dbm, incompatible with 250Kbps. Recommend for safety regulations test(in 1Mbps).
 #define XN297L_RF_POWER_P_4      0x14  // 010 100: 4dbm
+#define XN297L_RF_POWER_P_3      0x0C  // 001 100: 3dbm, incompatible with 250Kbps. Recommend for safety regulations test(in 1Mbps).
 #define XN297L_RF_POWER_N_1      0x2A  // 101 010: -1dbm
 #define XN297L_RF_POWER_N_9      0x29  // 101 001: -9dbm
 #define XN297L_RF_POWER_N_10     0x19  // 011 001: -10dbm
 #define XN297L_RF_POWER_N_23     0x30  // 110 000: -23dbm
-
+/**
+ * 06 RF_SETUP BIT[7:6]
+*/
 #define XN297L_RF_DR_2M          0x40  // 2Mbps
 #define XN297L_RF_DR_1M          0X00  // 1Mbps
 #define XN297L_RF_DR_250K        0XC0  // 250Kbps (work with XN297L_RF_POWER_P_9)
+/**
+ * 07 STATUS BIT[6:0]
+*/
+#define XN297L_FLAG_RX_DR        0X40  // RX FIFO, data ready
+#define XN297L_FLAG_TX_DS        0X20  // TX FIFO, data sent completed
+#define XN297L_FLAG_MAX_RT       0X10  // Reach max retries, sending failed
+#define XN297L_FLAG_RX_P_NO      0X0E  // RX FIFO, mask, data ready pipes
+#define XN297L_FLAG_TX_FULL      0x01  // TX FIFO is full
+/**
+ * 08 OBSERVE_TX
+ *   PLOS_CNT BIT[7:4]: Package lost counter, max value is 15
+ *   ARC_CNT BIT[3:0]: Retry counter, when it reaches SETUP_RETR.ARC, PLOS_CNT + 1. Write data to TX FIFO resets this value
+ * 
+ * 09 DATAOUT BIT[7:0]
+ *   BIT[7:4]: Realtime RSSI
+ *   BIT[3:0]: Packet received RSSI
+ * 
+ * 0A RX_ADDR_P0 BIT[39:0]
+ * 0B RX_ADDR_P1 BIT[39:0]
+ * 0C RX_ADDR_P2 BIT[7:0]
+ * 0D RX_ADDR_P3 BIT[7:0]
+ * 0E RX_ADDR_P4 BIT[7:0]
+ * 0F RX_ADDR_P5 BIT[7:0]
+ * 
+ * 10 TX_ADDR    BIT[39:0]
+ * 
+ * 11 RX_PW_P0   BIT[6:0] RX pipe0 payload length
+ * 12 RX_PW_P1   BIT[6:0] RX pipe1 payload length
+ * 13 RX_PW_P2   BIT[6:0] RX pipe2 payload length
+ * 14 RX_PW_P3   BIT[6:0] RX pipe3 payload length
+ * 15 RX_PW_P4   BIT[6:0] RX pipe4 payload length
+ * 16 RX_PW_P5   BIT[6:0] RX pipe5 payload length
+ * 
+ * 17 FIFO_STATUS BIT[6:0]
+*/
+#define XN297L_FIFO_STATUS_TX_REUSE     0x40
+#define XN297L_FIFO_STATUS_TX_FULL      0x20
+#define XN297L_FIFO_STATUS_TX_EMPTY     0x10
+#define XN297L_FIFO_STATUS_RX_FULL      0x02
+#define XN297L_FIFO_STATUS_RX_EMPTY     0x01
 
-#define XN297L_FLAG_RX_DR        0X40  // Data ready
-#define XN297L_FLAG_TX_DS        0X20  // Data sent
-#define XN297L_FLAG_RX_TX_CMP    0X60  // Data sent & acked
-#define XN297L_FLAG_MAX_RT       0X10  // Max retried
-#define XN297L_FLAG_TX_FULL      0x01  // TX FIFO full
-
-#define XN297L_SETUP_AW_3BYTE    0x01  // Address width 3 bytes
-#define XN297L_SETUP_AW_4BYTE    0x10  // Address width 4 bytes
-#define XN297L_SETUP_AW_5BYTE    0x11  // Address width 5 bytes
-
+/**
+ * 19 DEMOD_CAL BIT[7:0]
+ * 1A RF_CAL2 BIT[47:0]
+ * 1B DEM_CAL2 BIT[23:0]
+ * 1C DYNPD BIT[5:0]
+ *   Enable dynamic payload length, each bit stands for one channel
+ * 
+ * 1D FEATURE BIT[6:0]
+*/
 #define XN297L_FEATURE_BIT6_MUX_PA          0x40
 #define XN297L_FEATURE_BIT6_MUX_IRQ         0x00
 #define XN297L_FEATURE_BIT5_CE_SOFT         0x20
@@ -129,6 +205,10 @@
 #define XN297L_FEATURE_BIT1_EN_ACK_PAY_OFF  0x00
 #define XN297L_FEATURE_BIT0_EN_NOACK_ON     0x01
 #define XN297L_FEATURE_BIT0_EN_NOACK_OFF    0x00
+/**
+ * 1E RF_CAL BIT[23:0]
+ * 1F BB_CAL BIT[39:0]
+*/
 
 #define XN297L_TEST_ADDR         "XN297"
 

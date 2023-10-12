@@ -273,6 +273,9 @@ uint8_t XN297L_TxData(uint8_t *ucPayload, uint8_t length);
 uint8_t XN297L_DumpRxData(void);
 void XN297L_Carrier(uint8_t ucChannel_Set);
 
+ErrorStatus XN297L_TxFast(const uint8_t *ucPayload, uint8_t length);
+void XN297L_ReuseTX(void);
+
 uint8_t XN297L_PrintStatus(void);
 
 #endif

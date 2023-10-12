@@ -19,7 +19,7 @@
 #include "py32f0xx_bsp_clock.h"
 #include "xn297l.h"
 
-// 0:RX, 1:TX
+// 0:RX, 1:TX, 2:TX_FAST
 #define XN297L_MODE 0
 
 const uint8_t TX_ADDRESS[5] = {0x11,0x33,0x33,0x33,0x11};
@@ -89,7 +89,8 @@ int main(void)
     printf("\r\n");
   }
   
-#else
+#elif XN297L_MODE == 1
+  // TX
   XN297L_SetTxAddress(RX_ADDRESS);
   XN297L_SetRxAddress(TX_ADDRESS);
   XN297L_SetTxMode();
@@ -106,6 +107,34 @@ int main(void)
     }
     if (i == 0xFF)
     {
+      printf("%02X\r\n", j);
+      i = 0;
+      j = 0;
+    }
+  }
+#else
+  // TX fast
+  XN297L_SetTxAddress(RX_ADDRESS);
+  XN297L_SetRxAddress(TX_ADDRESS);
+  XN297L_SetTxMode();
+  printf("XN297L TX Initialized\r\n");
+
+  while(1)
+  {
+    i++;
+    // Around 10% performance improvement comparing to XL2400_Tx()
+    if (XN297L_TxFast(tmp, XN297L_PLOAD_WIDTH) == SUCCESS)
+    {
+      j++;
+    }
+    else
+    {
+      XN297L_ReuseTX();
+    }
+
+    if (i == 0xFF)
+    {
+      // Indicate success rate on 255 times of tx
       printf("%02X\r\n", j);
       i = 0;
       j = 0;

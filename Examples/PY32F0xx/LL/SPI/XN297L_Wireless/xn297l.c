@@ -22,7 +22,7 @@ const uint8_t
     Dem_cal_data[]   = {0x01},
     Dem_cal2_data[]  = {0x0B,0xDF,0x02};
 
-uint8_t cbuf[2], xbuf[XN297L_PLOAD_WIDTH + 1];
+uint8_t xn297l_state, cbuf[2], xbuf[XN297L_PLOAD_WIDTH + 1];
 
 
 uint8_t XN297L_WriteReg(uint8_t reg, uint8_t value)
@@ -153,12 +153,33 @@ void XN297L_SetRxMode(void)
 
 uint8_t XN297L_ReadStatus(void)
 {
-    return XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_STATUS);
+    xn297l_state = XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_STATUS);
+    return xn297l_state;
 }
 
 void XN297L_ClearStatus(void)
 {
     XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_STATUS, 0x70);
+}
+
+ErrorStatus XN297L_TxFast(const uint8_t *ucPayload, uint8_t length)
+{
+    //Blocking only if FIFO is full. This will loop and block until TX is successful or fail
+    while ((XN297L_ReadStatus() & XN297L_FLAG_TX_FULL)) {
+        if (xn297l_state & XN297L_FLAG_MAX_RT) {
+            return ERROR;
+        }
+    }
+    XN297L_WriteFromBuf(XN297L_CMD_W_TX_PAYLOAD, ucPayload, length);
+    XN297L_CE_HIGH();
+    return SUCCESS;
+}
+
+void XN297L_ReuseTX(void)
+{
+    XN297L_WriteReg(XN297L_CMD_W_REGISTER | XN297L_REG_STATUS, XN297L_FLAG_MAX_RT); //Clear max retry flag
+    XN297L_CE_LOW();
+    XN297L_CE_HIGH();
 }
 
 uint8_t XN297L_TxData(uint8_t *ucPayload, uint8_t length)

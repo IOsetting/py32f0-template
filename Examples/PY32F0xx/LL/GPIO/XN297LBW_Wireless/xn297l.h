@@ -41,17 +41,17 @@
 #define XN297L_CMD_W_REGISTER    0x20 // [001A AAAA] Register write
 #define XN297L_CMD_R_RX_PAYLOAD  0x61 // Read RX payload
 #define XN297L_CMD_W_TX_PAYLOAD  0xA0 // Write TX payload
-#define XN297L_CMD_FLUSH_TX      0xE1 // Flush TX FIFO
-#define XN297L_CMD_FLUSH_RX      0xE2 // Flush RX FIFO
-#define XN297L_CMD_REUSE_TX_PL   0xE3 // Reuse TX Payload
-#define XN297L_CMD_ACTIVATE      0x50 // ACTIVATE
-#define XN297L_CMD_DEACTIVATE    0x50 // DEACTIVATE
-#define XN297L_CMD_RST_FSPI      0x53 // RESET
+#define XN297L_CMD_FLUSH_TX      0xE1 // Flush TX FIFO, used in TX mode
+#define XN297L_CMD_FLUSH_RX      0xE2 // Flush RX FIFO, used in RX mode
+#define XN297L_CMD_REUSE_TX_PL   0xE3 // Used for a PTX device, reuse last transmitted payload
+#define XN297L_CMD_ACTIVATE      0x50 // This command followed by data 0x73 activates R_RX_PL_WID, W_TX_PAYLOAD_NOACK and W_ACK_PAYLOAD, executable in power down or standby modes only
+#define XN297L_CMD_DEACTIVATE    0x50 // This command followed by data 0x8C deactivates the above features
+#define XN297L_CMD_RST_FSPI      0x53 // This command followed by data 0x5A, switch the chip to reset mode; followed by data 0xA5, switch to normal mode
 #define XN297L_CMD_R_RX_PL_WID   0x60 // Read width of RX data 
-#define XN297L_CMD_W_ACK_PAYLOAD 0xA8 // Data with ACK
-#define XN297L_CMD_W_TX_PAYLOAD_NOACK 0xB0 // TX Payload no ACK Request
-#define XN297L_CMD_CE_FSPI_ON    0xFD // CE HIGH
-#define XN297L_CMD_CE_FSPI_OFF   0xFC // CE LOW
+#define XN297L_CMD_W_ACK_PAYLOAD 0xA8 // Used in RX mode. Write Payload to be transmitted together with ACK packet on PIPE PPP. (PPP valid in the range from 000 to 101).
+#define XN297L_CMD_W_TX_PAYLOAD_NOACK 0xB0 // Write Payload to be transmitted, used in TX mode. Disable auto ACK on this specific packet.
+#define XN297L_CMD_CE_FSPI_ON    0xFD // Set CE internal logic to 1, use the command followed by the data 0x00
+#define XN297L_CMD_CE_FSPI_OFF   0xFC // Set CE internal logic to 0, use the command followed by the data 0x00
 #define XN297L_CMD_NOP           0xFF // No operation (used for reading status register)
 
 /******************CONTROL  REGISTER ******************/
@@ -185,9 +185,19 @@
 #define XN297L_FIFO_STATUS_RX_EMPTY     0x01
 
 /**
- * 19 DEMOD_CAL BIT[7:0]
- * 1A RF_CAL2 BIT[47:0]
- * 1B DEM_CAL2 BIT[23:0]
+ * 19 DEMOD_CAL BIT[7:0]        * 0x01 *
+ *   CHIP BIT[7]:               0, Debug mode, 1:ON, 0:OFF
+ *   CARR BIT[6:5]:             00, Carrior test mode, 11:ON and CHIP=1, 00:OFF
+ *   GAUS_CAL BIT[4:1]:         0111, Gauss filter on DAC signal, 1111:low, 0000:high
+ *   SCRAMBLE_EN BIT[0]:        1, Scrambling code enabled, 1:ON, 0:OFF
+ * 
+ * 1A RF_CAL2 BIT[45:0]         * 0x45, 0x21, 0xEF, 0x2C, 0x5A, 0x40 *
+ *   BW_500K BIT[45]:           Filter band width, 0:narrow, 1:wide
+ *   GC_500K BIT[44]:           Filter gain control, 0:low, 1:high
+ * 
+ * 1B DEM_CAL2 BIT[23:0]        * 0x0B, 0xDF, 0x02 *
+ *   
+ * 
  * 1C DYNPD BIT[5:0]
  *   Enable dynamic payload length, each bit stands for one channel
  * 
@@ -206,8 +216,32 @@
 #define XN297L_FEATURE_BIT0_EN_NOACK_ON     0x01
 #define XN297L_FEATURE_BIT0_EN_NOACK_OFF    0x00
 /**
- * 1E RF_CAL BIT[23:0]
- * 1F BB_CAL BIT[39:0]
+ * 1E RF_CAL BIT[23:0]          * 0xF6(0x06 for safety regulations test), 0x3F, 0x5D *
+ *   EN_CLK_OUT BIT[23]:        OSC output to CLK_OUT, 1:ON, 0:OFF
+ *   DA_VREF_MB BIT[22:20]:     DAC vref+, 111:high, 000:low
+ *   DA_VREF_LB BIT[19:17]:     DAC vref-, 111:low, 000:high
+ *   DA_LPF_CTRL BIT[16]:       DAC output amp, 1:0.8, 0:0.5
+ *   RSSI_EN BIT[15]:           RSSI Enabled, 1:ON, 0:OFF
+ *   RSSI_Gain_CTR BIT[14:13]:  RSSI gain control, 00:None, 01: -6dB, 10: -12dB, 11: -18dB
+ *   MIXL_GC BIT[12]:           RX MIXL gain control, 1: 14dB, 0: 8dB
+ *   PA_BC BIT[11:10]:          PA DC output current, 00: ×1, 01: ×2, 10: ×3, 11: ×4
+ *   LNA_GC BIT[9:8]:           LNA gain control, 11: 17dB, 10: 11dB, 01: 5.4dB, 00: -0.4dB
+ *   VCO_BIAS BIT[7:5]:         VCO current, 000:900uA, 001:1050uA, 010:1200uA, 011:1350uA, 100:1500uA, 101:1650uA, 110:1800uA, 111:1950uA
+ *   RES_SEL BIT[4:3]:          Bias current resistor, 00: 26kR, 01: 24kR, 10: 22kR, 11: 20kR
+ *   LNA_HCURR BIT[2]:          LNA high current enabled, 1:ON, 0:OFF
+ *   MIXL_BC BIT[1]:            RX MIXL current, 1: ×1, 0: ×0.5
+ *   IB_BPF_TRIM BIT[0]:        RX band pass filter current, 1: ×1, 0: ×0.5
+ * 
+ * 1F BB_CAL BIT[39:0]          * 0x12, 0xED, 0x67, 0x9C, 0x46 *
+ *   Reserved BIT[39:32]:       Only 0X01000110 allowed
+ *   INVERTER BIT[31]:          Whether to reverse the RX path data before entering RX Block, 1: reverse, 0: remain unchanged
+ *   DAC_MODE BIT[30]:          The format of dac_out[5:0] for DAC input, 1:dac_out[5:0]<= [0:5], 0: dac_out[5:0]<= [5:0]
+ *   DAC_BASAL BIT[29:24]:      The initial offset of DAC input
+ *   TRX_TIME BIT[23:21]:       The time from sending carrier to sending data packet = TRX_TIME * 8 + 7.5
+ *   EX_PA_TIME BIT[20:16]      The time from TX PLL enable to PA enable = EX_PA_TIME*16, the unit is us.
+ *   TX_SETUP_TIME BIT[15:11]:  The time from PA enable to TX PLL Open = TX_SETUP_TIME*16, the unit is us
+ *   RX_SETUP_TIME BIT[10:6]:   The time from RX PLL enable to RX enable = RX_SETUP_TIME*16, the unit is us
+ *   RX_ACK_TIME BIT[5:0]:      The time from entering RX mode to waiting ACK = RX_ACK_TIME*16(2Mbps), RX_ACK_TIME*32(1Mbps), RX_ACK_TIME*128(250Kbps)
 */
 
 #define XN297L_TEST_ADDR         "XN297"

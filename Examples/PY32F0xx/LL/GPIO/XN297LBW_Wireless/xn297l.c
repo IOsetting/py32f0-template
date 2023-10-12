@@ -15,6 +15,13 @@
 #include <stdio.h>
 #include "xn297l.h"
 
+const uint8_t 
+    BB_cal_data[]    = {0x12,0xED,0x67,0x9C,0x46},
+    RF_cal_data[]    = {0xF6,0x3F,0x5D},
+    RF_cal2_data[]   = {0x45,0x21,0xEF,0x2C,0x5A,0x42},
+    Dem_cal_data[]   = {0x01},
+    Dem_cal2_data[]  = {0x0B,0xDF,0x02};
+
 uint8_t cbuf[2], xbuf[XN297L_PLOAD_WIDTH + 1];
 
 /**
@@ -113,12 +120,6 @@ void XN297L_ReadToBuf(uint8_t reg, uint8_t *pBuf, uint8_t len)
 
 void XN297L_Init(void)
 {
-    uint8_t BB_cal_data[]    = {0x12,0xED,0x67,0x9C,0x46};
-    uint8_t RF_cal_data[]    = {0xF6,0x3F,0x5D};
-    uint8_t RF_cal2_data[]   = {0x45,0x21,0xEF,0x2C,0x5A,0x42};
-    uint8_t Dem_cal_data[]   = {0x01};
-    uint8_t Dem_cal2_data[]  = {0x0B,0xDF,0x02}; 
-
     XN297L_WriteReg(XN297L_CMD_RST_FSPI, 0x5A); // Soft reset
     XN297L_WriteReg(XN297L_CMD_RST_FSPI, 0XA5);
 
@@ -275,27 +276,14 @@ uint8_t XN297L_PrintStatus(void)
 {
     uint8_t i, status;
 
-    printf("Bytes from low to high: 0,1,2,3,...\r\n[Config]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_CONFIG));
+    printf("\r\n[Config]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_CONFIG));
+    printf("  [EN_AA]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_EN_AA));
+    printf("  [EN_RxAddr]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_EN_RXADDR));
+    printf("  [AddrWidth]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_SETUP_AW));
+    printf("  [Retry]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_SETUP_RETR));
 
-    printf("  [EN_AA]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_EN_AA));
-
-    printf("  [EN_RxAddr]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_EN_RXADDR));
-
-    printf("  [AddrWidth]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_SETUP_AW));
-
-    printf("  [Retry]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_SETUP_RETR));
-
-    printf("\r\n[RF_Channel]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_RF_CH));
-
-    printf("  [RF_Setup]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_RF_SETUP));
-
+    printf("\r\n[RF_Channel]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_RF_CH));
+    printf("  [RF_Setup]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_RF_SETUP));
     printf("  [Observe_Tx]");
     XN297L_ReadToBuf(XN297L_CMD_R_REGISTER | XN297L_REG_OBSERVE_TX, xbuf, 4);
     for (i = 0; i < 4; i++) {
@@ -352,14 +340,10 @@ uint8_t XN297L_PrintStatus(void)
     for (i = 0; i < 3; i++) {
         printf("%02X", *(xbuf + i));
     }
-    printf("  [DynPloadWidth]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_DYNPD));
-    printf("  [Feature]");
-    printf("0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_FEATURE));
+    printf("  [DynPloadWidth]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_DYNPD));
+    printf("  [Feature]0x%02X", XN297L_ReadReg(XN297L_CMD_R_REGISTER | XN297L_REG_FEATURE));
 
     status = XN297L_ReadStatus();
-    printf("\r\n[Status]");
-    printf("0x%02X", status);
-    printf("\r\n\r\n");
+    printf("\r\n[Status]0x%02X\r\n\r\n", status);
     return status;
 }

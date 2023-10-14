@@ -122,7 +122,6 @@ int main(void)
   while(1)
   {
     i++;
-    // Around 10% performance improvement comparing to XL2400_Tx()
     if (XN297L_TxFast(tmp, XN297L_PLOAD_WIDTH) == SUCCESS)
     {
       j++;

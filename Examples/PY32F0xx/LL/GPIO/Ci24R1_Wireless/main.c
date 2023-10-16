@@ -16,7 +16,7 @@
 #include "py32f0xx_bsp_clock.h"
 #include "ci24r1.h"
 
-// 0:TX, 1:RX
+// 0:RX, 1:TX
 #define XL2400_MODE 0
 
 const uint8_t TX_ADDRESS[5] = {0x11,0x33,0x33,0x33,0x11};
@@ -33,9 +33,9 @@ extern uint8_t xbuf[CI24R1_PLOAD_MAX_WIDTH + 1];
 
 int main(void)
 {
-  uint8_t status;
+  uint8_t i = 0, j = 0, status;
   /* Set clock = 48MHz */
-  BSP_RCC_HSI_8MConfig();
+  BSP_RCC_HSI_PLL48MConfig();
   /* Enable peripheral clock */
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA | LL_IOP_GRP1_PERIPH_GPIOB);
 
@@ -54,20 +54,6 @@ int main(void)
   CI24R1_Init();
 
 #if XL2400_MODE == 0
-  CI24R1_SetChannel(60);
-  CI24R1_SetTxMode();
-  CI24R1_SetTxAddress(TX_ADDRESS);
-  CI24R1_SetRxAddress(RX_ADDRESS);
-  printf("CI24R1 TX Initialized\r\n");
-
-  while (1)
-  {
-    CI24R1_PrintStatus();
-    status = CI24R1_Tx(tmp, CI24R1_PLOAD_WIDTH);
-    printf("status: %02X\r\n", status);
-    LL_mDelay(500);
-  }
-#else
   // RX
   CI24R1_SetChannel(60);
   CI24R1_SetRxMode();
@@ -77,10 +63,32 @@ int main(void)
 
   while(1)
   {
-      CI24R1_PrintStatus();
-      CI24R1_Rx();
-      printf("\r\n");
-      LL_mDelay(10);
+      status = CI24R1_Rx();
+      printf("%02X %02X%02X...%02X\r\n", status, *xbuf, *(xbuf + 1), *(xbuf + CI24R1_PLOAD_WIDTH - 1));
+  }
+#else
+  // TX
+  CI24R1_SetChannel(60);
+  CI24R1_SetTxMode();
+  CI24R1_SetTxAddress(TX_ADDRESS);
+  CI24R1_SetRxAddress(RX_ADDRESS);
+  printf("CI24R1 TX Initialized\r\n");
+
+  while (1)
+  {
+    status = CI24R1_Tx2(tmp, CI24R1_PLOAD_WIDTH);
+
+    i++;
+    if (status & CI24R1_FLAG_TX_SENT)
+    {
+      j++;
+    }
+    if (i == 0xFF)
+    {
+      printf("%02X\r\n", j);
+      i = 0;
+      j = 0;
+    }
   }
 #endif
 }

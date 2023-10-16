@@ -175,7 +175,7 @@ void CI24R1_Init(void)
 #else
     // Fixed payload length
     CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_DYNPD, 0x00);
-    CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_FEATURE, 0x03);
+    CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_FEATURE, 0x00);
     // Length of pipe 0
     CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_RX_PW_P0, CI24R1_PLOAD_WIDTH);
     // Length of pipe 1
@@ -219,9 +219,36 @@ uint8_t CI24R1_Tx(uint8_t *ucPayload, uint8_t length)
     return status;
 }
 
+uint8_t CI24R1_Tx2(uint8_t *ucPayload, uint8_t length)
+{
+    uint8_t y = 100, status = 0;
+    //CI24R1_WriteReg(CI24R1_CMD_FLUSH_TX, CI24R1_CMD_NOP);
+#if (CI24R1_PLOAD_WIDTH == 0)
+    CI24R1_WriteFromBuf(CI24R1_CMD_W_TX_PAYLOAD, ucPayload, length);
+#else
+    CI24R1_WriteFromBuf(CI24R1_CMD_W_TX_PAYLOAD, ucPayload, CI24R1_PLOAD_WIDTH);
+#endif
+    CI24R1_CE_HIGH();
+    // Retry until timeout
+    while (y--)
+    {
+        LL_mDelay(1);
+        status = CI24R1_ReadStatus();
+        // If TX successful or retry timeout, exit
+        if ((status & (CI24R1_FLAG_MAX_RT | CI24R1_FLAG_TX_SENT)) != 0)
+        {
+            //printf(" %d %02X ", y, status);
+            break;
+        }
+    }
+    // Clear status flags
+    CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_STATUS, status);
+    return status;
+}
+
 uint8_t CI24R1_Rx(void)
 {
-    uint8_t i, status, rxplWidth;
+    uint8_t status, rxplWidth;
     CI24R1_WriteReg(CI24R1_CMD_FLUSH_RX, CI24R1_CMD_NOP);
     CI24R1_WriteReg(CI24R1_CMD_SELIRQ, CI24R1_CMD_NOP);
     CI24R1_DATA_IN();
@@ -229,7 +256,6 @@ uint8_t CI24R1_Rx(void)
     CI24R1_DATA_OUT();
     CI24R1_WriteReg(CI24R1_CMD_SELSPI, CI24R1_CMD_NOP);
     status = CI24R1_ReadStatus();
-    printf("%02X", status);
     if (status & CI24R1_FLAG_RX_READY)
     {
 #if CI24R1_PLOAD_WIDTH == 0
@@ -241,10 +267,10 @@ uint8_t CI24R1_Rx(void)
         CI24R1_ReadToBuf(CI24R1_CMD_R_RX_PAYLOAD, xbuf, rxplWidth);
         // Clear status flags
         CI24R1_WriteReg(CI24R1_CMD_W_REGISTER | CI24R1_REG_STATUS, status);
-        for (i = 0; i < rxplWidth; i++)
-        {
-            printf("%02X", *(xbuf_data + i));
-        }
+        // for (i = 0; i < rxplWidth; i++)
+        // {
+        //     printf("%02X", *(xbuf_data + i));
+        // }
     }
     return status;
 }

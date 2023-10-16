@@ -18,7 +18,7 @@
 #include "main.h"
 #include "string.h"
 
-#define CI24R1_PLOAD_WIDTH       16  // Payload width, 0:dynamic, [1,32]:fixed
+#define CI24R1_PLOAD_WIDTH       32  // Payload width, 0:dynamic, [1,32]:fixed
 
 #define CI24R1_DATA_OUT()        LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT)
 #define CI24R1_DATA_IN()         LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_7, LL_GPIO_MODE_INPUT)
@@ -137,6 +137,7 @@ void CI24R1_SetTxMode(void);
 void CI24R1_SetRxMode(void);
 
 uint8_t CI24R1_Tx(uint8_t *ucPayload, uint8_t length);
+uint8_t CI24R1_Tx2(uint8_t *ucPayload, uint8_t length);
 uint8_t CI24R1_Rx(void);
 
 uint8_t CI24R1_ReadStatus(void);

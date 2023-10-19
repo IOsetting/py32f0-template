@@ -1,8 +1,11 @@
 /***
- * Demo: ADC With DMA Triggered by TIM1
+ * Demo: 4-Channel ADC With DMA Triggered by TIM1
  * 
  * PY32          
  * PA4      ------> Input voltage between 0V ~ 3.3V
+ * PA5      ------> Input voltage between 0V ~ 3.3V
+ * PA6      ------> Input voltage between 0V ~ 3.3V
+ * PA7      ------> Input voltage between 0V ~ 3.3V
  * 
  * PA2(TX)  ------> RX
  * PA3(RX)  ------> TX
@@ -11,11 +14,8 @@
 #include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_bsp_printf.h"
 
-#define VDDA_APPLI                       ((uint32_t)3300)
+__IO uint16_t ADCxConvertedDatas[4];
 
-__IO uint16_t uhADCxConvertedData_Voltage_mVolt = 0;
-
-static uint32_t ADCxConvertedDatas;
 
 static void APP_ADCConfig(void);
 static void APP_TimerInit(void);
@@ -26,11 +26,11 @@ int main(void)
   BSP_RCC_HSI_PLL48MConfig();
 
   BSP_USART_Config(115200);
-  printf("ADC Timer Trigger DMA Demo\r\nClock: %ld\r\n", SystemCoreClock);
+  printf("Timer Trigger 4-Channel ADC DMA Demo\r\nClock: %ld\r\n", SystemCoreClock);
 
   APP_DMAConfig();
   APP_ADCConfig();
-  // Start ADC regular conversion and wait for next external trigger
+  // Start ADC regular conversion
   LL_ADC_REG_StartConversion(ADC1);
 
   APP_TimerInit();
@@ -75,8 +75,8 @@ static void APP_ADCConfig(void)
   }
   // Calibrate end
 
-  /* PA4 as ADC input, can be multiple pins */
-  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_ANALOG);
+  /* PA4,PA5,PA6,PA7 as ADC input */
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4| LL_GPIO_PIN_5| LL_GPIO_PIN_6 | LL_GPIO_PIN_7, LL_GPIO_MODE_ANALOG);
   /* Set ADC channel and clock source when ADEN=0, set other configurations when ADSTART=0 */
   LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_NONE);
 
@@ -89,14 +89,15 @@ static void APP_ADCConfig(void)
   /* Set TIM1 as trigger source */
   LL_ADC_REG_SetTriggerSource(ADC1, LL_ADC_REG_TRIG_EXT_TIM1_TRGO);
   LL_ADC_REG_SetTriggerEdge(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
+  /* Single conversion mode (CONT = 0, DISCEN = 0), performs a single sequence of conversions, converting all the channels once */
   LL_ADC_REG_SetContinuousMode(ADC1, LL_ADC_REG_CONV_SINGLE);
 
   LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_UNLIMITED);
   LL_ADC_REG_SetOverrun(ADC1, LL_ADC_REG_OVR_DATA_OVERWRITTEN);
   /* Enable: each conversions in the sequence need to be triggerred separately */
   LL_ADC_REG_SetSequencerDiscont(ADC1, LL_ADC_REG_SEQ_DISCONT_DISABLE);
-  /* Can be multiple channels */
-  LL_ADC_REG_SetSequencerChannels(ADC1, LL_ADC_CHANNEL_4);
+  /* Set channel 4/5/6/7 */
+  LL_ADC_REG_SetSequencerChannels(ADC1, LL_ADC_CHANNEL_4 | LL_ADC_CHANNEL_5 | LL_ADC_CHANNEL_6 | LL_ADC_CHANNEL_7);
 
   LL_ADC_Enable(ADC1);
 }
@@ -116,16 +117,16 @@ static void APP_DMAConfig(void)
   LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_CIRCULAR);
   // Peripheral address no increment
   LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PERIPH_NOINCREMENT);
-  // Memory address no increment
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_NOINCREMENT);
+  // Memory address increment
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_INCREMENT);
   // Peripheral data alignment : Word
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_WORD);
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_HALFWORD);
   // Memory data alignment : Word
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_WORD);
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_HALFWORD);
   // Data length
-  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, 1);
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, 4);
   // Sorce and target address
-  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_1, (uint32_t)&ADC1->DR, (uint32_t)&ADCxConvertedDatas, LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1));
+  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_1, (uint32_t)&ADC1->DR, (uint32_t)ADCxConvertedDatas, LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1));
   // Enable DMA channel 1
   LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
   // Enable transfer-complete interrupt
@@ -137,9 +138,12 @@ static void APP_DMAConfig(void)
 
 void APP_TransferCompleteCallback(void)
 {
-  /* Convert the adc value to voltage value */
-  uhADCxConvertedData_Voltage_mVolt = __LL_ADC_CALC_DATA_TO_VOLTAGE(VDDA_APPLI, ADCxConvertedDatas, LL_ADC_RESOLUTION_12B);
-  printf("Channel4 voltage %d mV\r\n", uhADCxConvertedData_Voltage_mVolt);
+  printf("Read value:");
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    printf(" %d", *(ADCxConvertedDatas + i));
+  }
+  printf("\r\n");
 }
 
 void APP_ErrorHandler(void)

@@ -15,24 +15,23 @@
 #include <stdio.h>
 #include "74hc165.h"
 
-
 uint8_t HC165_Read(void)
 {
-	uint8_t i, data = 0;
+    uint8_t i, data = 0;
 
-	HC165_LD_LOW();     // Pull down LD to load parallel inputs
-	HC165_LD_HIGH();    // Pull up to inhibit parallel loading
+    HC165_LD_LOW();  // Pull down LD to load parallel inputs
+    HC165_LD_HIGH(); // Pull up to inhibit parallel loading
 
     for (i = 0; i < 8; i++)
     {
         data = data << 1;
         HC165_SCK_LOW();
-        __NOP();        // NOP to ensure reading correct value
+        __NOP(); // NOP to ensure reading correct value
         if (HC165_DATA_READ())
         {
             data |= 0x01;
         }
         HC165_SCK_HIGH();
     }
-	return data;
+    return data;
 }

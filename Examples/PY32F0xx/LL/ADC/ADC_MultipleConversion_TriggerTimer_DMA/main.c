@@ -76,7 +76,11 @@ static void APP_ADCConfig(void)
   // Calibrate end
 
   /* PA4,PA5,PA6,PA7 as ADC input */
-  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4| LL_GPIO_PIN_5| LL_GPIO_PIN_6 | LL_GPIO_PIN_7, LL_GPIO_MODE_ANALOG);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_ANALOG);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_5, LL_GPIO_MODE_ANALOG);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_6, LL_GPIO_MODE_ANALOG);
+  LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_7, LL_GPIO_MODE_ANALOG);
+  
   /* Set ADC channel and clock source when ADEN=0, set other configurations when ADSTART=0 */
   LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_NONE);
 

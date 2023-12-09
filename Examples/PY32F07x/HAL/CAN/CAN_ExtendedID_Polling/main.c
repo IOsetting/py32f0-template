@@ -58,7 +58,7 @@ int main(void)
   CanFilter.Rank           = CAN_FILTER_RANK_CHANNEL_NUMBER;
   CanFilter.FilterID       = RX_ID;
   CanFilter.FilterFormat   = 0xFFFFFFFF;
-  CanFilter.MaskID         = 0x0; /* Use all 29 bits for ID comparison */
+  CanFilter.MaskID         = 0xE0000000; /* Use all 29 bits for ID comparison */
   CanFilter.MaskFormat     = 0xFFFFFFFF;
   if (HAL_CAN_ConfigFilter(&CanHandle, &CanFilter) != HAL_OK)
   {

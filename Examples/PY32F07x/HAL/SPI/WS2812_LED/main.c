@@ -20,7 +20,7 @@ int main(void)
   BSP_HSI_24MHzClockConfig();
 
   BSP_USART_Config();
-  printf("PY32F07x WS2818 Example\r\nClock: %ld\r\n", SystemCoreClock);
+  printf("PY32F07x WS2812 Example\r\nClock: %ld\r\n", SystemCoreClock);
   
   APP_SPI_Config();
 

@@ -20,8 +20,11 @@ extern "C" {
 
 HAL_StatusTypeDef BSP_HSI_8MHzClockConfig(void);
 HAL_StatusTypeDef BSP_HSI_24MHzClockConfig(void);
+HAL_StatusTypeDef BSP_HSI_PLL_72MHzClockConfig(void);
 
 HAL_StatusTypeDef BSP_HSE_ClockConfig(void);
+HAL_StatusTypeDef BSP_HSE_PLLx2_ClockConfig(void);
+HAL_StatusTypeDef BSP_HSE_PLLx3_ClockConfig(void);
 
 #ifdef __cplusplus
 }

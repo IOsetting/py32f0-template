@@ -19,6 +19,8 @@ extern "C" {
 #include "py32f07x_hal.h"
 
 HAL_StatusTypeDef BSP_HSI_8MHzClockConfig(void);
+HAL_StatusTypeDef BSP_HSI_24MHzClockConfig(void);
+
 HAL_StatusTypeDef BSP_HSE_ClockConfig(void);
 
 #ifdef __cplusplus

@@ -18,6 +18,9 @@
 #include "main.h"
 #include "string.h"
 
+/** Options: USE_XL2400, USE_XL2400P */
+#define USE_XL2400
+
 #define XL2400_PLOAD_WIDTH       32   // Payload width
 
 #define XL2400_DATA_OUT()        LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_7, LL_GPIO_MODE_OUTPUT)
@@ -132,7 +135,6 @@ void XL2400_SetRxAddress(const uint8_t *address);
 void XL2400_SetPower(uint8_t power);
 
 void XL2400_Sleep(void);
-void XL2400_WakeUp(void);
 
 ErrorStatus XL2400_RxCalibrate(void);
 

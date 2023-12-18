@@ -57,8 +57,8 @@ int main(void)
 
 #if XL2400_MODE == 0
   XL2400_SetChannel(78);
-  XL2400_SetTxAddress(RX_ADDRESS);
-  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_SetTxAddress(TX_ADDRESS);
+  XL2400_SetRxAddress(RX_ADDRESS);
   XL2400_SetTxMode();
   printf("XL2400 TX Initialized\r\n");
 
@@ -86,7 +86,6 @@ int main(void)
   XL2400_SetChannel(77);
   XL2400_SetTxAddress(RX_ADDRESS);
   XL2400_SetRxAddress(TX_ADDRESS);
-  XL2400_WakeUp();
   printf("XL2400 RX Initialized\r\n");
 
   while (1)
@@ -97,15 +96,15 @@ int main(void)
       status = XL2400_Rx();
       if (status & RX_DR_FLAG)
       {
-        printf(".");
         for (i = 0; i < 32; i++)
         {
           printf("%02X", *(xbuf + i));
         }
+        printf("\r\n");
       }
-      //LL_mDelay(1);
+      LL_mDelay(1);
     }
-    printf("\r\n");
+    //printf("\r\n");
     //XL2400_PrintStatus();
     //XL2400_Sleep();
   }

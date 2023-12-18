@@ -40,6 +40,7 @@ void XL2400_WriteByte(uint8_t value)
         XL2400_CLK_HIGH();
         value = value << 1;
     }
+    XL2400_DATA_HIGH();
     XL2400_CLK_LOW();
 }
 
@@ -113,22 +114,41 @@ void XL2400_ReadToBuf(uint8_t reg, uint8_t *pBuf, uint8_t len)
 
 void XL2400_CE_Low(void)
 {
+#ifdef USE_XL2400P
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0xEE);
+#else
     XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
     *(cbuf + 1) &= 0xBF;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
+#endif
 }
 
 void XL2400_CE_High(void)
 {
+#ifdef USE_XL2400P
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0xEF);
+#else
     XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
     *(cbuf + 1) |= 0x40;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
+#endif
 }
 
 ErrorStatus XL2400_SPI_Test(void)
 {
     uint8_t i;
     const uint8_t *ptr = (const uint8_t *)XL2400_TEST_ADDR;
+
+#ifdef USE_XL2400P
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x02);
+    LL_mDelay(2);
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x3E);
+    LL_mDelay(2);
+    XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_ANALOG_CFG3, xbuf, 6);
+    xbuf[5] = (xbuf[5] | 0x6d);
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_ANALOG_CFG3, xbuf, 6);
+#endif
+
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_TX_ADDR, ptr, 5);
     XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_TX_ADDR, xbuf, 5);
     for (i = 0; i < 5; i++) {
@@ -140,15 +160,32 @@ ErrorStatus XL2400_SPI_Test(void)
 
 void XL2400_Init(void)
 {
+#ifdef USE_XL2400P
+    // Reset EN_PM, POWER_UP
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x02);
+    LL_mDelay(2);
+    // Set EN_PM, POWER_UP
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x3E);
+    LL_mDelay(2);
+    XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_ANALOG_CFG3, xbuf, 6);
+    xbuf[5] = (xbuf[5] | 0x6d);
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_ANALOG_CFG3, xbuf, 6);
+#else
     // Analog config
     XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_ANALOG_CFG0, xbuf, 13);
     *(xbuf + 4) &= ~0x04;
     *(xbuf + 12) |= 0x40;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_ANALOG_CFG0, xbuf, 13);
     // Switch to software CE control, wake up RF
-    XL2400_WakeUp();
-    // Enable Auto ACK Pipe 0
-    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_EN_AA, 0x3F);
+    *(xbuf + 0) = 0x7E;
+    *(xbuf + 1) = 0x82;
+    *(xbuf + 2) = 0x0B;
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, xbuf, 3);
+    XL2400_CE_Low();
+    XL2400_ClearStatus();
+#endif
+    // Enable Auto ACK
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_EN_AA, 0x1F);
     // Enable Pipe 0
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_EN_RXADDR, 0x3F);
     // Address Width, 5 bytes
@@ -181,6 +218,12 @@ void XL2400_Init(void)
 void XL2400_SetChannel(uint8_t channel)
 {
     if (channel > 80) channel = 80;
+#ifdef USE_XL2400P
+    *cbuf = XL2400_ReadReg(XL2400_CMD_R_REGISTER | XL2400_REG_EN_AA);
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_EN_AA, *cbuf & ~0x40);
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_RF_CH, 0x60 + channel);
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_EN_AA, *cbuf | 0x40);
+#else
     // AFC reset
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_ANALOG_CFG0, 0x06);
     // AFC on
@@ -192,6 +235,7 @@ void XL2400_SetChannel(uint8_t channel)
     // AFC Locked
     *(cbuf + 1) |= 0x20;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_RF_CH, cbuf, 2);
+#endif
 }
 
 void XL2400_SetTxAddress(const uint8_t *address)
@@ -207,13 +251,22 @@ void XL2400_SetRxAddress(const uint8_t *address)
 
 void XL2400_SetPower(uint8_t power)
 {
+#ifdef USE_XL2400P
+    XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_RF_SETUP, xbuf, 2);
+	*(xbuf + 1) = power;
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_RF_SETUP, xbuf, 2);
+#else
     XL2400_ReadToBuf(XL2400_CMD_R_REGISTER | XL2400_REG_RF_CH, xbuf, 3);
     *(xbuf + 2) = power;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_RF_CH, xbuf, 3);
+#endif
 }
 
 void XL2400_Sleep(void)
 {
+#ifdef USE_XL2400P
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x00);
+#else
     XL2400_CE_Low();
     XL2400_ClearStatus();
 
@@ -221,16 +274,7 @@ void XL2400_Sleep(void)
     *(xbuf + 1) = 0x82;
     *(xbuf + 2) = 0x03;
     XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, xbuf, 3);
-}
-
-void XL2400_WakeUp(void)
-{
-    *(xbuf + 0) = 0x7E;
-    *(xbuf + 1) = 0x82;
-    *(xbuf + 2) = 0x0B;
-    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, xbuf, 3);
-    XL2400_CE_Low();
-    XL2400_ClearStatus();
+#endif
 }
 
 ErrorStatus XL2400_RxCalibrate(void)
@@ -265,19 +309,33 @@ ErrorStatus XL2400_RxCalibrate(void)
 
 void XL2400_SetTxMode(void)
 {
+#ifdef USE_XL2400P
+    cbuf[0] = 0xee;
+    cbuf[1] = 0x80;
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
+    XL2400_ClearStatus();
+#else
     XL2400_CE_Low();
     XL2400_ClearStatus();
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x7E);
     XL2400_RxCalibrate();
-    LL_mDelay(2);
+#endif
+    LL_mDelay(1);
 }
 
 void XL2400_SetRxMode(void)
 {
+#ifdef USE_XL2400P
+    cbuf[0] = 0xee;
+    cbuf[1] = 0xc0;
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, cbuf, 2);
+    XL2400_ClearStatus();
+#else
     XL2400_CE_Low();
     XL2400_ClearStatus();
     XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0x7F);
     // XL2400_RxCalibrate();
+#endif
     XL2400_CE_High();
     LL_mDelay(1);
 }
@@ -305,7 +363,7 @@ uint8_t XL2400_Tx(uint8_t *ucPayload, uint8_t length)
 
 uint8_t XL2400_Rx(void)
 {
-    uint8_t i, status, rxplWidth;
+    uint8_t status, rxplWidth;
     status = XL2400_ReadStatus();
     if (status & RX_DR_FLAG)
     {

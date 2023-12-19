@@ -277,6 +277,35 @@ void XL2400_Sleep(void)
 #endif
 }
 
+/**
+ * For XL2400 only
+*/
+void XL2400_WakeUp(void)
+{
+#ifdef USE_XL2400
+    *(xbuf + 0) = 0x7E;
+    *(xbuf + 1) = 0x82;
+    *(xbuf + 2) = 0x0B;
+    XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, xbuf, 3);
+    XL2400_CE_Low();
+    XL2400_ClearStatus();
+#endif
+}
+
+/**
+ * For XL2400P only.
+ * XL2400 uses sleep & wakeup
+*/
+void XL2400_Reset(void)
+{
+#ifdef USE_XL2400P
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0xEA);
+    LL_mDelay(0);
+    XL2400_WriteReg(XL2400_CMD_W_REGISTER | XL2400_REG_CFG_TOP, 0xEE);
+    LL_mDelay(1);
+#endif
+}
+
 ErrorStatus XL2400_RxCalibrate(void)
 {
     uint8_t i, j;

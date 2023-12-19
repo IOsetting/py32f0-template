@@ -55,7 +55,7 @@
 #define XL2400_CMD_NOP           0xFF // No operation (used for reading status register)
 
 /******************CONTROL  REGISTER ******************/
-#define XL2400_REG_CFG_TOP       0x00 // Configuration register, 20 bits
+#define XL2400_REG_CFG_TOP       0x00 // Configuration register, 20 bits. (XL2400P: bit[7] controls CE high/low)
 #define XL2400_REG_EN_AA         0x01 // Enable "Auto acknowledgment"
 #define XL2400_REG_EN_RXADDR     0x02 // Enable RX addresses
 #define XL2400_REG_SETUP_AW      0x03 // Setup of address widths
@@ -135,6 +135,8 @@ void XL2400_SetRxAddress(const uint8_t *address);
 void XL2400_SetPower(uint8_t power);
 
 void XL2400_Sleep(void);
+void XL2400_WakeUp(void);
+void XL2400_Reset(void);
 
 ErrorStatus XL2400_RxCalibrate(void);
 

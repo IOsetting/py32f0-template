@@ -18,6 +18,9 @@
 #include "main.h"
 #include "string.h"
 
+/** Options: USE_XL2400, USE_XL2400P */
+#define USE_XL2400P
+
 #define XL2400_PLOAD_WIDTH       32   // Payload width
 
 #define XL2400_NSS_LOW()         LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)
@@ -92,8 +95,10 @@
 #define XL2400_RF__12DB          0x04
 #define XL2400_RF__18DB          0x02
 #define XL2400_RF__24DB          0x01
-#define XL2400_RF_DR_1M          0x02 // 1Mbps
-#define XL2400_RF_DR_250K        0x22 // 250Kbps
+#define XL2400_RF_DR_2M          0x08 // 2Mbps
+#define XL2400_RF_DR_1M          0x00 // 1Mbps
+#define XL2400_RF_DR_250K        0x20 // 250Kbps
+#define XL2400_RF_DR_125K        0x28 // 125Kbps
 
 #define XL2400_FLAG_RX_DR        0X40   // Data ready
 #define XL2400_FLAG_TX_DS        0X20   // Data sent
@@ -125,6 +130,7 @@ void XL2400_SetPower(uint8_t power);
 
 void XL2400_Sleep(void);
 void XL2400_WakeUp(void);
+void XL2400_Reset(void);
 
 ErrorStatus XL2400_RxCalibrate(void);
 

@@ -63,7 +63,6 @@ int main(void)
   XL2400_SetChannel(77);
   XL2400_SetTxAddress(RX_ADDRESS);
   XL2400_SetRxAddress(TX_ADDRESS);
-  XL2400_WakeUp();
   XL2400_SetRxMode();
   printf("XL2400 RX Mode\r\n");
 
@@ -79,8 +78,8 @@ int main(void)
 
 #elif XL2400_MODE == 1
   XL2400_SetChannel(78);
-  XL2400_SetTxAddress(RX_ADDRESS);
-  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_SetTxAddress(TX_ADDRESS);
+  XL2400_SetRxAddress(RX_ADDRESS);
   XL2400_SetTxMode();
   printf("XL2400 TX Mode\r\n");
 
@@ -97,11 +96,13 @@ int main(void)
       i = 0;
       j = 0;
     }
+    printf("\r\n");
+    LL_mDelay(1000);
   }
 #else
   XL2400_SetChannel(78);
-  XL2400_SetTxAddress(RX_ADDRESS);
-  XL2400_SetRxAddress(TX_ADDRESS);
+  XL2400_SetTxAddress(TX_ADDRESS);
+  XL2400_SetRxAddress(RX_ADDRESS);
   XL2400_SetTxMode();
   printf("XL2400 TX Fast Mode\r\n");
 
@@ -125,6 +126,8 @@ int main(void)
       i = 0;
       j = 0;
     }
+    printf("\r\n");
+    LL_mDelay(1000);
   }
 #endif
 }

@@ -24,9 +24,11 @@
 #define ADXL345_DEFAULT_ADDRESS     (0x53) // Assumes ALT address pin low
 #define ADXL345_DEVICE_ID           (0xE5)
 
-#define ADXL345_REG_DEVID           (0x00) // R,   Device ID
+#define ADXL345_REG_DEVID           (0x00) // R,   DEVID register holds a fixed device ID code of 0xE5 (345 octal)
 #define ADXL345_REG_THRESH_TAP      (0x1D) // R/W, Tap threshold
-#define ADXL345_REG_OFSX            (0x1E) // R/W, X-axis offset
+#define ADXL345_REG_OFSX            (0x1E) // R/W, X-axis offset, The value stored in the offset registers is 
+                                           //   automatically added to the acceleration data, and the resulting 
+                                           //   value is stored in the output data registers
 #define ADXL345_REG_OFSY            (0x1F) // R/W, Y-axis offset
 #define ADXL345_REG_OFSZ            (0x20) // R/W, Z-axis offset
 #define ADXL345_REG_DUR             (0x21) // R/W, Tap duration
@@ -80,12 +82,12 @@ typedef enum {
     ADXL345_DATARATE_3200_HZ  = 0x0F, // 1600Hz Bandwidth
     ADXL345_DATARATE_1600_HZ  = 0x0E, //  800Hz Bandwidth
     ADXL345_DATARATE_800_HZ   = 0x0D, //  400Hz Bandwidth
-    ADXL345_DATARATE_400_HZ   = 0x0C, //  200Hz Bandwidth
-    ADXL345_DATARATE_200_HZ   = 0x0B, //  100Hz Bandwidth
-    ADXL345_DATARATE_100_HZ   = 0x0A, //   50Hz Bandwidth (default)
-    ADXL345_DATARATE_50_HZ    = 0x09, //   25Hz Bandwidth
-    ADXL345_DATARATE_25_HZ    = 0x08, // 12.5Hz Bandwidth
-    ADXL345_DATARATE_12_5_HZ  = 0x07, // 6.25Hz Bandwidth
+    ADXL345_DATARATE_400_HZ   = 0x0C, //  200Hz Bandwidth, 90 µA
+    ADXL345_DATARATE_200_HZ   = 0x0B, //  100Hz Bandwidth, 60 µA
+    ADXL345_DATARATE_100_HZ   = 0x0A, //   50Hz Bandwidth, 50 µA (default)
+    ADXL345_DATARATE_50_HZ    = 0x09, //   25Hz Bandwidth, 45 µA
+    ADXL345_DATARATE_25_HZ    = 0x08, // 12.5Hz Bandwidth, 40 µA
+    ADXL345_DATARATE_12_5_HZ  = 0x07, // 6.25Hz Bandwidth, 34 µA
     ADXL345_DATARATE_6_25HZ   = 0x06, // 3.13Hz Bandwidth
     ADXL345_DATARATE_3_13_HZ  = 0x05, // 1.56Hz Bandwidth
     ADXL345_DATARATE_1_56_HZ  = 0x04, // 0.78Hz Bandwidth
@@ -148,6 +150,7 @@ typedef enum {
 
 uint8_t ADXL345_ReadByte(uint8_t addr);
 int16_t ADXL345_ReadInt(uint8_t addr);
+void ADXL345_BurstRead(uint8_t addr, uint8_t *pBuf, uint8_t size);
 
 void ADXL345_WriteByte(uint8_t addr, uint8_t dat);
 

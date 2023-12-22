@@ -18,7 +18,7 @@
 #include "adxl345.h"
 
 __IO uint8_t count_int1 = 0, count_int2 = 0, count_double_tap = 0;
-__IO int16_t x, y, z;
+__IO int16_t xbuf[3];
 
 static void APP_GPIOConfig(void);
 static void APP_SPIConfig(void);
@@ -58,20 +58,26 @@ int main(void)
   ADXL345_WriteByte(ADXL345_REG_WINDOW, 0xF0);
   ADXL345_EnableTapDetectOnAxes(
       ADXL345_TAP_DETECT_AXIS_X|ADXL345_TAP_DETECT_AXIS_Y|ADXL345_TAP_DETECT_AXIS_Z);
+  // Remap DATA_READY to INT2
+  ADXL345_RemapInterrupts(ADXL345_INT_DATA_READY);
   ADXL345_SetInterrupts(
       ADXL345_INT_DATA_READY|ADXL345_INT_SINGLE_TAP|ADXL345_INT_DOUBLE_TAP);
-  ADXL345_RemapInterrupts(ADXL345_INT_DATA_READY);
-
-  x = ADXL345_ReadInt(ADXL345_REG_DATAX0);
-  y = ADXL345_ReadInt(ADXL345_REG_DATAY0);
-  z = ADXL345_ReadInt(ADXL345_REG_DATAZ0);
-  x = ADXL345_ReadByte(ADXL345_REG_INT_SOURCE);
+  /*
+   * The interrupt functions are latched and cleared by either reading the data registers 
+   * (Address 0x32 to Address 0x37) until the interrupt condition is no longer valid for 
+   * the data-related interrupts or by reading the INT_SOURCE register (Address 0x30) for 
+   * the remaining interrupts.
+   */
+  // or ADXL345_BurstRead(ADXL345_REG_DATAX0, (uint8_t *)xbuf, 6);
+  xbuf[0] = ADXL345_ReadInt(ADXL345_REG_DATAX0);
+  xbuf[0] = ADXL345_ReadInt(ADXL345_REG_DATAY0);
+  xbuf[0] = ADXL345_ReadInt(ADXL345_REG_DATAZ0);
+  xbuf[0] = ADXL345_ReadByte(ADXL345_REG_INT_SOURCE);
 
   while (1)
   {
-    
     printf("X:%6d, Y:%6d, Z:%6d, DAT:%3d, TAP:%3d, 2-TAP:%3d\r\n",
-           x, y, z, count_int2, count_int1, count_double_tap);
+           xbuf[0], xbuf[1], xbuf[2], count_int2, count_int1, count_double_tap);
     LL_mDelay(50);
   }
 }
@@ -173,7 +179,7 @@ uint8_t SPI_TxRxByte(uint8_t data)
 
 void EXTI4_15_IRQHandler(void)
 {
-  if (LL_EXTI_IsActiveFlag(LL_EXTI_LINE_4))
+  if (LL_EXTI_IsActiveFlag(LL_EXTI_LINE_4)) // PA4 -> INT1
   {
     count_int1++;
     if (ADXL345_IsInterrupt(ADXL345_INT_DOUBLE_TAP) > 0)
@@ -182,12 +188,10 @@ void EXTI4_15_IRQHandler(void)
     }
     LL_EXTI_ClearFlag(LL_EXTI_LINE_4);
   }
-  else if (LL_EXTI_IsActiveFlag(LL_EXTI_LINE_5))
+  else if (LL_EXTI_IsActiveFlag(LL_EXTI_LINE_5)) // PA5 -> INT2
   {
     count_int2++;
-    x = ADXL345_ReadInt(ADXL345_REG_DATAX0);
-    y = ADXL345_ReadInt(ADXL345_REG_DATAY0);
-    z = ADXL345_ReadInt(ADXL345_REG_DATAZ0);
+    ADXL345_BurstRead(ADXL345_REG_DATAX0, (uint8_t *)xbuf, 6);
     LL_EXTI_ClearFlag(LL_EXTI_LINE_5);
   }
 }

@@ -18,7 +18,7 @@ extern "C" {
 #include "py32f0xx_ll_utils.h"
 
 void APP_I2C_Transmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, uint16_t size);
-uint8_t APP_I2C_Receive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uint16_t size);
+void APP_I2C_Receive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uint16_t size);
 
 void APP_ErrorHandler(void);
 

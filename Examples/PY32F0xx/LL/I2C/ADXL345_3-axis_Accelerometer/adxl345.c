@@ -20,17 +20,23 @@ uint8_t ADXL345_ReadByte(uint8_t addr)
 {
     uint8_t ret;
     APP_I2C_Receive(ADXL345_DEFAULT_ADDRESS, addr, &ret, 1);
+    // Add delay when i2c speed is 100khz
+    //LL_mDelay(1);
     return ret;
 }
 
 void ADXL345_BurstRead(uint8_t addr, uint8_t *pBuf, uint8_t size)
 {
     APP_I2C_Receive(ADXL345_DEFAULT_ADDRESS, addr, pBuf, size);
+    // Add delay when i2c speed is 100khz
+    //LL_mDelay(1);
 }
 
 void ADXL345_WriteByte(uint8_t addr, uint8_t dat)
 {
     APP_I2C_Transmit(ADXL345_DEFAULT_ADDRESS, addr, &dat, 1);
+    // Add delay when i2c speed is 100khz
+    //LL_mDelay(1);
 }
 
 ErrorStatus ADXL345_Init(

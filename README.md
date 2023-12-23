@@ -24,8 +24,6 @@ Frequency up to 48 MHz, 16 to 64 Kbytes of Flash memory, 3 to 8 Kbytes of SRAM.
 
 Frequency up to 24 MHz, 24 Kbytes of Flash memory, 3 Kbytes of SRAM.
 
-* PY32F001
-  * ?
 * PY32F002B
   * PY32F002Bx(24KB Flash/3KB RAM)
 
@@ -50,11 +48,11 @@ Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more
 │   │   ├── HAL                 # HAL library examples
 │   │   └── LL                  # LL(Low Layer) library examples
 │   ├── PY32F07x                # PY32F07x examples
-│   │   └── HAL
-│   └── PY32F0xx
+│   │   └── HAL                 # HAL library examples
+│   └── PY32F0xx                # PY32F002A,PY32F003,PY32F030 examples
 │       ├── FreeRTOS            # FreeRTOS examples
-│       ├── HAL
-│       └── LL
+│       ├── HAL                 # HAL library examples
+│       └── LL                  # LL(Low Layer) library examples
 ├── Libraries
 │   ├── CMSIS
 │   ├── EPaper                  # Waveshare e-paper library

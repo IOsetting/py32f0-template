@@ -33,6 +33,12 @@ static uint8_t L3G4200D_ReadByte(uint8_t reg)
     return ret;
 }
 
+static void L3G4200D_BurstRead(uint8_t reg, uint8_t *buf, uint8_t size)
+{
+    // bit[7] must be equal to 1 in order to read multiple bytes
+    APP_I2C_Receive(L3G4200D_ADDRESS, reg | 0x80, buf, size);
+}
+
 ErrorStatus L3G4200D_Begin(l3g4200d_dps_t scale, l3g4200d_odrbw_t odrbw)
 {
     // Check L3G4200D Who Am I Register
@@ -95,11 +101,7 @@ uint8_t L3G4200D_GetThreshold(void)
 
 void L3G4200D_ReadRaw(int16_t *xbuf)
 {
-    uint8_t i, *p = (uint8_t *)xbuf;
-    for (i = 0; i < 6; i++)
-    {
-        *(p + i) = L3G4200D_ReadByte(L3G4200D_REG_OUT_X_L + i);
-    }
+    L3G4200D_BurstRead(L3G4200D_REG_OUT_X_L, (uint8_t *)xbuf, 6);
 }
 
 void L3G4200D_ReadNormalize(int16_t *xbuf)

@@ -41,12 +41,12 @@ extern "C" {
 
 #define DEBUG_USART_RX_GPIO_PORT                GPIOA
 #define DEBUG_USART_RX_GPIO_CLK_ENABLE()        LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA)
-#define DEBUG_USART_RX_PIN                      LL_GPIO_PIN_3
+#define DEBUG_USART_RX_PIN                      LL_GPIO_PIN_4
 #define DEBUG_USART_RX_AF                       LL_GPIO_AF_1
 
 #define DEBUG_USART_TX_GPIO_PORT                GPIOA
 #define DEBUG_USART_TX_GPIO_CLK_ENABLE()        LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA)
-#define DEBUG_USART_TX_PIN                      LL_GPIO_PIN_2
+#define DEBUG_USART_TX_PIN                      LL_GPIO_PIN_3
 #define DEBUG_USART_TX_AF                       LL_GPIO_AF_1
 
 #define DEBUG_USART_IRQHandler                  USART1_IRQHandler

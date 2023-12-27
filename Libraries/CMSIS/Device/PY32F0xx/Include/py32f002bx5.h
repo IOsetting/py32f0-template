@@ -3716,8 +3716,8 @@ typedef struct
 /*********************** UART Instances : IRDA mode ***************************/
 #define IS_IRDA_INSTANCE(INSTANCE) ((INSTANCE) == USART1)
 
-
-
+/******** Enable 48MHz HSI *********/
+#define RCC_HSI48M_SUPPORT
 /**
   * @}
   */

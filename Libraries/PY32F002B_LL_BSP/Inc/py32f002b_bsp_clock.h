@@ -23,6 +23,7 @@ extern "C" {
 #include "py32f002b_ll_usart.h"
 
 void BSP_RCC_HSI_24MConfig(void);
+void BSP_RCC_HSI_48MConfig(void);
 
 
 #ifdef __cplusplus

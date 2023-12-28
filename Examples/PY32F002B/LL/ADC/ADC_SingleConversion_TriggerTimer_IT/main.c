@@ -156,7 +156,7 @@ void ADC_COMP_IRQHandler(void)
     adcRead = LL_ADC_REG_ReadConversionData12(ADC1);
     /* Convert the adc value to voltage value */
     mVoltage = __LL_ADC_CALC_DATA_TO_VOLTAGE(VDDA_APPLI, adcRead, LL_ADC_RESOLUTION_12B);
-    printf("Channel5 %ld, voltage %d mV\r\n", adcRead, mVoltage);
+    printf("Read %ld, voltage %d mV\r\n", adcRead, mVoltage);
   }
 }
 

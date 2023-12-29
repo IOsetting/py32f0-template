@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    py32f0xx_it.h
+  * @file    py32f002b_it.h
   * @author  MCU Application Team
   * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
@@ -22,8 +22,8 @@
 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __PY32F0XX_IT_H
-#define __PY32F0XX_IT_H
+#ifndef __PY32F002B_IT_H
+#define __PY32F002B_IT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +44,6 @@ void SysTick_Handler(void);
 }
 #endif
 
-#endif /* __PY32F0XX_IT_H */
+#endif /* __PY32F002B_IT_H */
 
 /************************ (C) COPYRIGHT Puya *****END OF FILE******************/

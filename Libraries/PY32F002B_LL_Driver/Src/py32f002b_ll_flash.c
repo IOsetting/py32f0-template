@@ -1,0 +1,1016 @@
+/**
+  ******************************************************************************
+  * @file    py32f002b_ll_flash.c
+  * @author  MCU Application Team
+  * @brief   FLASH LL module driver.
+  *          This file provides firmware functions to manage the following
+  *          functionalities of the internal FLASH memory:
+  *           + Program operations functions
+  *           + Memory Control functions
+  *           + Peripheral Errors functions
+  *
+ @verbatim
+
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; Copyright (c) Puya Semiconductor Co.
+  * All rights reserved.</center></h2>
+  *
+  * <h2><center>&copy; Copyright (c) 2016 STMicroelectronics.
+  * All rights reserved.</center></h2>
+  *
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
+  *
+  ******************************************************************************
+  */
+
+/* Includes ------------------------------------------------------------------*/
+#include "py32f002b_ll_flash.h"
+#include "py32f002b_ll_utils.h"
+
+#ifdef  USE_FULL_ASSERT
+  #include "py32_assert.h"
+#else
+  #define assert_param(expr) ((void)0U)
+#endif
+
+/** @defgroup FLASH FLASH
+  * @brief FLASH LL module driver
+  * @{
+  */
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private defines -----------------------------------------------------------*/
+/* Private macros ------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+
+#if defined ( __GNUC__ ) && !defined (__CC_ARM) /* GNU Compiler */
+#ifndef __weak
+#define __weak   __attribute__((weak))
+#endif /* __weak */
+#ifndef __packed
+#define __packed __attribute__((__packed__))
+#endif /* __packed */
+#endif /* __GNUC__ */
+
+/**
+  * @brief  __RAM_FUNC definition
+  */
+#if defined ( __CC_ARM   )
+/* ARM Compiler
+   ------------
+   RAM functions are defined using the toolchain options.
+   Functions that are executed in RAM should reside in a separate source module.
+   Using the 'Options for File' dialog you can simply change the 'Code / Const'
+   area of a module to a memory space in physical RAM.
+   Available memory areas are declared in the 'Target' tab of the 'Options for Target'
+   dialog.
+*/
+#define __RAM_FUNC
+
+#elif defined ( __ICCARM__ )
+/* ICCARM Compiler
+   ---------------
+   RAM functions are defined using a specific toolchain keyword "__ramfunc".
+*/
+#define __RAM_FUNC __ramfunc
+
+#elif defined   (  __GNUC__  )
+/* GNU Compiler
+   ------------
+  RAM functions are defined using a specific toolchain attribute
+   "__attribute__((section(".RamFunc")))".
+*/
+#define __RAM_FUNC __attribute__((section(".RamFunc")))
+
+#endif
+
+/** @defgroup FLASH_Private_Variables FLASH Private Variables
+ * @{
+ */
+
+#define __LL_FLASH_LOCK(__HANDLE__)                                           \
+                                do{                                        \
+                                    if((__HANDLE__)->Lock == LL_LOCKED)   \
+                                    {                                      \
+                                       return ERROR;                    \
+                                    }                                      \
+                                    else                                   \
+                                    {                                      \
+                                       (__HANDLE__)->Lock = LL_LOCKED;    \
+                                    }                                      \
+                                  }while (0U)
+
+#define __LL_FLASH_UNLOCK(__HANDLE__)                                          \
+                                  do{                                       \
+                                      (__HANDLE__)->Lock = LL_UNLOCKED;    \
+                                    }while (0U)
+
+/**
+  * @brief  Variable used for Program/Erase sectors under interruption
+  */
+FLASH_ProcessTypeDef pFlash  = {.Lock = LL_UNLOCKED, \
+                                .ErrorCode = LL_FLASH_ERROR_NONE, \
+                                .ProcedureOnGoing = FLASH_TYPENONE, \
+                                .Address = 0U, \
+                                .PageOrSector = 0U, \
+                                .NbPagesSectorsToErase = 0U
+                               };
+/**
+  * @}
+  */
+const uint32_t _FlashTimmingParam[8] = {0x1FFF011C, 0x1FFF011C, 0x1FFF011C, 0x1FFF011C, 0x1FFF011C, 0x1FFF0130, 0x1FFF011C, 0x1FFF011C};
+
+/**
+  * @brief  Option byte program.
+  * @note   Enable this configuration, you need to add the corresponding optionbyte FLM file
+  */
+#ifdef FLASH_OPT_PROGRAM_ENABLED
+#if defined ( __GNUC__ ) && !defined (__CC_ARM) /* GNU Compiler */
+    const uint32_t u32ICG[] __attribute__((section(".opt_sec"))) =
+#elif defined (__CC_ARM)
+    const uint32_t u32ICG[] __attribute__((at(OB_BASE))) =
+#elif defined (__ICCARM__)
+    __root const uint32_t u32ICG[] @ OB_BASE =
+#else
+    #error "unsupported compiler!!"
+#endif
+{
+    FLASH_OPTR_CONSTANT,
+    FLASH_SDKR_CONSTANT,
+    0xFFFFFFFF,
+    FLASH_WRPR_CONSTANT,
+};
+#endif /* FLASH_OPT_PROGRAM_ENABLED */
+
+/* Private function prototypes -----------------------------------------------*/
+/** @defgroup FLASH_Private_Functions FLASH Private Functions
+ * @{
+ */
+static void FLASH_MassErase(void);
+static void FLASH_Program_Page(uint32_t Address, uint32_t * DataAddress);
+static void FLASH_PageErase(uint32_t PageAddress);
+/**
+  * @}
+  */
+
+/**
+  * @brief  Unlock the FLASH control register access.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_Unlock(void)
+{
+  ErrorStatus status = SUCCESS;
+
+  if (READ_BIT(FLASH->CR, FLASH_CR_LOCK) != 0x00U)
+  {
+    /* Authorize the FLASH Registers access */
+    WRITE_REG(FLASH->KEYR, FLASH_KEY1);
+    WRITE_REG(FLASH->KEYR, FLASH_KEY2);
+
+    /* verify Flash is unlock */
+    if (READ_BIT(FLASH->CR, FLASH_CR_LOCK) != 0x00U)
+    {
+      status = ERROR;
+    }
+  }
+
+  return status;
+}
+
+/**
+  * @brief  Lock the FLASH control register access.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_Lock(void)
+{
+  ErrorStatus status = ERROR;
+
+  /* Set the LOCK Bit to lock the FLASH Registers access */
+  SET_BIT(FLASH->CR, FLASH_CR_LOCK);
+
+  /* verify Flash is locked */
+  if (READ_BIT(FLASH->CR, FLASH_CR_LOCK) != 0x00u)
+  {
+    status = SUCCESS;
+  }
+
+  return status;
+}
+
+/**
+  * @brief  Unlock the FLASH Option Bytes Registers access.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_OB_Unlock(void)
+{
+  ErrorStatus status = ERROR;
+
+  if (READ_BIT(FLASH->CR, FLASH_CR_OPTLOCK) != 0x00U)
+  {
+    /* Authorizes the Option Byte register programming */
+    WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY1);
+    WRITE_REG(FLASH->OPTKEYR, FLASH_OPTKEY2);
+
+    /* verify option bytes are unlocked */
+    if (READ_BIT(FLASH->CR, FLASH_CR_OPTLOCK) == 0x00U)
+    {
+      status = SUCCESS;
+    }
+  }
+
+  return status;
+}
+
+/**
+  * @brief  Lock the FLASH Option Bytes Registers access.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_OB_Lock(void)
+{
+  ErrorStatus status = ERROR;
+
+  /* Set the OPTLOCK Bit to lock the FLASH Option Byte Registers access */
+  SET_BIT(FLASH->CR, FLASH_CR_OPTLOCK);
+
+  /* verify option bytes are locked */
+  if (READ_BIT(FLASH->CR, FLASH_CR_OPTLOCK) != 0x00u)
+  {
+    status = SUCCESS;
+  }
+
+  return status;
+}
+
+/**
+  * @brief  Launch the option byte loading.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_OB_Launch(void)
+{
+  /* Set the bit to force the option byte reloading */
+  SET_BIT(FLASH->CR, FLASH_CR_OBL_LAUNCH);
+
+  /* We should not reach here : Option byte launch generates Option byte reset
+     so return error */
+  return ERROR;
+}
+
+/**
+  * @brief  Get the specific FLASH error flag.
+  * @retval FLASH_ErrorCode The returned value can be
+  *            @arg @ref LL_FLASH_ERROR_NONE No error set
+  *            @arg @ref LL_FLASH_ERROR_WRP FLASH Write protection error
+  *            @arg @ref LL_FLASH_ERROR_OPTV FLASH Option validity error
+  * @note (*) availability depends on devices
+  */
+uint32_t LL_FLASH_GetError(void)
+{
+  return pFlash.ErrorCode;
+}
+
+/**
+  * @brief  Wait for a FLASH operation to complete.
+  * @param  Timeout maximum flash operation timeout
+  * @retval ErrorStatus ErrorStatus
+  */
+ErrorStatus FLASH_WaitForLastOperation(uint32_t Timeout)
+{
+  /* Wait for the FLASH operation to complete by polling on BUSY flag to be reset.
+     Even if the FLASH operation fails, the BUSY flag will be reset and an error
+     flag will be set */
+
+  /* Wait if any operation is ongoing */
+  while (__LL_FLASH_GET_FLAG(FLASH_FLAG_BSY) != 0x00U)
+  {
+    if (Timeout-- == 0)
+    {
+      return ERROR;
+    }
+    LL_mDelay(1);
+  }
+
+  /* Clear SR register */
+  FLASH->SR = FLASH_FLAG_SR_CLEAR;
+
+  return SUCCESS;
+}
+
+
+/**
+  * @brief  Full erase of FLASH memory Bank
+  *
+  * @retval None
+  */
+static void FLASH_MassErase(void)
+{
+  /* Clean the error context */
+  pFlash.ErrorCode = LL_FLASH_ERROR_NONE;
+  /* Only bank1 will be erased*/
+  SET_BIT(FLASH->CR, FLASH_CR_MER);
+  *(__IO uint32_t *)(0x08000000) = 0x12344321;
+}
+
+/**
+  * @brief  Page erase of FLASH memory
+  *
+  * @retval None
+  */
+static void FLASH_PageErase(uint32_t PageAddress)
+{
+  /* Clean the error context */
+  pFlash.ErrorCode = LL_FLASH_ERROR_NONE;
+  SET_BIT(FLASH->CR, FLASH_CR_PER);
+  *(__IO uint32_t *)(PageAddress) = 0xFF;
+}
+
+/**
+  * @brief  Sector erase of FLASH memory
+  *
+  * @retval None
+  */
+static void FLASH_SectorErase(uint32_t SectorAddress)
+{
+  SET_BIT(FLASH->CR, FLASH_CR_SER);
+  *(__IO uint32_t *)(SectorAddress) = 0xFF;
+}
+
+/**
+  * @brief  Page program of FLASH memory
+  *
+  * @retval None
+  */
+static void FLASH_Program_Page(uint32_t Address, uint32_t * DataAddress)
+{
+
+  uint8_t index=0;
+  uint32_t dest = Address;
+  uint32_t * src = DataAddress;
+  uint32_t primask_bit;
+
+  SET_BIT(FLASH->CR, FLASH_CR_PG);
+  /* Enter critical section */
+  primask_bit = __get_PRIMASK();
+  __disable_irq();
+  /* 32 words*/
+  while(index<32U)
+  {
+    *(uint32_t *)dest = *src;
+    src += 1U;
+    dest += 4U;
+    index++;
+    if(index==31)
+    {
+      SET_BIT(FLASH->CR, FLASH_CR_PGSTRT);
+    }
+  }
+
+  /* Exit critical section: restore previous priority mask */
+  __set_PRIMASK(primask_bit);
+}
+
+/**
+  * @brief  Perform a mass erase or erase the specified FLASH memory pages
+  * @note   To correctly run this function, the @ref LL_FLASH_Unlock() function
+  *         must be called before.
+  *         Call the @ref LL_FLASH_Lock() to disable the flash memory access
+  *         (recommended to protect the FLASH memory against possible unwanted operation)
+  * @param[in]  pEraseInit pointer to an FLASH_EraseInitTypeDef structure that
+  *         contains the configuration information for the erasing.
+  *
+  * @param[out]  PageSectorError pointer to variable  that
+  *         contains the configuration information on faulty page or sector in case of error
+  *         (0xFFFFFFFF means that all the pages or sectors have been correctly erased)
+  *
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t *PageSectorError)
+{
+  ErrorStatus status = ERROR;
+  uint32_t address = 0U;
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Check the parameters */
+  assert_param(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
+
+  if (pEraseInit->TypeErase == FLASH_TYPEERASE_MASSERASE)
+  {
+    /* Mass Erase requested for Bank1 */
+    /* Wait for last operation to be completed */
+    if (FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE) == SUCCESS)
+    {
+      /*Mass erase to be done*/
+      FLASH_MassErase();
+
+      /* Wait for last operation to be completed */
+      status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
+
+      /* If the erase operation is completed, disable the MER Bit */
+      CLEAR_BIT(FLASH->CR, FLASH_CR_MER);
+    }
+  }else if(pEraseInit->TypeErase == FLASH_TYPEERASE_PAGEERASE)
+  {
+    /* Page Erase is requested */
+    /* Check the parameters */
+    assert_param(IS_FLASH_PROGRAM_ADDRESS(pEraseInit->PageAddress));
+    assert_param(IS_FLASH_NB_PAGES(pEraseInit->PageAddress, pEraseInit->NbPages));
+
+    /* Wait for last operation to be completed */
+    if (FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE) == SUCCESS)
+    {
+      /*Initialization of PageSectorError variable*/
+      *PageSectorError = 0xFFFFFFFFU;
+
+      /* Erase page by page to be done*/
+      for(address = pEraseInit->PageAddress;
+          address < ((pEraseInit->NbPages * FLASH_PAGE_SIZE) + pEraseInit->PageAddress);
+          address += FLASH_PAGE_SIZE)
+      {
+        FLASH_PageErase(address);
+
+        /* Wait for last operation to be completed */
+        status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
+        /* If the erase operation is completed, disable the PER Bit */
+        CLEAR_BIT(FLASH->CR, FLASH_CR_PER);
+        if (status != SUCCESS)
+        {
+          /* In case of error, stop erase procedure and return the faulty address */
+          *PageSectorError = address;
+          break;
+        }
+      }
+    }
+  }
+  else if(pEraseInit->TypeErase == FLASH_TYPEERASE_SECTORERASE)
+  {
+    /* Sector Erase is requested */
+    /* Check the parameters */
+    assert_param(IS_FLASH_PROGRAM_ADDRESS(pEraseInit->SectorAddress));
+    assert_param(IS_FLASH_NB_SECTORS(pEraseInit->SectorAddress, pEraseInit->NbSectors));
+
+    /* Wait for last operation to be completed */
+    if (FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE) == SUCCESS)
+    {
+      /*Initialization of PageSectorError variable*/
+      *PageSectorError = 0xFFFFFFFFU;
+
+      /* Erase page by page to be done*/
+      for(address = pEraseInit->SectorAddress;
+          address < ((pEraseInit->NbSectors * FLASH_SECTOR_SIZE) + pEraseInit->SectorAddress);
+          address += FLASH_SECTOR_SIZE)
+      {
+        FLASH_SectorErase(address);
+        /* Wait for last operation to be completed */
+        status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
+        /* If the erase operation is completed, disable the SER Bit */
+        CLEAR_BIT(FLASH->CR, FLASH_CR_SER);
+        if (status != SUCCESS)
+        {
+          /* In case of error, stop erase procedure and return the faulty address */
+          *PageSectorError = address;
+          break;
+        }
+      }  
+    }
+  }
+
+  /* Process Unlocked */
+  __LL_FLASH_UNLOCK(&pFlash);
+
+  return status;
+}
+
+
+/**
+  * @brief  Perform a mass erase or erase the specified FLASH memory pages with interrupt enabled.
+  * @param  pEraseInit Pointer to an @ref FLASH_EraseInitTypeDef structure that
+  *         contains the configuration information for the erasing.
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit)
+{
+  ErrorStatus status;
+
+  /* Check the parameters */
+  assert_param(IS_FLASH_TYPEERASE(pEraseInit->TypeErase));
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Reset error code */
+  pFlash.ErrorCode = LL_FLASH_ERROR_NONE;
+
+  /* save procedure for interrupt treatment */
+  pFlash.ProcedureOnGoing = pEraseInit->TypeErase;
+
+  /* Wait for last operation to be completed */
+  status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+
+  if (status != SUCCESS)
+  {
+    /* Process Unlocked */
+    __LL_FLASH_UNLOCK(&pFlash);
+  }
+  else
+  {
+    /* Enable End of Operation and Error interrupts */
+    FLASH->CR |= FLASH_CR_EOPIE | FLASH_CR_ERRIE;
+
+    if (pEraseInit->TypeErase == FLASH_TYPEERASE_MASSERASE)
+    {
+      /* Set Page to 0 for Interrupt callback management */
+      pFlash.PageOrSector = 0;
+
+      /* Proceed to Mass Erase */
+      FLASH_MassErase();
+    }else if (pEraseInit->TypeErase == FLASH_TYPEERASE_PAGEERASE)
+    {
+      /* Erase by page to be done */
+      pFlash.NbPagesSectorsToErase = pEraseInit->NbPages;
+      pFlash.PageOrSector = pEraseInit->PageAddress;
+
+      /*Erase 1st page and wait for IT */
+      FLASH_PageErase(pEraseInit->PageAddress);
+    }else if (pEraseInit->TypeErase == FLASH_TYPEERASE_SECTORERASE)
+    {
+      /* Erase by sector to be done */
+      pFlash.NbPagesSectorsToErase = pEraseInit->NbSectors;
+      pFlash.PageOrSector = pEraseInit->SectorAddress;
+        
+      FLASH_SectorErase(pEraseInit->SectorAddress);
+    }
+  }
+
+  /* return status */
+  return status;
+}
+
+/**
+  * @brief  Program of a page at a specified address.
+  * @param  Address Specifies the address to be programmed.
+  * @param  DataAddr:Page Start Address
+  *
+  * @retval ErrorStatus status
+  */
+ErrorStatus LL_FLASH_PageProgram(uint32_t Address, uint32_t * DataAddr )
+{
+   return LL_FLASH_Program(FLASH_TYPEPROGRAM_PAGE, Address, DataAddr);
+}
+
+/**
+  * @brief  Program of a page at a specified address.
+  * @param  TypeProgram Indicate the way to program at a specified address.
+  *                      This parameter can be a value of @ref FLASH_Type_Program
+  * @param  Address Specifies the address to be programmed.
+  * @param  DataAddr:Page Start Address
+  *
+  * @retval ErrorStatus status
+  */
+ErrorStatus LL_FLASH_Program(uint32_t TypeProgram, uint32_t Address, uint32_t * DataAddr )
+{
+  ErrorStatus status = ERROR;
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Check the parameters */
+  assert_param(IS_FLASH_TYPEPROGRAM(TypeProgram));
+  assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+
+  /* must be the first address of the PAGE */
+  if(Address%FLASH_PAGE_SIZE)
+  {
+    return ERROR;
+  }
+
+  /* Wait for last operation to be completed */
+  status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+
+  if(status == SUCCESS)
+  {
+    FLASH_Program_Page(Address, DataAddr);
+
+    /* Wait for last operation to be completed */
+    status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+    /* If the program operation is completed, disable the PG Bit */
+    CLEAR_BIT(FLASH->CR, FLASH_CR_PG);
+    /* In case of error, stop programming procedure */
+    if (status != SUCCESS)
+    {
+      return status;
+    }
+  }
+
+  /* Process Unlocked */
+  __LL_FLASH_UNLOCK(&pFlash);
+
+  return status;
+}
+
+/**
+  * @brief  Program of a page at a specified address with interrupt enabled.
+  * @param  Address  Specifies the address to be programmed.
+  * @param  DataAddr Specifies the buffer address to be programmed.
+  *
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_PageProgram_IT(uint32_t Address, uint32_t *DataAddr)
+{
+  return LL_FLASH_Program_IT(FLASH_TYPEPROGRAM_PAGE, Address, DataAddr);
+}
+
+/**
+  * @brief  Program of a page at a specified address with interrupt enabled.
+  * @param  TypeProgram Indicate the way to program at a specified address.
+  *                      This parameter can be a value of @ref FLASH_Type_Program
+  * @param  Address Specifies the address to be programmed.
+  * @param  DataAddr Specifies the buffer address to be programmed.
+  *
+  * @retval ErrorStatus
+  */
+ErrorStatus LL_FLASH_Program_IT(uint32_t TypeProgram, uint32_t Address, uint32_t *DataAddr)
+{
+  ErrorStatus status;
+
+  /* Check the parameters */
+  assert_param(IS_FLASH_TYPEPROGRAM(TypeProgram));
+  assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Reset error code */
+  pFlash.ErrorCode = LL_FLASH_ERROR_NONE;
+
+  /* Wait for last operation to be completed */
+  status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
+
+  if (status != SUCCESS)
+  {
+    /* Process Unlocked */
+    __LL_FLASH_UNLOCK(&pFlash);
+  }else
+  {
+    /* Set internal variables used by the IRQ handler */
+    pFlash.ProcedureOnGoing = TypeProgram;
+    pFlash.Address = Address;
+
+    /* Enable End of Operation and Error interrupts */
+    __LL_FLASH_ENABLE_IT(FLASH_IT_EOP | FLASH_IT_OPERR);
+
+    FLASH_Program_Page(Address, DataAddr);
+  }
+
+  /* return status */
+  return status;
+}
+
+/**
+  * @brief  Set User configuration
+  * @param  UserType  The FLASH User Option Bytes to be modified.
+  *         This parameter can be a combination of @ref FLASH_OB_USER_Type
+  * @param  UserConfig  The FLASH User Option Bytes values.
+  *         This parameter can be a combination of:
+  *           @arg @ref FLASH_OB_USER_BOR_ENABLE
+  *           @arg @ref FLASH_OB_USER_BOR_LEVEL
+  *           @arg @ref FLASH_OB_USER_IWDG_STOP
+  *           @arg @ref FLASH_OB_USER_IWDG_SW
+  *           @arg @ref FLASH_OB_USER_SWD_NRST
+  * @retval None
+  */
+static void FLASH_OB_OptrConfig(uint32_t UserType, uint32_t UserConfig)
+{
+  uint32_t optr;
+
+  /* Check the parameters */
+  assert_param(IS_OB_USER_TYPE(UserType));
+  assert_param(IS_OB_USER_CONFIG(UserType, UserConfig));
+
+  optr = FLASH->OPTR;
+
+  optr &= ~(UserType | 0xff);
+  FLASH->OPTR = (optr | UserConfig | 0xAA);
+}
+
+/**
+  * @brief  Program option bytes
+  * @note   The function @ref LL_FLASH_Unlock() should be called before to unlock the FLASH interface
+  *         The function @ref LL_FLASH_OB_Unlock() should be called before to unlock the options bytes
+  *         The function @ref LL_FLASH_OB_Launch() should be called after to force the reload of the options bytes
+  *         (system reset will occur)
+  *
+  * @param  pOBInit pointer to an FLASH_OBInitStruct structure that
+  *         contains the configuration information for the programming.
+  *
+  * @retval ErrorStatus status
+  */
+ErrorStatus LL_FLASH_OBProgram(FLASH_OBProgramInitTypeDef *pOBInit)
+{
+  ErrorStatus status = ERROR;
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Check the parameters */
+  assert_param(IS_OPTIONBYTE(pOBInit->OptionType));
+
+  /* WRP register */
+  if ((pOBInit->OptionType & OPTIONBYTE_WRP) != 0)
+  {
+    /* Write protection configuration */
+    FLASH->WRPR = (uint16_t)(~(pOBInit->WRPSector));
+  }
+  
+  /* SDK register */
+  if ((pOBInit->OptionType & OPTIONBYTE_SDK) != 0)
+  {
+    /* SDK protection configuration */
+    FLASH->SDKR = (pOBInit->SDKStartAddr) | (pOBInit->SDKEndAddr<<8);
+  }
+  
+  if ((pOBInit->OptionType & OPTIONBYTE_USER) != 0x00U)
+  {
+    FLASH_OB_OptrConfig(pOBInit->USERType, pOBInit->USERConfig);
+  }
+  else
+  {
+    /* nothing to do */
+  }
+
+  /* starts to modify Flash Option bytes */
+  FLASH->CR|=FLASH_CR_OPTSTRT;
+
+  /* set bit EOPIE */
+  FLASH->CR|=FLASH_CR_EOPIE;
+
+  /* trigger program */
+  *((__IO uint32_t *)(0x40022080))=0xff;
+
+  /* Wait for last operation to be completed */
+  status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
+
+  /* Process Unlocked */
+  __LL_FLASH_UNLOCK(&pFlash);
+
+  return status;
+}
+
+/**
+  * @brief  Program option bytes
+  * @note   The function @ref LL_FLASH_Unlock() should be called before to unlock the FLASH interface
+  *         The function @ref LL_FLASH_OB_Unlock() should be called before to unlock the options bytes
+  *         The function @ref LL_FLASH_OB_Launch() should be called after to force the reload of the options bytes
+  *         (system reset will occur)
+  *
+  * @param  pBOOTInit pointer to an FLASH_OBBootProgramInitTypeDef structure that
+  *         contains the configuration information for the programming.
+  *
+  * @retval ErrorStatus status
+  */
+ErrorStatus LL_FLASH_OBBOOTProgram(FLASH_OBBootProgramInitTypeDef *pBOOTInit)
+{
+  ErrorStatus status = ERROR;
+
+  /* Process Locked */
+  __LL_FLASH_LOCK(&pFlash);
+    
+  /* Config flash timming */
+  __LL_FLASH_TIMMING_SEQUENCE_CONFIG();
+
+  /* Check the parameters */
+  assert_param(IS_OB_BOOTTYPE(pBOOTInit->BOOTType));
+  assert_param(IS_OB_BOOTSIZE(pBOOTInit->BOOTSize));
+ 
+  MODIFY_REG(FLASH->BTCR, FLASH_BTCR_NBOOT1 | FLASH_BTCR_BOOT0 | FLASH_BTCR_BOOT_SIZE ,pBOOTInit->BOOTType | pBOOTInit->BOOTSize );
+
+  /* starts to modify Flash Option bytes */
+  FLASH->CR|=FLASH_CR_OPTSTRT;
+
+  /* set bit EOPIE */
+  FLASH->CR|=FLASH_CR_EOPIE;
+
+  /* trigger program */
+  *((__IO uint32_t *)(0x40022080))=0xff;
+
+  /* Wait for last operation to be completed */
+  status = FLASH_WaitForLastOperation((uint32_t)FLASH_TIMEOUT_VALUE);
+
+  /* Process Unlocked */
+  __LL_FLASH_UNLOCK(&pFlash);
+
+  return status;
+}
+
+/**
+  * @brief   Get the Boot configuration
+  * @param  pBOOTInit pointer to an FLASH_OBInitStruct structure that
+  *         contains the configuration information for the programming.
+  *
+  * @retval None
+  */
+void LL_FLASH_OBBOOTGetConfig(FLASH_OBBootProgramInitTypeDef *pBOOTInit)
+{
+  pBOOTInit->BOOTType= READ_BIT(FLASH->BTCR,FLASH_BTCR_BOOT0 | FLASH_BTCR_NBOOT1 ) ;
+  pBOOTInit->BOOTSize= READ_BIT(FLASH->BTCR,FLASH_BTCR_BOOT_SIZE);
+}
+
+
+/**
+  * @brief   Get the Option byte configuration
+  * @param  pOBInit pointer to an FLASH_OBInitStruct structure that
+  *         contains the configuration information for the programming.
+  *
+  * @retval None
+  */
+void LL_FLASH_OBGetConfig(FLASH_OBProgramInitTypeDef *pOBInit)
+{
+  pOBInit->OptionType = OPTIONBYTE_ALL;
+
+  /* Get WRP sector */
+  pOBInit->WRPSector = (uint16_t)(~FLASH->WRPR);
+
+  /* Get SDK sector */
+  pOBInit->SDKStartAddr = (FLASH->SDKR)&0x1F;
+  pOBInit->SDKEndAddr = ((FLASH->SDKR)&0x1F00)>>8;
+
+  /*Get USER*/
+  pOBInit->USERType = OB_USER_ALL;
+
+  pOBInit->USERConfig = (FLASH->OPTR)&(FLASH_OPTR_IWDG_SW   | FLASH_OPTR_IWDG_STOP |  \
+                                       FLASH_OPTR_NRST_MODE | FLASH_OPTR_BOR_EN   |    \
+                                       FLASH_OPTR_BOR_LEV   | FLASH_OPTR_SWD_MODE);
+
+}
+
+/**
+  * @brief Handle FLASH interrupt request.
+  * @retval None
+  */
+void LL_FLASH_IRQHandler(void)
+{
+  uint32_t param = 0xFFFFFFFFU;
+  uint32_t error;
+
+  /* Save flash errors. Only ECC detection can be checked here as ECCC
+     generates NMI */
+  error = (FLASH->SR & FLASH_FLAG_SR_ERROR);
+
+  CLEAR_BIT(FLASH->CR, pFlash.ProcedureOnGoing);
+
+  /* A] Set parameter for user or error callbacks */
+  /* check operation was a program or erase */
+  if ((pFlash.ProcedureOnGoing & (FLASH_TYPEPROGRAM_PAGE)) != 0x00U)
+  {
+    /* return adress being programmed */
+    param = pFlash.Address;
+  }else if ((pFlash.ProcedureOnGoing & (FLASH_TYPEERASE_MASSERASE | FLASH_TYPEERASE_SECTORERASE | FLASH_TYPEERASE_PAGEERASE)) != 0x00U)
+  {
+    /* return page number being erased (0 for mass erase) */
+    param = pFlash.PageOrSector;
+  }else
+  {
+    /* Nothing to do */
+  }
+
+  /* B] Check errors */
+  if (error != 0x00U)
+  {
+    /*Save the error code*/
+    pFlash.ErrorCode |= error;
+
+    /* clear error flags */
+    __LL_FLASH_CLEAR_FLAG(error);
+
+    /*Stop the procedure ongoing*/
+    pFlash.ProcedureOnGoing = FLASH_TYPENONE;
+
+    /* Error callback */
+    LL_FLASH_OperationErrorCallback(param);
+  }
+
+  /* C] Check FLASH End of Operation flag */
+  if (__LL_FLASH_GET_FLAG(FLASH_FLAG_EOP) != 0x00U)
+  {
+    /* Clear FLASH End of Operation pending bit */
+    __LL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP);
+
+    if (pFlash.ProcedureOnGoing == FLASH_TYPEERASE_PAGEERASE)
+    {
+      /* Nb of pages to erased can be decreased */
+      pFlash.NbPagesSectorsToErase--;
+
+      /* Check if there are still pages to erase*/
+      if (pFlash.NbPagesSectorsToErase != 0x00U)
+      {
+        /* Increment page number */
+        pFlash.PageOrSector += FLASH_PAGE_SIZE;
+        FLASH_PageErase(pFlash.PageOrSector);
+      }else
+      {
+        /* No more pages to erase: stop erase pages procedure */
+        pFlash.ProcedureOnGoing = FLASH_TYPENONE;
+      }
+    }
+    else if (pFlash.ProcedureOnGoing == FLASH_TYPEERASE_SECTORERASE)
+    {
+      /* Nb of sectors to erased can be decreased */
+      pFlash.NbPagesSectorsToErase--;
+
+      /* Check if there are still pages to erase*/
+      if (pFlash.NbPagesSectorsToErase != 0x00U)
+      {
+        /* Increment page number */
+        pFlash.PageOrSector += FLASH_SECTOR_SIZE;
+        FLASH_SectorErase(pFlash.PageOrSector);
+      }else
+      {
+        /* No more pages to erase: stop erase pages procedure */
+        pFlash.ProcedureOnGoing = FLASH_TYPENONE;
+      }
+    }
+    else
+    {
+      /*Stop the ongoing procedure */
+      pFlash.ProcedureOnGoing = FLASH_TYPENONE;
+    }
+
+    /* User callback */
+    LL_FLASH_EndOfOperationCallback(param);
+  }
+
+  if (pFlash.ProcedureOnGoing == FLASH_TYPENONE)
+  {
+    /* Disable End of Operation and Error interrupts */
+    __LL_FLASH_DISABLE_IT(FLASH_IT_EOP | FLASH_IT_OPERR);
+
+    /* Process Unlocked */
+    __LL_FLASH_UNLOCK(&pFlash);
+  }
+}
+
+/**
+  * @brief  FLASH end of operation interrupt callback.
+  * @param  ReturnValue The value saved in this parameter depends on the ongoing procedure
+  *                  Mass Erase: 0
+  *                  Page Erase: Page which has been erased
+  *                  Program: Address which was selected for data program
+  * @retval None
+  */
+__weak void LL_FLASH_EndOfOperationCallback(uint32_t ReturnValue)
+{
+  /* Prevent unused argument(s) compilation warning */
+  (void)(ReturnValue);
+
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the LL_FLASH_EndOfOperationCallback could be implemented in the user file
+   */
+}
+
+/**
+  * @brief  FLASH operation error interrupt callback.
+  * @param  ReturnValue The value saved in this parameter depends on the ongoing procedure
+  *                 Mass Erase: 0
+  *                 Page Erase: Page number which returned an error
+  *                 Program: Address which was selected for data program
+  * @retval None
+  */
+__weak void LL_FLASH_OperationErrorCallback(uint32_t ReturnValue)
+{
+  /* Prevent unused argument(s) compilation warning */
+  (void)(ReturnValue);
+
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the LL_FLASH_OperationErrorCallback could be implemented in the user file
+   */
+}
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+/************************ (C) COPYRIGHT Puya *****END OF FILE****/

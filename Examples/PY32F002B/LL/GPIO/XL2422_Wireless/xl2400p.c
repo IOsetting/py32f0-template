@@ -210,8 +210,8 @@ void XL2400_SetChannel(uint8_t ch)
 
 void XL2400_SetAddress(uint8_t *addr)
 {
-  XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER + XL2400_REG_TX_ADDR, AddrBuff, 5);
-  XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER + XL2400_REG_RX_ADDR_P0, AddrBuff, 5);
+  XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER + XL2400_REG_TX_ADDR, addr, 5);
+  XL2400_WriteFromBuf(XL2400_CMD_W_REGISTER + XL2400_REG_RX_ADDR_P0, addr, 5);
 }
 
 void XL2400_SetPower(uint8_t power)

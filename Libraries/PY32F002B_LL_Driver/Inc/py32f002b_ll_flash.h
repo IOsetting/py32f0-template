@@ -511,8 +511,6 @@ void         LL_FLASH_OperationErrorCallback(uint32_t ReturnValue);
 ErrorStatus  LL_FLASH_Erase(FLASH_EraseInitTypeDef *pEraseInit, uint32_t *PageError);
 ErrorStatus  LL_FLASH_Erase_IT(FLASH_EraseInitTypeDef *pEraseInit);
 
-#define LL_FLASHEx_Erase        LL_FLASH_Erase
-#define LL_FLASHEx_Erase_IT     LL_FLASH_Erase_IT
 /**
   * @}
   */

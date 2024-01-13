@@ -20,14 +20,14 @@ int16_t delta[3], threshold[3];
 
 static void L3G4200D_WriteByte(uint8_t reg, uint8_t value)
 {
-    APP_I2C_Transmit(L3G4200D_ADDRESS, reg, &value, 1);
+    I2C_MemoryWrite(I2C1, L3G4200D_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &value, 1);
     LL_mDelay(1);
 }
 
 static uint8_t L3G4200D_ReadByte(uint8_t reg)
 {
     uint8_t ret;
-    APP_I2C_Receive(L3G4200D_ADDRESS, reg, &ret, 1);
+    I2C_MemoryRead(I2C1, L3G4200D_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &ret, 1);
     // Add delay when i2c speed is 100khz
     //LL_mDelay(1);
     return ret;
@@ -36,7 +36,7 @@ static uint8_t L3G4200D_ReadByte(uint8_t reg)
 static void L3G4200D_BurstRead(uint8_t reg, uint8_t *buf, uint8_t size)
 {
     // bit[7] must be equal to 1 in order to read multiple bytes
-    APP_I2C_Receive(L3G4200D_ADDRESS, reg | 0x80, buf, size);
+    I2C_MemoryRead(I2C1, L3G4200D_ADDRESS, reg | 0x80, I2C_MEMADD_SIZE_8BIT, buf, size);
 }
 
 ErrorStatus L3G4200D_Begin(l3g4200d_dps_t scale, l3g4200d_odrbw_t odrbw)

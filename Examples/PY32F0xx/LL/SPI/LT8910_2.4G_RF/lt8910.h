@@ -81,6 +81,19 @@ extern "C" {
 #define LT8910_BRCLK_APLL_CLK       (0x06 << 1)
 #define LT8910_BRCLK_LOW1           (0x07 << 1)
 
+// Reg 41, bit[15], default 1
+#define LT8910_PKG_CRC_ON           (0x01 << 15)
+// Reg 41, bit[14], default 0
+#define LT8910_PKG_SCRAMBLE_ON      (0x01 << 14)
+// Reg 41, bit[13], default 1
+#define LT8910_PKG_LEN_ENABLE       (0x01 << 13) // bit[13], 0:off, 1:on, first byte indicate the packet length
+// Reg 41, bit[12], default 1
+#define LT8910_FW_TERM_TX           (0x01 << 12) // 1:when FIFO read point equals write point, LT8910 stop TX
+// Reg 41, bit[11], default 1
+#define LT8910_AUTO_ACK_ON          (0x01 << 11)
+// Reg 41, bit[10], default 0
+#define LT8910_PKT_FIFO_POLARITY    (0x01 << 10) // 0:active high, 1:active low
+
 // Reg 44, bit[15, 8], default 0x00
 #define LT8910_DATARATE_1MBPS       (0x01 << 8)
 #define LT8910_DATARATE_250KBPS     (0x04 << 8)

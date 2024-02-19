@@ -21,12 +21,6 @@
 #define R_SYNCWORD4         39
 
 #define R_PACKETCONFIG      41
-#define PACKETCONFIG_CRC_ON             0x8000
-#define PACKETCONFIG_SCRAMBLE_ON        0x4000
-#define PACKETCONFIG_PACK_LEN_ENABLE    0x2000 // bit[13], 0:off, 1:on, first byte indicate the packet length
-#define PACKETCONFIG_FW_TERM_TX         0x1000
-#define PACKETCONFIG_AUTO_ACK           0x0800
-#define PACKETCONFIG_PKT_FIFO_POLARITY  0x0400
 
 #define R_DATARATE          44
 #define R_STATUS            48
@@ -132,7 +126,7 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(38, 0x5A5A);
   LT8910_WriteRegister16(39, 0x5A5A);
   LT8910_WriteRegister16(40, 0x4402);
-  LT8910_WriteRegister16(41, 0xB000);
+  LT8910_WriteRegister16(41, LT8910_PKG_CRC_ON | LT8910_PKG_LEN_ENABLE | LT8910_FW_TERM_TX);
   LT8910_WriteRegister16(42, 0xFDB0);
   LT8910_WriteRegister16(43, 0x000F);
 
@@ -248,7 +242,7 @@ uint8_t LT8910_Rx(uint8_t *pBuf)
       len = LT8910_ReadToBuf(R_FIFO, pBuf);
       //printf("~%d ", len);
     }
-    // Enable RX
+    // Re-enable RX
     LT8910_WriteRegister16(R_CHANNEL, LT8910_RX_EN | _lt8910_channel);
   }
   return len;

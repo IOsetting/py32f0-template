@@ -8,10 +8,6 @@
 #define REGISTER_MASK       0b01111111  //bin
 
 #define R_CHANNEL           7
-#define CHANNEL_RX_BIT      7
-#define CHANNEL_TX_BIT      8
-#define CHANNEL_MASK        0x7F
-#define DEFAULT_CHANNEL     0x30
 
 #define R_CURRENT           9
 #define CURRENT_POWER_SHIFT 12
@@ -105,12 +101,10 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(4, 0x9CC9);
   LT8910_WriteRegister16(5, 0x6637);
   LT8910_WriteRegister16(7, 0x0030);
-  LT8910_WriteRegister16(8, 0x6C90);
-
-  LT8910_WriteRegister16(9, LT8910_1dBm);
-
+  LT8910_WriteRegister16(8, 0x6C90); // Undocumented
+  LT8910_WriteRegister16(9, LT8910__1_4DBM);
   LT8910_WriteRegister16(10, 0x7FFD);
-  LT8910_WriteRegister16(11, 0x0008);   // RSSI on
+  LT8910_WriteRegister16(11, 0x0008); // RSSI on
   LT8910_WriteRegister16(12, 0x0000);
   LT8910_WriteRegister16(13, 0x48BD);
 
@@ -120,10 +114,15 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(25, 0x1659);
   LT8910_WriteRegister16(26, 0x19E0);
 
-  LT8910_WriteRegister16(27, 0x1301);  // 1Mbps
+  LT8910_WriteRegister16(27, 0x1301); // 1Mbps, Undocumented
   LT8910_WriteRegister16(28, 0x1800);
 
-  LT8910_WriteRegister16(32, 0x4800);
+  LT8910_WriteRegister16(32, LT8910_PREAMBLE_3BYTE 
+                           | LT8910_SYNCWORD_32BIT 
+                           | LT8910_TRAILER_4BIT 
+                           | LT8910_PACKET_NRZ_RAW 
+                           | LT8910_BRCLK_LOW0);
+
   LT8910_WriteRegister16(33, 0x3FC7);
   LT8910_WriteRegister16(34, 0x2000);
   LT8910_WriteRegister16(35, 0x0300);
@@ -137,8 +136,8 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(42, 0xFDB0);
   LT8910_WriteRegister16(43, 0x000F);
 
-  LT8910_WriteRegister16(44, LT8910_DATARATE_1MBPS & LT8910_DATARATE_MASK);
-  LT8910_WriteRegister16(45, 0x0152);
+  LT8910_WriteRegister16(44, LT8910_DATARATE_1MBPS);
+  LT8910_WriteRegister16(45, LT8910_DATARATE_1MBPS_OPT);
   LT8910_WriteRegister16(R_FIFO_CONTROL, 0x8080); //Fifo Rx/Tx queue reset
 
   LT8910_SetSyncWord(0x03805a5a03800380);
@@ -156,13 +155,7 @@ void LT8910_Sleep()
 
 void LT8910_SetChannel(uint8_t channel)
 {
-  uint16_t val;
-
-  _lt8910_channel = channel;
-  val = LT8910_ReadRegister(R_CHANNEL);
-  val &= ~CHANNEL_MASK;
-  val |= channel & CHANNEL_MASK;
-  LT8910_WriteRegister16(R_CHANNEL, val);
+  _lt8910_channel = channel & 0x7F;
 }
 
 void LT8910_SetCurrentControl(uint8_t power, uint8_t gain)
@@ -209,7 +202,7 @@ void LT8910_Tx(uint8_t *data, uint8_t size)
 {
   uint8_t msb, lsb, pos = 0;
 
-  LT8910_WriteRegister16(R_CHANNEL, _lt8910_channel & CHANNEL_MASK);
+  LT8910_WriteRegister16(R_CHANNEL, _lt8910_channel);
   LT8910_WriteRegister16(52, 0x8080);
   LT8910_WriteRegister16(8, 0x6C90);
 
@@ -225,7 +218,7 @@ void LT8910_Tx(uint8_t *data, uint8_t size)
     LT8910_WriteRegister(R_FIFO, msb, lsb);
   }
   //printf("\r\n");
-  LT8910_WriteRegister16(R_CHANNEL, (0x01 << CHANNEL_TX_BIT) | (_lt8910_channel & CHANNEL_MASK));
+  LT8910_WriteRegister16(R_CHANNEL, LT8910_TX_EN | _lt8910_channel);
   LT8910_DelayMs(0);
   //Wait until the packet is sent.
   while (LT8910_PKT_READ() == 0)
@@ -237,10 +230,10 @@ void LT8910_Tx(uint8_t *data, uint8_t size)
 
 void LT8910_SetRx(void)
 {
-  LT8910_WriteRegister16(R_CHANNEL, _lt8910_channel & CHANNEL_MASK);
+  LT8910_WriteRegister16(R_CHANNEL, _lt8910_channel);
   LT8910_WriteRegister16(52, 0x8080);
   LT8910_WriteRegister16(8, 0x6C90);
-  LT8910_WriteRegister16(R_CHANNEL, (0x01 << CHANNEL_RX_BIT) | (_lt8910_channel & CHANNEL_MASK));
+  LT8910_WriteRegister16(R_CHANNEL, LT8910_RX_EN | _lt8910_channel);
 }
 
 uint8_t LT8910_Rx(uint8_t *pBuf)
@@ -256,7 +249,7 @@ uint8_t LT8910_Rx(uint8_t *pBuf)
       //printf("~%d ", len);
     }
     // Enable RX
-    LT8910_WriteRegister16(R_CHANNEL, (0x01 << CHANNEL_RX_BIT) | (_lt8910_channel & CHANNEL_MASK));
+    LT8910_WriteRegister16(R_CHANNEL, LT8910_RX_EN | _lt8910_channel);
   }
   return len;
 }
@@ -265,13 +258,16 @@ void LT8910_WhatsUp(void)
 {
   uint16_t val = LT8910_ReadRegister(R_CHANNEL);
   printf("%04X ", val);
-  printf("RF Channel:%d ", val & CHANNEL_MASK);
-  printf("TX:%d ", (uint8_t)((val & bit(CHANNEL_TX_BIT)) >> CHANNEL_TX_BIT));
-  printf("RX:%d\r\n", (uint8_t)((val & bit(CHANNEL_RX_BIT)) >> CHANNEL_RX_BIT));
-  
+  printf("RF Channel:%d ", val & 0x7F);
+  printf("TX:%d ", (uint8_t)((val & LT8910_TX_EN) >> 8));
+  printf("RX:%d\r\n", (uint8_t)((val & LT8910_RX_EN) >> 7));
+
   val = LT8910_ReadRegister(R_DATARATE);
   printf("Data_Rate:0x%04X ", val);
-
+  val = LT8910_ReadRegister(29);
+  printf("REG29:0x%04X ", val);
+  val = LT8910_ReadRegister(32);
+  printf("REG32:0x%04X ", val);
   val = LT8910_ReadRegister(41);
   printf("REG41:0x%04X ", val);
 

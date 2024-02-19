@@ -1,6 +1,45 @@
 #include "lt8910.h"
 #include <stdio.h>
 
+#define bit(b) (1UL << (b))
+
+#define REGISTER_READ       0b10000000  //bin
+#define REGISTER_WRITE      0b00000000  //bin
+#define REGISTER_MASK       0b01111111  //bin
+
+#define R_CHANNEL           7
+#define CHANNEL_RX_BIT      7
+#define CHANNEL_TX_BIT      8
+#define CHANNEL_MASK        0x7F
+#define DEFAULT_CHANNEL     0x30
+
+#define R_CURRENT           9
+#define CURRENT_POWER_SHIFT 12
+#define CURRENT_POWER_MASK  0b1111000000000000
+#define CURRENT_GAIN_SHIFT  7
+#define CURRENT_GAIN_MASK   0b0000011110000000
+
+#define R_SYNCWORD1         36
+#define R_SYNCWORD2         37
+#define R_SYNCWORD3         38
+#define R_SYNCWORD4         39
+
+#define R_PACKETCONFIG      41
+#define PACKETCONFIG_CRC_ON             0x8000
+#define PACKETCONFIG_SCRAMBLE_ON        0x4000
+#define PACKETCONFIG_PACK_LEN_ENABLE    0x2000 // bit[13], 0:off, 1:on, first byte indicate the packet length
+#define PACKETCONFIG_FW_TERM_TX         0x1000
+#define PACKETCONFIG_AUTO_ACK           0x0800
+#define PACKETCONFIG_PKT_FIFO_POLARITY  0x0400
+
+#define R_DATARATE          44
+#define R_STATUS            48
+#define STATUS_CRC_BIT      15
+
+#define R_FIFO              50
+#define R_FIFO_CONTROL      52
+
+
 uint8_t _lt8910_channel;
 
 uint16_t LT8910_ReadRegister(uint8_t reg)
@@ -68,7 +107,7 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(7, 0x0030);
   LT8910_WriteRegister16(8, 0x6C90);
 
-  LT8910_WriteRegister16(9, LT89xx_1dBm);
+  LT8910_WriteRegister16(9, LT8910_1dBm);
 
   LT8910_WriteRegister16(10, 0x7FFD);
   LT8910_WriteRegister16(11, 0x0008);   // RSSI on
@@ -98,8 +137,7 @@ void LT8910_Init(void)
   LT8910_WriteRegister16(42, 0xFDB0);
   LT8910_WriteRegister16(43, 0x000F);
 
-  //1Mbps
-  LT8910_WriteRegister16(44, 0x0100);
+  LT8910_WriteRegister16(44, LT8910_DATARATE_1MBPS & LT8910_DATARATE_MASK);
   LT8910_WriteRegister16(45, 0x0152);
   LT8910_WriteRegister16(R_FIFO_CONTROL, 0x8080); //Fifo Rx/Tx queue reset
 
@@ -142,34 +180,9 @@ void LT8910_SetSyncWord(uint64_t syncWord)
   LT8910_WriteRegister16(R_SYNCWORD4, syncWord >> 48);
 }
 
-ErrorStatus LT8910_SetDataRate(DataRate rate)
+void LT8910_SetDataRate(uint16_t regval)
 {
-  uint16_t regval;
-
-  switch (rate)
-  {
-    case LT8910_1MBPS:
-      regval = DATARATE_1MBPS;
-      break;
-    case LT8910_250KBPS:
-      regval = DATARATE_250KBPS;
-      break;
-    case LT8910_125KBPS:
-      regval = DATARATE_125KBPS;
-      break;
-    case LT8910_62KBPS:
-      regval = DATARATE_62KBPS;
-      break;
-    default:
-      return ERROR;
-  }
   LT8910_WriteRegister16(R_DATARATE, regval);
-  //verify
-  if ((LT8910_ReadRegister(R_DATARATE) & DATARATE_MASK) == regval)
-  {
-    return SUCCESS;
-  }
-  return ERROR;
 }
 
 /** Set BRCLK_SEL, register 32, bits 3:1 */
@@ -217,7 +230,7 @@ void LT8910_Tx(uint8_t *data, uint8_t size)
   //Wait until the packet is sent.
   while (LT8910_PKT_READ() == 0)
   {
-    printf(".");
+    //printf(".");
     LT8910_DelayMs(0);
   }
 }
@@ -236,17 +249,17 @@ uint8_t LT8910_Rx(uint8_t *pBuf)
 
   if (LT8910_PKT_READ() != 0)
   {
-    printf(":");
+    //printf(":");
     if ((LT8910_ReadRegister(48) & 0x8000) == 0)
     {
       len = LT8910_ReadToBuf(R_FIFO, pBuf);
-      printf("~%d ", len);
+      //printf("~%d ", len);
     }
+    // Enable RX
     LT8910_WriteRegister16(R_CHANNEL, (0x01 << CHANNEL_RX_BIT) | (_lt8910_channel & CHANNEL_MASK));
   }
   return len;
 }
-
 
 void LT8910_WhatsUp(void)
 {
@@ -265,15 +278,11 @@ void LT8910_WhatsUp(void)
   val = LT8910_ReadRegister(48);
   printf("REG48:0x%04X\r\n", val);
 
-
-  //read the status register.
-  uint16_t state = LT8910_ReadRegister(R_STATUS);
-  printf("state:%04X ", state);
-  uint8_t crc_error = (state & bit(15)) != 0;
-  uint8_t fec23_error = (state & bit(14)) != 0;
-  uint8_t framer_st = (state & 0b0011111100000000) >> 8;
-  uint8_t pkt_flag = (state & bit(6)) != 0;
-  uint8_t fifo_flag = (state & bit(5)) != 0;
+  uint8_t crc_error = (val & bit(15)) != 0;
+  uint8_t fec23_error = (val & bit(14)) != 0;
+  uint8_t framer_st = (val & 0b0011111100000000) >> 8;
+  uint8_t pkt_flag = (val & bit(6)) != 0;
+  uint8_t fifo_flag = (val & bit(5)) != 0;
 
   printf("CRC=%d ", crc_error);
   printf("FEC=%d ", fec23_error);
@@ -282,6 +291,6 @@ void LT8910_WhatsUp(void)
   printf("FIFO=%d\r\n", fifo_flag);
 
   uint16_t fifo = LT8910_ReadRegister(R_FIFO_CONTROL);
-  printf("FIFO_WR_PTR=0X%02X", (fifo >> 8) & 0b111111);
+  printf("FIFO_WR_PTR=0X%02X ", (fifo >> 8) & 0b111111);
   printf("FIFO_RD_PTR=0X%02X\r\n", fifo & 0b111111);
 }

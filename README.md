@@ -267,4 +267,4 @@ More examples can be found in *Examples* folder, copy and replace the files unde
 
 # Links
 
-* Puya Product Page(Datasheet & SDK download): https://www.puyasemi.com/cpzx3/info_267_aid_242_kid_235.html
+* Puya Product Page(Datasheet download): https://www.puyasemi.com/mcu_weichuliqi.html

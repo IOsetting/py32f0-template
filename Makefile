@@ -7,10 +7,10 @@ BUILD_DIR		= Build
 # MCU types: 
 #   PY32F002Ax5
 #   PY32F002Bx5
-#   PY32F003x6, PY32F003x8, 
+#   PY32F003x4, PY32F003x6, PY32F003x8,
 #   PY32F030x6, PY32F030x8, 
 #   PY32F072xB
-MCU_TYPE		= PY32F030x8
+MCU_TYPE		= PY32F003x4
 
 ##### Options #####
 
@@ -31,7 +31,7 @@ FLASH_PROGRM	?= pyocd
 
 #ARM_TOOCHAIN	?= /opt/gcc-arm/gcc-arm-11.2-2022.02-x86_64-arm-none-eabi/bin
 #ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin
-ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
+ARM_TOOCHAIN	?= /opt/gcc-arm/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin
 
 # path to JLinkExe
 JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe

@@ -2172,6 +2172,7 @@ typedef struct
 /*                        Power Control (PWR)                                 */
 /*                                                                            */
 /******************************************************************************/
+#define PWR_DEEPSTOP_SUPPORT                  /*!< PWR feature available only on specific devices: Deep stop feature */
 
 /********************  Bit definition for PWR_CR1 register  ********************/
 #define PWR_CR1_BIAS_CR_Pos          (0U)
@@ -2201,6 +2202,9 @@ typedef struct
 #define PWR_CR1_SRAM_RETV_Pos        (17U)
 #define PWR_CR1_SRAM_RETV_Msk        (0x1UL << PWR_CR1_SRAM_RETV_Pos)             /*!< 0x00020000 */
 #define PWR_CR1_SRAM_RETV            PWR_CR1_SRAM_RETV_Msk                        /*!< SRAM retention voltage control in Stop mode */
+#define PWR_CR1_SRAM_RETV_DLP_Pos    (18U)
+#define PWR_CR1_SRAM_RETV_DLP_Msk    (0x1UL << PWR_CR1_SRAM_RETV_DLP_Pos)         /*!< 0x00040000 */
+#define PWR_CR1_SRAM_RETV_DLP        PWR_CR1_SRAM_RETV_DLP_Msk                    /*!< SRAM retention voltage control in DeepStop mode */
 #define PWR_CR1_HSION_CTRL_Pos       (19U)
 #define PWR_CR1_HSION_CTRL_Msk       (0x1UL << PWR_CR1_HSION_CTRL_Pos)            /*!< 0x00080000 */
 #define PWR_CR1_HSION_CTRL           PWR_CR1_HSION_CTRL_Msk                       /*!< HSI enables time control when waking from stop mode */
@@ -2214,6 +2218,7 @@ typedef struct
 * @brief Specific device feature definitions
 */
 #define RCC_LSE_SUPPORT
+#define RCC_HSI48M_SUPPORT
 
 /********************  Bit definition for RCC_CR register  *****************/
 #define RCC_CR_HSION_Pos                 (8U)
@@ -3716,8 +3721,7 @@ typedef struct
 /*********************** UART Instances : IRDA mode ***************************/
 #define IS_IRDA_INSTANCE(INSTANCE) ((INSTANCE) == USART1)
 
-/******** Enable 48MHz HSI *********/
-#define RCC_HSI48M_SUPPORT
+
 /**
   * @}
   */

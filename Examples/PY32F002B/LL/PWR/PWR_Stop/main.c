@@ -7,7 +7,7 @@
   *  GND      ---> GND 
   *  
   * - Don't connect any other pins to avoid possible current leakage
-  * - Current drops from 1.2 mA to 1.6 uA after 3 seconds
+  * - MCU enters stop mode after 3 seconds, current drops from 1.2 mA to 1.6 uA
   */
 
 /* Includes ------------------------------------------------------------------*/

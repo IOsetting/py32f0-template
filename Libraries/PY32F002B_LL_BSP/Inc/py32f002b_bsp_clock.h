@@ -24,6 +24,9 @@ extern "C" {
 
 void BSP_RCC_HSI_24MConfig(void);
 void BSP_RCC_HSI_48MConfig(void);
+void BSP_RCC_LSE_Config(void);
+void APP_RCC_LSI_32K768Config(void);
+void APP_RCC_LSI_38K4Config(void);
 
 
 #ifdef __cplusplus

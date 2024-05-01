@@ -8,7 +8,8 @@
   *  GND      ---> GND 
   *  
   * - MCU enters deep stop mode after 3 seconds,
-  * - LED blinks every 5 seconds (actually it is a bit longer than 5 seconds)
+  * - LED blinks every 5 seconds (In low voltage LSI becomes slower and slower, the 
+  *   interval will be longer than expected)
   * - Current consumption is around 0.6uA in deep stop mode
   */
 
@@ -77,8 +78,12 @@ static void APP_LPTIM_Config(void)
   /* Enable LPTIM */
   LL_LPTIM_Enable(LPTIM);
   /*
-   * Set autoreload value
-   * It must be modified only when LPTIM is enabled
+   * Set autoreload value, it must be modified only when LPTIM is enabled
+   * 
+   * 1024 -> 4 seconds
+   * 1280 -> 7 seconds
+   * 1536 -> 26 seconds
+   * 1792 -> never wakeup
    */
   LL_LPTIM_SetAutoReload(LPTIM, 1280 - 1);
 

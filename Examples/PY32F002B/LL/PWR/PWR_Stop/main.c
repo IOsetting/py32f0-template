@@ -27,6 +27,9 @@ int main(void)
   /* Hold 3 seconds for flash download */
   LL_mDelay(3000);
 
+  /* Disable LES otherwise it will consume extra 0.6 uA */
+  LL_RCC_LSE_Disable();
+
   /* Set wake-up mode of the LPTIM(EXTI Line29) to event request */
   LL_EXTI_DisableIT(LL_EXTI_LINE_29);   /* Disable interrupt request for EXTI Line29 */
   LL_EXTI_EnableEvent(LL_EXTI_LINE_29); /* Enable event request for EXTI Line29 */

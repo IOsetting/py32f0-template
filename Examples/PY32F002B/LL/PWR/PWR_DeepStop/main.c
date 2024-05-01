@@ -29,6 +29,9 @@ int main(void)
   /* Hold 3 seconds for flash download */
   LL_mDelay(3000);
 
+  /* Disable LES otherwise it will consume extra 0.6 uA */
+  LL_RCC_LSE_Disable();
+
   /* Enable PWR clock */
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 

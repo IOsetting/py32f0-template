@@ -137,7 +137,7 @@ g_pfnVectors:
   .word  0                              /* 9Reserved */
   .word  0                              /* 10Reserved */
   .word  0                              /* 11Reserved */
-  .word  ADC_IRQHandler                 /* 12ADC */
+  .word  ADC_COMP_IRQHandler            /* 12ADC */
   .word  TIM1_BRK_UP_TRG_COM_IRQHandler /* 13TIM1 Break, Update, Trigger and Commutation */
   .word  TIM1_CC_IRQHandler             /* 14TIM1 Capture Compare */
   .word  0                              /* 15Reserved  */
@@ -196,8 +196,8 @@ g_pfnVectors:
   .weak      EXTI4_15_IRQHandler                
   .thumb_set EXTI4_15_IRQHandler,Default_Handler
 
-  .weak      ADC_IRQHandler                
-  .thumb_set ADC_IRQHandler,Default_Handler
+  .weak      ADC_COMP_IRQHandler                
+  .thumb_set ADC_COMP_IRQHandler,Default_Handler
 
   .weak      TIM1_BRK_UP_TRG_COM_IRQHandler                
   .thumb_set TIM1_BRK_UP_TRG_COM_IRQHandler,Default_Handler

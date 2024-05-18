@@ -7,6 +7,7 @@ endif
 
 PREFIX		?= $(ARM_TOOCHAIN)/arm-none-eabi-
 CC			= $(PREFIX)gcc
+XX			= $(PREFIX)g++
 AS			= $(PREFIX)as
 LD			= $(PREFIX)ld
 OBJCOPY		= $(PREFIX)objcopy
@@ -15,15 +16,20 @@ TOP			= .
 BDIR		= $(TOP)/$(BUILD_DIR)
 
 # For each direcotry, add it to csources
-CSOURCES := $(foreach dir, $(CDIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.c'))
+CSOURCES 	:= $(foreach dir, $(CDIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.c'))
 # Add single c source files to csources
-CSOURCES += $(addprefix $(TOP)/, $(CFILES))
+CSOURCES 	+= $(addprefix $(TOP)/, $(CFILES))
+# C++ files
+CPPSOURCES	:= $(foreach dir, $(CDIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.cpp'))
+CPPSOURCES 	+= $(addprefix $(TOP)/, $(CPPFILES))
+
 # Then assembly source folders and files
 ASOURCES := $(foreach dir, $(ADIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.s'))
 ASOURCES += $(addprefix $(TOP)/, $(AFILES))
 
 # Fill object files with c and asm files (keep source directory structure)
 OBJS = $(CSOURCES:$(TOP)/%.c=$(BDIR)/%.o)
+OBJS += $(CPPSOURCES:$(TOP)/%.cpp=$(BDIR)/%.o)
 OBJS += $(ASOURCES:$(TOP)/%.s=$(BDIR)/%.o)
 # d files for detecting h file changes
 DEPS=$(CSOURCES:$(TOP)/%.c=$(BDIR)/%.d)
@@ -37,16 +43,15 @@ ARCH_FLAGS	:= -mthumb -mcpu=cortex-m0plus
 #  -gdwarf: in DWARF format, -gdwarf-2,-gdwarf-3,-gdwarf-4,-gdwarf-5
 DEBUG_FLAGS ?= -gdwarf-3
 
-# c flags
 OPT			?= -Og
-CSTD		?= -std=c99
-TGT_CFLAGS 	+= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) $(CSTD) $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
-
-# asm flags
-TGT_ASFLAGS += $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
-
-# ld flags
-TGT_LDFLAGS += $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -static -lc -lm \
+# C flags
+TGT_CFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c99 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
+# C++ flags
+TGT_CPPFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c++11 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
+# ASM flags
+TGT_ASFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
+# LD flags
+TGT_LDFLAGS		?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -static -lc -lm \
 				-Wl,-Map=$(BDIR)/$(PROJECT).map \
 				-Wl,--gc-sections \
 				-Wl,--print-memory-usage
@@ -91,6 +96,11 @@ $(BDIR)/%.o: %.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) $(TGT_CFLAGS) $(TGT_INCFLAGS) -MT $@ -o $@ -c $< -MD -MF $(BDIR)/$*.d -MP
+
+$(BDIR)/%.o: %.cpp
+	@printf "  XX\t$<\n"
+	@mkdir -p $(dir $@)
+	$(Q)$(XX) $(TGT_CPPFLAGS) $(TGT_INCFLAGS) -MT $@ -o $@ -c $< -MD -MF $(BDIR)/$*.d -MP
 
 # Compile asm to obj
 $(BDIR)/%.o: %.s

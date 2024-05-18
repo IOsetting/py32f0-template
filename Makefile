@@ -40,15 +40,16 @@ PYOCD_EXE		?= pyocd
 
 ##### Paths ############
 
-# C source folders
-CDIRS	:= User 
-# C source files (if there are any single ones)
-CFILES := 
+# C and CPP source folders
+CDIRS		:= User 
+# Single C and CPP source files
+CFILES		:= 
+CPPFILES	:= 
 
 # ASM source folders
-ADIRS	:= User
-# ASM single files
-AFILES	:= 
+ADIRS		:= User
+# Single ASM source files
+AFILES		:= 
 
 # Include paths
 INCLUDES	:= Libraries/CMSIS/Core/Include \

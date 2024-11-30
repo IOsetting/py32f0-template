@@ -724,6 +724,7 @@ __STATIC_INLINE uint32_t LL_RCC_HSI_GetCalibTrimming(void)
 __STATIC_INLINE void LL_RCC_HSI_SetCalibFreq(uint32_t Value)
 {
   MODIFY_REG(RCC->ICSCR, (RCC_ICSCR_HSI_FS | RCC_ICSCR_HSI_TRIM), Value);
+  SystemCoreClockUpdate();
 }
 
 /**

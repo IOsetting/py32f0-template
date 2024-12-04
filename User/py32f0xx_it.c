@@ -32,7 +32,7 @@
 /* Private function prototypes -----------------------------------------------*/
 /* Private user code ---------------------------------------------------------*/
 /* External variables --------------------------------------------------------*/
-
+extern I2C_HandleTypeDef I2cHandle;
 /******************************************************************************/
 /*          Cortex-M0+ Processor Interruption and Exception Handlers          */
 /******************************************************************************/
@@ -73,6 +73,12 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   HAL_IncTick();
+}
+
+void I2C1_IRQHandler(void)
+{
+  HAL_I2C_EV_IRQHandler(&I2cHandle);
+  HAL_I2C_ER_IRQHandler(&I2cHandle);
 }
 
 /******************************************************************************/

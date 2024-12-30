@@ -6,14 +6,14 @@ NULL	:= 2>/dev/null
 endif
 
 PREFIX		?= $(ARM_TOOLCHAIN)/arm-none-eabi-
-CC			= $(PREFIX)gcc
-XX			= $(PREFIX)g++
-AS			= $(PREFIX)as
-LD			= $(PREFIX)ld
+CC		= $(PREFIX)gcc
+XX		= $(PREFIX)g++
+AS		= $(PREFIX)as
+LD		= $(PREFIX)ld
 OBJCOPY		= $(PREFIX)objcopy
 OBJDUMP		= $(PREFIX)objdump
 # `$(shell pwd)` or `.`, both works
-TOP			= .
+TOP		= .
 BDIR		= $(TOP)/$(BUILD_DIR)
 
 # For each direcotry, add it to csources
@@ -44,15 +44,15 @@ ARCH_FLAGS	:= -mcpu=cortex-m0plus
 #  -gdwarf: in DWARF format, -gdwarf-2,-gdwarf-3,-gdwarf-4,-gdwarf-5
 DEBUG_FLAGS ?= -gdwarf-3
 
-OPT			?= -Og
+OPT		?= -Os
 # C flags
-TGT_CFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c17 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
+TGT_CFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c17 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
 # C++ flags
 TGT_CPPFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c++11 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
 # ASM flags
-TGT_ASFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
+TGT_ASFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
 # LD flags
-TGT_LDFLAGS		?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -static -lc -lm \
+TGT_LDFLAGS	?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -lc -lm \
 				-Wl,-Map=$(BDIR)/$(PROJECT).map \
 				-Wl,--gc-sections \
 				-Wl,--print-memory-usage

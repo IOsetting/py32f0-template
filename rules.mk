@@ -36,7 +36,7 @@ OBJS += $(ASOURCES:$(TOP)/%.s=$(BDIR)/%.o)
 DEPS=$(CSOURCES:$(TOP)/%.c=$(BDIR)/%.d)
 
 # Arch and target specified flags
-ARCH_FLAGS	:= -mthumb -mcpu=cortex-m0plus
+ARCH_FLAGS	:= -mcpu=cortex-m0plus
 # Debug options, -gdwarf-2 for debug, -g0 for release 
 # https://gcc.gnu.org/onlinedocs/gcc-12.2.0/gcc/Debugging-Options.html
 #  -g: system’s native format, -g0:off, -g/g1,-g2,-g3 -> more verbosely

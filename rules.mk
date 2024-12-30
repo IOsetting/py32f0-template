@@ -5,7 +5,7 @@ Q		:= @
 NULL	:= 2>/dev/null
 endif
 
-PREFIX		?= $(ARM_TOOCHAIN)/arm-none-eabi-
+PREFIX		?= $(ARM_TOOLCHAIN)/arm-none-eabi-
 CC			= $(PREFIX)gcc
 XX			= $(PREFIX)g++
 AS			= $(PREFIX)as

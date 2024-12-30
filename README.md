@@ -164,7 +164,7 @@ Change the settings in Makefile
   * If you use J-Link, `FLASH_PROGRM` can be jlink or pyocd
   * If you use DAPLink, set `FLASH_PROGRM ?= pyocd`
   * ST-LINK is not supported yet.
-* **ARM_TOOCHAIN** Make sure it points to the correct path of arm-none-eabi-gcc
+* **ARM_TOOLCHAIN** Make sure it points to the correct path of arm-none-eabi-gcc
 
 ```makefile
 ##### Project #####
@@ -195,7 +195,7 @@ USE_DSP           ?= n
 FLASH_PROGRM      ?= pyocd
 
 ##### Toolchains #######
-ARM_TOOCHAIN      ?= /opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin
+ARM_TOOLCHAIN     ?= /usr/bin
 
 # path to JLinkExe
 JLINKEXE		?= /opt/SEGGER/JLink/JLinkExe

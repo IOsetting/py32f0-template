@@ -11,6 +11,7 @@ XX			= $(PREFIX)g++
 AS			= $(PREFIX)as
 LD			= $(PREFIX)ld
 OBJCOPY		= $(PREFIX)objcopy
+OBJDUMP		= $(PREFIX)objdump
 # `$(shell pwd)` or `.`, both works
 TOP			= .
 BDIR		= $(TOP)/$(BUILD_DIR)
@@ -72,7 +73,7 @@ TGT_INCFLAGS := $(addprefix -I $(TOP)/, $(INCLUDES))
 
 .PHONY: all clean flash echo
 
-all: fullcheck $(BDIR)/$(PROJECT).elf $(BDIR)/$(PROJECT).bin $(BDIR)/$(PROJECT).hex
+all: fullcheck $(BDIR)/$(PROJECT).elf $(BDIR)/$(PROJECT).bin $(BDIR)/$(PROJECT).hex $(BDIR)/$(PROJECT).lst
 
 fullcheck:
 	@if [ '$(findstring PY32F07,$(MCU_TYPE))' = 'PY32F07' ] && [ '$(USE_LL_LIB)' = 'y' ]; then \
@@ -122,6 +123,11 @@ $(BDIR)/$(PROJECT).elf: $(OBJS) $(TOP)/$(LDSCRIPT)
 %.hex: %.elf
 	@printf "  OBJCP HEX\t$@\n"
 	$(Q)$(OBJCOPY) -I elf32-littlearm -O ihex  $< $@
+
+# Create assembly listing
+%.lst: %.elf
+	@printf "  OBJDP LST\t$@\n"
+	$(Q)$(OBJDUMP) --source $< > $@
 
 clean:
 	rm -rf $(BDIR)/*

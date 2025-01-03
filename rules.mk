@@ -6,14 +6,14 @@ NULL	:= 2>/dev/null
 endif
 
 PREFIX		?= $(ARM_TOOLCHAIN)/arm-none-eabi-
-CC			= $(PREFIX)gcc
-XX			= $(PREFIX)g++
-AS			= $(PREFIX)as
-LD			= $(PREFIX)ld
+CC		= $(PREFIX)gcc
+XX		= $(PREFIX)g++
+AS		= $(PREFIX)as
+LD		= $(PREFIX)ld
 OBJCOPY		= $(PREFIX)objcopy
 OBJDUMP		= $(PREFIX)objdump
 # `$(shell pwd)` or `.`, both works
-TOP			= .
+TOP		= .
 BDIR		= $(TOP)/$(BUILD_DIR)
 
 # For each direcotry, add it to csources
@@ -36,7 +36,7 @@ OBJS += $(ASOURCES:$(TOP)/%.s=$(BDIR)/%.o)
 DEPS=$(CSOURCES:$(TOP)/%.c=$(BDIR)/%.d)
 
 # Arch and target specified flags
-ARCH_FLAGS	:= -mthumb -mcpu=cortex-m0plus
+ARCH_FLAGS	:= -mcpu=cortex-m0plus
 # Debug options, -gdwarf-2 for debug, -g0 for release 
 # https://gcc.gnu.org/onlinedocs/gcc-12.2.0/gcc/Debugging-Options.html
 #  -g: system’s native format, -g0:off, -g/g1,-g2,-g3 -> more verbosely
@@ -44,15 +44,15 @@ ARCH_FLAGS	:= -mthumb -mcpu=cortex-m0plus
 #  -gdwarf: in DWARF format, -gdwarf-2,-gdwarf-3,-gdwarf-4,-gdwarf-5
 DEBUG_FLAGS ?= -gdwarf-3
 
-OPT			?= -Og
+OPT		?= -Os
 # C flags
-TGT_CFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c99 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
+TGT_CFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c17 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
 # C++ flags
 TGT_CPPFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c++11 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
 # ASM flags
-TGT_ASFLAGS		?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
+TGT_ASFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
 # LD flags
-TGT_LDFLAGS		?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -static -lc -lm \
+TGT_LDFLAGS	?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -lc -lm \
 				-Wl,-Map=$(BDIR)/$(PROJECT).map \
 				-Wl,--gc-sections \
 				-Wl,--print-memory-usage
@@ -132,12 +132,12 @@ $(BDIR)/$(PROJECT).elf: $(OBJS) $(TOP)/$(LDSCRIPT)
 clean:
 	rm -rf $(BDIR)/*
 
-flash:
+flash: $(BDIR)/$(PROJECT).elf
 ifeq ($(FLASH_PROGRM),jlink)
 	$(JLINKEXE) -device $(JLINK_DEVICE) -if swd -speed 4000 -JLinkScriptFile $(TOP)/Misc/jlink-script -CommanderScript $(TOP)/Misc/jlink-command
 else ifeq ($(FLASH_PROGRM),pyocd)
 	$(PYOCD_EXE) erase -t $(PYOCD_DEVICE) --chip --config $(TOP)/Misc/pyocd.yaml
-	$(PYOCD_EXE) load $(BDIR)/$(PROJECT).hex -t $(PYOCD_DEVICE) --config $(TOP)/Misc/pyocd.yaml
+	$(PYOCD_EXE) load $< -t $(PYOCD_DEVICE) --config $(TOP)/Misc/pyocd.yaml
 else
 	@echo "FLASH_PROGRM is invalid\n"
 endif

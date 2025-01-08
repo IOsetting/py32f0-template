@@ -81,6 +81,15 @@ Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more
 └── User                        # User application code
 ```
 
+## Use as a submodule
+
+If you prefer you may include this template as a submodule into your repository.
+```
+git submodule add https://github.com/IOsetting/py32f0-template
+sed 's/include \./include py32f0-template/' py32f0-template/Makefile > Makefile
+```
+Then adjust the `Makefile` to your needs.
+
 # Requirements
 
 * PY32F0 EVB or boards of PY32F002/003/030 series

@@ -12,28 +12,183 @@ AS		= $(PREFIX)as
 LD		= $(PREFIX)ld
 OBJCOPY		= $(PREFIX)objcopy
 OBJDUMP		= $(PREFIX)objdump
-# `$(shell pwd)` or `.`, both works
-TOP		= .
-BDIR		= $(TOP)/$(BUILD_DIR)
+BDIR := $(BUILD_DIR)
+
+# TOP is py32f0-template, SRC is user's base - identical in the simple case but need not be
+TOP := $(dir $(lastword $(MAKEFILE_LIST)))
+SRC := $(TOP:%py32f0-template/=%)
+ifneq (,$(findstring ../,$(TOP)))
+	# py32f0-template is a neighbor to cwd, ensure proper build dir structure
+	SRC_PREFIX := ../$(notdir $(shell pwd))/
+	ADIRS := $(ADIRS:%=$(SRC_PREFIX)%)
+	AFILES := $(AFILES:%=$(SRC_PREFIX)%)
+	CDIRS := $(CDIRS:%=$(SRC_PREFIX)%)
+	CFILES := $(CFILES:%=$(SRC_PREFIX)%)
+	CPPFILES := $(CPPFILES:%=$(SRC_PREFIX)%)
+endif
+
+##### Library Paths ############
+
+LIB := $(TOP)Libraries/
+
+# Library flags
+LIB_FLAGS += $(MCU_TYPE)
+# JLink device (Uppercases)
+JLINK_DEVICE ?= $(shell echo $(MCU_TYPE) | tr '[:lower:]' '[:upper:]')
+# PyOCD device (Lowercases)
+PYOCD_DEVICE ?= $(shell echo $(MCU_TYPE) | tr '[:upper:]' '[:lower:]')
+# Link descript file: 
+LDSCRIPT ?= $(LIB)LDScripts/$(PYOCD_DEVICE).ld
+
+
+ifneq (,$(findstring PY32F002B,$(MCU_TYPE)))
+
+# PY32F002B >>>
+CFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/system_py32f002b.c
+
+ifeq ($(USE_LL_LIB),y)
+CDIRS += \
+	$(LIB)PY32F002B_LL_Driver/Src \
+	$(LIB)PY32F002B_LL_BSP/Src
+INCLUDES += \
+	$(LIB)PY32F002B_LL_Driver/Inc \
+	$(LIB)PY32F002B_LL_BSP/Inc
+LIB_FLAGS += USE_FULL_LL_DRIVER
+else
+CDIRS += \
+	$(LIB)PY32F002B_HAL_Driver/Src  \
+	$(LIB)PY32F002B_HAL_BSP/Src
+INCLUDES +=
+	$(LIB)PY32F002B_HAL_Driver/Inc \
+	$(LIB)PY32F002B_HAL_BSP/Inc
+endif
+# Startup file
+AFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f002b.s
+# PY32F002B <<<
+
+else ifneq (,$(findstring PY32F07,$(MCU_TYPE)))
+
+# PY32F07x >>>
+CFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/system_py32f07x.c
+
+CDIRS += \
+	$(LIB)PY32F07x_HAL_Driver/Src \
+	$(LIB)PY32F07x_HAL_BSP/Src
+INCLUDES += \
+	$(LIB)PY32F07x_HAL_Driver/Inc \
+	$(LIB)PY32F07x_HAL_BSP/Inc
+LIB_FLAGS += USE_HAL_DRIVER
+# Startup file
+AFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f072.s
+# PY32F07 <<<
+
+else
+
+# PY32F002A,003,030 >>>
+CFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/system_py32f0xx.c
+
+ifeq ($(USE_LL_LIB),y)
+CDIRS += \
+	$(LIB)PY32F0xx_LL_Driver/Src \
+	$(LIB)PY32F0xx_LL_BSP/Src
+INCLUDES += \
+	$(LIB)PY32F0xx_LL_Driver/Inc \
+	$(LIB)PY32F0xx_LL_BSP/Inc
+LIB_FLAGS += USE_FULL_LL_DRIVER
+else
+CDIRS += \
+	$(LIB)PY32F0xx_HAL_Driver/Src \
+	$(LIB)PY32F0xx_HAL_BSP/Src
+INCLUDES += \
+	$(LIB)PY32F0xx_HAL_Driver/Inc \
+	$(LIB)PY32F0xx_HAL_BSP/Inc
+endif
+# Startup file
+ifneq (,$(findstring PY32F002A,$(LIB_FLAGS)))
+AFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f002a.s
+endif
+ifneq (,$(findstring PY32F003,$(LIB_FLAGS)))
+AFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f003.s
+endif
+ifneq (,$(findstring PY32F030,$(LIB_FLAGS)))
+AFILES += $(LIB)CMSIS/Device/PY32F0xx/Source/gcc/startup_py32f030.s
+endif
+# PY32F002A,003,030 <<<
+
+endif
+
+######## Additional Libs ########
+
+ifeq ($(USE_FREERTOS),y)
+CDIRS += \
+	$(LIB)FreeRTOS \
+	$(LIB)FreeRTOS/portable/GCC/ARM_CM0
+
+CFILES += $(LIB)FreeRTOS/portable/MemMang/heap_4.c
+
+INCLUDES += \
+	$(LIB)FreeRTOS/include \
+	$(LIB)FreeRTOS/portable/GCC/ARM_CM0
+endif
+
+ifeq ($(USE_DSP),y)
+CFILES += \
+	$(LIB)CMSIS/DSP/Source/BasicMathFunctions/BasicMathFunctions.c \
+	$(LIB)CMSIS/DSP/Source/BayesFunctions/BayesFunctions.c \
+	$(LIB)CMSIS/DSP/Source/CommonTables/CommonTables.c \
+	$(LIB)CMSIS/DSP/Source/ComplexMathFunctions/ComplexMathFunctions.c \
+	$(LIB)CMSIS/DSP/Source/ControllerFunctions/ControllerFunctions.c \
+	$(LIB)CMSIS/DSP/Source/DistanceFunctions/DistanceFunctions.c \
+	$(LIB)CMSIS/DSP/Source/FastMathFunctions/FastMathFunctions.c \
+	$(LIB)CMSIS/DSP/Source/FilteringFunctions/FilteringFunctions.c \
+	$(LIB)CMSIS/DSP/Source/InterpolationFunctions/InterpolationFunctions.c \
+	$(LIB)CMSIS/DSP/Source/MatrixFunctions/MatrixFunctions.c \
+	$(LIB)CMSIS/DSP/Source/QuaternionMathFunctions/QuaternionMathFunctions.c \
+	$(LIB)CMSIS/DSP/Source/StatisticsFunctions/StatisticsFunctions.c \
+	$(LIB)CMSIS/DSP/Source/SupportFunctions/SupportFunctions.c \
+	$(LIB)CMSIS/DSP/Source/SVMFunctions/SVMFunctions.c \
+	$(LIB)CMSIS/DSP/Source/TransformFunctions/TransformFunctions.c
+INCLUDES += \
+	$(LIB)CMSIS/DSP/Include \
+	$(LIB)CMSIS/DSP/PrivateInclude
+endif
+
+ifeq ($(USE_EPAPER),y)
+CDIRS += \
+	$(LIB)EPaper/Lib \
+	$(LIB)EPaper/Examples \
+	$(LIB)EPaper/Fonts \
+	$(LIB)EPaper/GUI
+
+INCLUDES += \
+	$(LIB)EPaper/Lib \
+	$(LIB)EPaper/Examples \
+	$(LIB)EPaper/Fonts \
+	$(LIB)EPaper/GUI
+endif
 
 # For each direcotry, add it to csources
-CSOURCES 	:= $(foreach dir, $(CDIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.c'))
+CSOURCES := $(foreach dir, $(CDIRS), $(shell find $(dir) -maxdepth 1 -name '*.c'))
 # Add single c source files to csources
-CSOURCES 	+= $(addprefix $(TOP)/, $(CFILES))
+CSOURCES += $(CFILES)
 # C++ files
-CPPSOURCES	:= $(foreach dir, $(CDIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.cpp'))
-CPPSOURCES 	+= $(addprefix $(TOP)/, $(CPPFILES))
+CPPSOURCES := $(foreach dir, $(CDIRS), $(shell find $(dir) -maxdepth 1 -name '*.cpp'))
+CPPSOURCES += $(CPPFILES)
 
 # Then assembly source folders and files
-ASOURCES := $(foreach dir, $(ADIRS), $(shell find $(TOP)/$(dir) -maxdepth 1 -name '*.s'))
-ASOURCES += $(addprefix $(TOP)/, $(AFILES))
+ASOURCES := $(foreach dir, $(ADIRS), $(shell find $(dir) -maxdepth 1 -iname '*.s'))
+ASOURCES += $(AFILES)
 
 # Fill object files with c and asm files (keep source directory structure)
-OBJS = $(CSOURCES:$(TOP)/%.c=$(BDIR)/%.o)
-OBJS += $(CPPSOURCES:$(TOP)/%.cpp=$(BDIR)/%.o)
-OBJS += $(ASOURCES:$(TOP)/%.s=$(BDIR)/%.o)
+OBJS := $(CSOURCES:%.c=%.o)
+OBJS += $(CPPSOURCES:%.cpp=%.o)
+OBJS += $(patsubst %.s,%.o, \
+        $(patsubst %.S,%.o,$(ASOURCES)))
+OBJS := $(OBJS:../%=%)
+OBJS := $(OBJS:%=$(BDIR)/%)
+
 # d files for detecting h file changes
-DEPS=$(CSOURCES:$(TOP)/%.c=$(BDIR)/%.d)
+DEPS := $(OBJS:%.o=%.d)
 
 # Arch and target specified flags
 ARCH_FLAGS	:= -mcpu=cortex-m0plus
@@ -68,7 +223,10 @@ TGT_LDFLAGS	+= -u _printf_float
 endif
 
 # include paths
-TGT_INCFLAGS := $(addprefix -I $(TOP)/, $(INCLUDES))
+INCLUDES += \
+	$(LIB)CMSIS/Core/Include \
+	$(LIB)CMSIS/Device/PY32F0xx/Include
+TGT_INCFLAGS := $(addprefix -I , $(INCLUDES))
 
 
 .PHONY: all clean flash echo
@@ -92,27 +250,33 @@ echo:
 # include d files without non-exist warning
 -include $(DEPS)
 
-# Compile c to obj -- should be `$(BDIR)/%.o: $(TOP)/%.c`, but since $(TOP) is base folder so non-path also works
-$(BDIR)/%.o: %.c
+# Compile c to obj
+$(BDIR)/%.o: $(SRC)%.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) $(TGT_CFLAGS) $(TGT_INCFLAGS) -MT $@ -o $@ -c $< -MD -MF $(BDIR)/$*.d -MP
 
-$(BDIR)/%.o: %.cpp
+$(BDIR)/%.o: $(SRC)%.cpp
 	@printf "  XX\t$<\n"
 	@mkdir -p $(dir $@)
 	$(Q)$(XX) $(TGT_CPPFLAGS) $(TGT_INCFLAGS) -MT $@ -o $@ -c $< -MD -MF $(BDIR)/$*.d -MP
 
 # Compile asm to obj
-$(BDIR)/%.o: %.s
+$(BDIR)/%.o: $(SRC)%.s
 	@printf "  AS\t$<\n"
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) $(TGT_ASFLAGS) -o $@ -c $<
 
+# Compile asm to obj with preprocessing
+$(BDIR)/%.o: $(SRC)%.S
+	@printf "  AS\t$<\n"
+	@mkdir -p $(dir $@)
+	$(Q)$(CC) $(TGT_ASFLAGS) $(TGT_INCFLAGS) -o $@ -c $< -MD -MF $(BDIR)/$*.d -MP
+
 # Link object files to elf
-$(BDIR)/$(PROJECT).elf: $(OBJS) $(TOP)/$(LDSCRIPT)
+$(BDIR)/$(PROJECT).elf: $(OBJS) $(LDSCRIPT)
 	@printf "  LD\t$(LDSCRIPT) -> $@\n"
-	$(Q)$(CC) $(TGT_LDFLAGS) -T$(TOP)/$(LDSCRIPT) $(OBJS) -o $@
+	$(Q)$(CC) $(TGT_LDFLAGS) -T$(LDSCRIPT) $(OBJS) -o $@
 
 # Convert elf to bin
 %.bin: %.elf
@@ -134,10 +298,10 @@ clean:
 
 flash: $(BDIR)/$(PROJECT).elf
 ifeq ($(FLASH_PROGRM),jlink)
-	$(JLINKEXE) -device $(JLINK_DEVICE) -if swd -speed 4000 -JLinkScriptFile $(TOP)/Misc/jlink-script -CommanderScript $(TOP)/Misc/jlink-command
+	$(JLINKEXE) -device $(JLINK_DEVICE) -if swd -speed 4000 -JLinkScriptFile $(TOP)Misc/jlink-script -CommanderScript $(TOP)Misc/jlink-command
 else ifeq ($(FLASH_PROGRM),pyocd)
-	$(PYOCD_EXE) erase -t $(PYOCD_DEVICE) --chip --config $(TOP)/Misc/pyocd.yaml
-	$(PYOCD_EXE) load $< -t $(PYOCD_DEVICE) --config $(TOP)/Misc/pyocd.yaml
+	$(PYOCD_EXE) erase -t $(PYOCD_DEVICE) --chip --config $(TOP)Misc/pyocd.yaml
+	$(PYOCD_EXE) load $< -t $(PYOCD_DEVICE) --config $(TOP)Misc/pyocd.yaml
 else
 	@echo "FLASH_PROGRM is invalid\n"
 endif

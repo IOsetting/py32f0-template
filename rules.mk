@@ -205,7 +205,7 @@ TGT_CFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c17 $(addprefix -D, $(LIB
 # C++ flags
 TGT_CPPFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -std=c++11 $(addprefix -D, $(LIB_FLAGS)) -Wall -ffunction-sections -fdata-sections
 # ASM flags
-TGT_ASFLAGS	?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) -Wa,--warn
+TGT_ASFLAGS ?= $(ARCH_FLAGS) $(DEBUG_FLAGS) $(OPT) $(addprefix -D, $(LIB_FLAGS)) -Wa,--warn
 # LD flags
 TGT_LDFLAGS	?= $(ARCH_FLAGS) -specs=nano.specs -specs=nosys.specs -lc -lm \
 				-Wl,-Map=$(BDIR)/$(PROJECT).map \

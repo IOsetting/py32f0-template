@@ -3,7 +3,7 @@
 #include <errno.h>
 #include "bsp_uart.h"
 
-const char HEX_TABLE[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+const char BSP_UartHex[16] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
 void BSP_UartTxChar(char ch)
 {
@@ -16,8 +16,8 @@ void BSP_UartTxHex(uint8_t *hex, uint8_t size)
 {
     while (size--)
     {
-        BSP_UartTxChar(HEX_TABLE[(*(hex + size) >> 4) & 0x0F]);
-        BSP_UartTxChar(HEX_TABLE[*(hex + size) & 0x0F]);
+        BSP_UartTxChar(BSP_UartHex[(*(hex + size) >> 4) & 0x0F]);
+        BSP_UartTxChar(BSP_UartHex[*(hex + size) & 0x0F]);
     }
 }
 

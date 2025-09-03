@@ -1,4 +1,4 @@
-#include "i2c.h"
+#include "bsp_i2c.h"
 
 #define I2C_STATE_READY    0
 #define I2C_STATE_BUSY_TX  1
@@ -10,7 +10,7 @@ extern "C" {
 
 __IO static uint32_t i2cState  = I2C_STATE_READY;
 
-void APP_I2C_Transmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, uint16_t size)
+void BSP_I2cTransmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, uint16_t size)
 {
   uint16_t timeout;
 
@@ -60,11 +60,11 @@ void APP_I2C_Transmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, ui
   i2cState = I2C_STATE_READY;
   if (!timeout) 
   {
-    APP_I2cConfig();
+    BSP_I2cReconfig();
   }
 }
 
-void APP_I2C_Receive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uint16_t size)
+void BSP_I2cReceive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uint16_t size)
 {
   uint16_t timeout;
 
@@ -204,7 +204,7 @@ void APP_I2C_Receive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uin
   i2cState = I2C_STATE_READY;
   if (!timeout) 
   {
-    APP_I2cConfig();
+    BSP_I2cReconfig();
   }
 }
 

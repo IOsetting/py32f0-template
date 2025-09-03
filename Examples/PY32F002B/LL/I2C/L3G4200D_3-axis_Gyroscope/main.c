@@ -20,8 +20,6 @@
 extern int16_t delta[3], threshold[3];
 int16_t vect[3];
 
-static void APP_I2CConfig(void);
-
 int main(void)
 {
   uint8_t temp;
@@ -31,7 +29,7 @@ int main(void)
   BSP_USART_Config(115200);
   printf("I2C Demo: L3G4200D, 3-axis gyroscope\r\nClock: %ld\r\n", SystemCoreClock);
 
-  APP_I2CConfig();
+  APP_I2cConfig();
 
   L3G4200D_Begin(L3G4200D_SCALE_500DPS, L3G4200D_DATARATE_100HZ_12_5);
 
@@ -52,7 +50,7 @@ int main(void)
   }
 }
 
-static void APP_I2CConfig(void)
+void APP_I2cConfig(void)
 {
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 

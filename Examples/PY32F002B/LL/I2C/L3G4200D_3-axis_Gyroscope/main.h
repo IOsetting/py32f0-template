@@ -16,6 +16,7 @@ extern "C" {
 #include "py32f002b_ll_tim.h"
 
 
+void APP_I2cConfig(void);
 void APP_ErrorHandler(void);
 
 #ifdef __cplusplus

@@ -60,7 +60,7 @@ void APP_I2C_Transmit(uint8_t devAddress, uint8_t memAddress, uint8_t *pData, ui
   i2cState = I2C_STATE_READY;
   if (!timeout) 
   {
-    APP_I2cConfig();
+    APP_I2cReconfig();
   }
 }
 
@@ -204,7 +204,7 @@ void APP_I2C_Receive(uint16_t devAddress, uint16_t memAddress, uint8_t *buf, uin
   i2cState = I2C_STATE_READY;
   if (!timeout) 
   {
-    APP_I2cConfig();
+    APP_I2cReconfig();
   }
 }
 

@@ -11,16 +11,18 @@
 #include "py32f0xx_bsp_printf.h"
 #include "py32f0xx_bsp_clock.h"
 #include "qmc5883l.h"
-#include "i2c.h"
 
-#define MASTER_ADDRESS        0xA0
 
-int16_t magnet[3];
+#define MASTER_ADDRESS      0xA0
 
-uint8_t APP_I2CConfig(void);
+
+static void APP_I2CConfig(void);
 
 int main(void)
 {
+  float heading;
+  int16_t magnet[3];
+
   BSP_RCC_HSI_PLL48MConfig();
 
   BSP_USART_Config(115200);
@@ -28,21 +30,20 @@ int main(void)
 
   APP_I2CConfig();
 
-  /* qmc5883l init */
   QMC5883L_Reset();
   QMC5883L_Initialize(MODE_CONTROL_CONTINUOUS, OUTPUT_DATA_RATE_50HZ, FULL_SCALE_2G, OVER_SAMPLE_RATIO_256);
-
   LL_mDelay(200);
 
   while (1)
   {
     QMC5883L_Read_Data(magnet);
-    printf("X:%6d\tY:%6d\tZ:%6d\r\n", magnet[0], magnet[1], magnet[2]);
+    heading = QMC5883L_Heading(magnet[0], magnet[1], magnet[2]);
+    printf("X:%8d  Y:%8d  Z:%8d  orientation:%f\r\n", magnet[0], magnet[1], magnet[2], heading);
     LL_mDelay(100);
   }
 }
 
-uint8_t APP_I2CConfig(void)
+static void APP_I2CConfig(void)
 {
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -77,10 +78,7 @@ uint8_t APP_I2CConfig(void)
   I2C_InitStruct.OwnAddress1     = MASTER_ADDRESS;
   I2C_InitStruct.TypeAcknowledge = LL_I2C_NACK;
   LL_I2C_Init(I2C1, &I2C_InitStruct);
-
-  return 0;
 }
-
 
 void APP_ErrorHandler(void)
 {

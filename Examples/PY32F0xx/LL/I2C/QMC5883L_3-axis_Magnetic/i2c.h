@@ -7,9 +7,11 @@ extern "C" {
 
 #include "main.h"
 
-ErrorStatus APP_I2C_TestAddress(uint8_t dev_addr);
-uint8_t APP_I2C_Transmit(uint8_t dev_addr, uint8_t reg_addr, uint8_t *read_data, uint16_t len);
-uint8_t APP_I2C_Receive(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+#define I2C_MEMADD_SIZE_8BIT            0x00000001U
+#define I2C_MEMADD_SIZE_16BIT           0x00000010U
+
+ErrorStatus I2C_MemoryRead(I2C_TypeDef *I2Cx, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size);
+ErrorStatus I2C_MemoryWrite(I2C_TypeDef *I2Cx, uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size);
 
 
 #ifdef __cplusplus

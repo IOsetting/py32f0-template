@@ -1,18 +1,48 @@
+// Copyright 2021 IOsetting <iosetting(at)outlook.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "qmc5883l.h"
+#include "i2c.h"
+#include <math.h>
 
 float Xmin,Xmax,Ymin,Ymax;
 int16_t X,Y,Z;
 
 uint8_t QMC5883L_Read_Reg(uint8_t reg)
 {
-    uint8_t Buffer[1];
-    APP_I2C_Receive(QMC5883L_ADDRESS, reg, Buffer, 1);
-    return Buffer[0];
+    uint8_t ret;
+    I2C_MemoryRead(I2C1, QMC5883L_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &ret, 1);
+    // Add delay when i2c speed is 100khz
+    //LL_mDelay(1);
+    return ret;
 }
 
-void QMC5883L_Write_Reg(uint8_t reg, uint8_t data)
+void QMC5883L_Write_Reg(uint8_t reg, uint8_t value)
 {
-    APP_I2C_Transmit(QMC5883L_ADDRESS, reg, &data, 1);
+    I2C_MemoryWrite(I2C1, QMC5883L_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &value, 1);
+    LL_mDelay(1);
+}
+
+void QMC5883L_Initialize(_qmc5883l_MODE MODE, _qmc5883l_ODR ODR, _qmc5883l_RNG RNG, _qmc5883l_OSR OSR)
+{
+    QMC5883L_Write_Reg(QMC5883L_CONFIG_3, 0x01);
+    QMC5883L_Write_Reg(QMC5883L_CONFIG_1, MODE | ODR | RNG | OSR);
+}
+
+void QMC5883L_Reset()
+{
+    QMC5883L_Write_Reg(QMC5883L_CONFIG_2, 0x81);
 }
 
 void QMC5883L_Read_Data(int16_t *vect) // (-32768 / +32768)
@@ -25,17 +55,6 @@ void QMC5883L_Read_Data(int16_t *vect) // (-32768 / +32768)
 int16_t QMC5883L_Read_Temperature()
 {
     return (((int16_t)QMC5883L_Read_Reg(QMC5883L_TEMP_READ_LSB)) | (((int16_t)QMC5883L_Read_Reg(QMC5883L_TEMP_READ_MSB)) << 8)) / 100;
-}
-
-void QMC5883L_Initialize(_qmc5883l_MODE MODE, _qmc5883l_ODR ODR, _qmc5883l_RNG RNG, _qmc5883l_OSR OSR)
-{
-    QMC5883L_Write_Reg(QMC5883L_CONFIG_3, 0x01);
-    QMC5883L_Write_Reg(QMC5883L_CONFIG_1, MODE | ODR | RNG | OSR);
-}
-
-void QMC5883L_Reset()
-{
-    QMC5883L_Write_Reg(QMC5883L_CONFIG_2, 0x81);
 }
 
 void QMC5883L_InterruptConfig(_qmc5883l_INT INT)
@@ -137,7 +156,7 @@ float QMC5883L_Heading(int16_t Xraw, int16_t Yraw, int16_t Zraw)
     // WEST
     // Heading -= QMC5883L_DECLINATION_ANGLE;
 
-    if (Heading < 0)
+    if (Heading < - 2 * M_PI)
     {
         Heading += 2 * M_PI;
     }
@@ -145,7 +164,6 @@ float QMC5883L_Heading(int16_t Xraw, int16_t Yraw, int16_t Zraw)
     {
         Heading -= 2 * M_PI;
     }
-
     return Heading;
 }
 

@@ -25,6 +25,24 @@
 #define QMC6309_MODE_SINGLE         0x02
 #define QMC6309_MODE_CONTINUOUS     0x03
 
+// Over Sample Rates
+#define QMC6309_OSR_8               0x00
+#define QMC6309_OSR_4               0x01
+#define QMC6309_OSR_2               0x02
+#define QMC6309_OSR_1               0x03
+
+// Low Pass Filter
+#define QMC6309_LPF_1               0x00
+#define QMC6309_LPF_2               0x01
+#define QMC6309_LPF_4               0x02
+#define QMC6309_LPF_8               0x03
+#define QMC6309_LPF_16              0x04
+
+// Range scales
+#define QMC6309_RANGE_32G           0x00
+#define QMC6309_RANGE_16G           0x01
+#define QMC6309_RANGE_8G            0x02
+
 // Output Data Rates
 #define QMC6309_ODR_1HZ             0x00
 #define QMC6309_ODR_10HZ            0x01
@@ -32,13 +50,12 @@
 #define QMC6309_ODR_100HZ           0x03
 #define QMC6309_ODR_200HZ           0x04
 
-// Range scales
-#define QMC6309_RANGE_32G           0x00
-#define QMC6309_RANGE_16G           0x01
-#define QMC6309_RANGE_8G            0x02
+#ifndef M_PI 
+#define M_PI 3.14159265358979323846264338327950288f 
+#endif
 
-typedef ErrorStatus (*QMC6309_I2cRead_t)(uint8_t devAddr, uint8_t memAddr, uint8_t *pData, uint16_t Size);
-typedef ErrorStatus (*QMC6309_I2cWrite_t)(uint8_t devAddr, uint8_t memAddr, uint8_t *pData, uint16_t Size);
+#define QMC6309_DECLINATION_ANGLE  93.67 * 180 / 1000 / M_PI  // degree, Tekirdag/Turkey
+
 
 typedef struct {
     uint8_t addr;
@@ -51,5 +68,7 @@ void QMC6309_Write(uint8_t addr, uint8_t dat);
 ErrorStatus QMC6309_Detect(uint8_t address);
 void QMC6309_Init(void);
 void QMC6309_ReadAll(int16_t *buf);
+void QMC6309_SetMode(uint8_t mode, uint8_t osr, uint8_t lpf, uint8_t rng, uint8_t odr);
+int32_t QMC6309_Heading(int16_t Xraw, int16_t Yraw, int16_t Zraw);
 
 #endif

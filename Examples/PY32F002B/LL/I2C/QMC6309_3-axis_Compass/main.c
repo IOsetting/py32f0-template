@@ -4,6 +4,7 @@
 
 int main(void)
 {
+  int32_t heading;
   int16_t qmc63_buff[3];
 
   BSP_Rcc48MConfig();
@@ -19,9 +20,11 @@ int main(void)
     while (1)
     {
       QMC6309_ReadAll(qmc63_buff);
+      heading = QMC6309_Heading(qmc63_buff[0], qmc63_buff[1], qmc63_buff[2]);
       BSP_UartTxInt(qmc63_buff[0], 9);
       BSP_UartTxInt(qmc63_buff[1], 8);
       BSP_UartTxInt(qmc63_buff[2], 8);
+      BSP_UartTxInt(heading, 8);
       BSP_UartTxString("\r\n");
       LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_2);
       LL_mDelay(100);

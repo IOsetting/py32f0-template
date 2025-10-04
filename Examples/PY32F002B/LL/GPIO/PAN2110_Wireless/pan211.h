@@ -47,11 +47,11 @@
 #define PAN211_P0_I2C_CFG               0x06    // default 0x05
                                                 // [3]IRQ_I2C_MUX_EN, data and irq complex, 0:off, 1:en
 #define PAN211_P0_WMODE_CFG0            0x07    // default 0x49
-                                                // [6:7]CRC_MODE, 00：CRC DISABLE, 01：CRC-1BYTE, 10：CRC-2BYTE, 11：CRC-3BYTE
+                                                // [6:7]CRC_MODE, 00:CRC DISABLE, 01:CRC-1BYTE, 10:CRC-2BYTE, 11:CRC-3BYTE
                                                 // [4:5]WORK_MODE, 00:XN297L, 11:BLE
                                                 // [3]WHITEN_ENABLE, 0:off, 1:on
                                                 // [2]CRC_SKIP_ADDR, 0:don't skip, 1:skip
-                                                // [1]TX_NOACK, in enhanced mode, 0:reply ack, 1:don't reply ack
+                                                // [1]TX_NOACK, in enhanced mode, 0:reply ack, 1:no reply ack
                                                 // [0]ENDIAN, 0:le, BLE, 1:be, XN297L
 #define PAN211_P0_WMODE_CFG1            0x08    // default 0x83
                                                 // [7]RX_GOON, exit rx when error, 0:exit, 1:no exit
@@ -131,8 +131,8 @@
 #define PAN211_P0_PIPE4_RXADDR0_CFG     0x27    // default 0xCC, pipe4
 #define PAN211_P0_PIPE5_RXADDR0_CFG     0x28    // default 0xCC, pipe5
 #define PAN211_P0_TXAUTO_CFG            0x29    // default 0x03
-                                                // [4:7]ARD, auto retry interval, 0000：250µs, 0001：500µs, 0010：750µs, ……, 1111：4000µs
-                                                // [0:3]ARC, retry times, 0000:no ack, 0001：ack, no retry, 0002: ack, retry once, ……, 1111:ack, retry 14 times
+                                                // [4:7]ARD, auto retry interval, 0000:250µs, 0001:500µs, 0010:750µs, ……, 1111:4000µs
+                                                // [0:3]ARC, retry times, 0000:no ack, 0001:ack, no retry, 0002: ack, retry once, ……, 1111:ack, retry 14 times
 #define PAN211_P0_TRXMODE_CFG           0x2A    // default 0x01
                                                 // [7]REG_TX_CFG_MODE, 0:single, 1:continuous
                                                 // [5:6]REG_RX_CFG_MODE, 
@@ -255,51 +255,56 @@
  * @param Value Single byte data to write to register
  * @return None
  */
-void PAN211_WriteReg(unsigned char Addr, unsigned char Value);
+void PAN211_WriteReg(uint8_t Addr, uint8_t Value);
 /**
  * @brief Read single byte from specified register
  * @param Addr Register address to read
- * @return unsigned char Value read from register
+ * @return uint8_t Value read from register
  */
-unsigned char PAN211_ReadReg(unsigned char Addr);
+uint8_t PAN211_ReadReg(uint8_t Addr);
 /**
  * @brief Continuously write multiple PAN211 register values
  * @param Addr Starting register address
  * @param Buffer Buffer containing data to write
  * @param Len Number of bytes to write
  */
-void PAN211_WriteRegs(unsigned char Addr, unsigned char *Buffer, unsigned char Len);
+void PAN211_WriteRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Len);
 /**
  * @brief Continuously read multiple PAN211 register values
  * @param Addr Starting register address
  * @param Buffer Buffer to store read data
  * @param Len Number of bytes to read
  */
-void PAN211_ReadRegs(unsigned char Addr, unsigned char *Buffer, unsigned char Len);
+void PAN211_ReadRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Len);
 /**
  * @brief Write data to PAN211 TX FIFO
  * @param Buffer Data buffer to write to FIFO
  * @param Size Number of bytes of data to write
  */
-void PAN211_WriteFIFO(unsigned char *Buffer, unsigned char Size);
+void PAN211_WriteFIFO(uint8_t *Buffer, uint8_t Size);
 /**
  * @brief Read data from data FIFO
  * @param Buffer Buffer to store data read from FIFO
  * @param Size Number of bytes to read
  */
-void PAN211_ReadFIFO(unsigned char *Buffer, unsigned char Size);
+void PAN211_ReadFIFO(uint8_t *Buffer, uint8_t Size);
 /**
  * @brief When DATA pin multiplexed interrupt function is enabled, detect if DATA pin has interrupt event during SPI idle period, active low.
  * @note Method to enable DATA pin multiplexed interrupt function is to set IRQ_DATA_MUX_EN (Page0 0x03[2]) to 1.
  * @return 1: Interrupt triggered
  * @return 0: No interrupt triggered
  */
-unsigned char IRQDetected(void);
+uint8_t IRQDetected(void);
 
 /**
  * @brief Initialize PAN211 transceiver to STB3 state after power-on
+ * @param rf_channel 0 ~ 83
  */
-unsigned char PAN211_Init(void);
+uint8_t PAN211_Init(uint8_t rf_channel);
+/**
+ * @brief Enter enhanced mode
+ */
+void PAN211_SetEnhancedMode(uint8_t enabled);
 /**
  * @brief PAN211 transceiver soft reset (SOFT_RSTL)
  * @note This function must be called in STB3 state.
@@ -343,13 +348,13 @@ void PAN211_RxStart(void);
  * @param Channel Desired RF channel, range from 0 to 83
  * @note Actual frequency will be (2400 + Channel)MHz
  */
-void PAN211_SetChannel(unsigned char Channel);
+void PAN211_SetChannel(uint8_t Channel);
 /**
  * @brief Set PAN211 transceiver frequency channel
  * @param Channel Desired RF channel, range from 0 to 83
  * @note Actual frequency will be (2400 + Channel)MHz
  */
-void PAN211_SetAddrWidth(unsigned char AddrWidth);
+void PAN211_SetAddrWidth(uint8_t AddrWidth);
 /**
  * @brief Set static reception address for specified channel
  * @param Pipe Channel to configure address, range from 0 to 5
@@ -358,18 +363,18 @@ void PAN211_SetAddrWidth(unsigned char AddrWidth);
  * @note Buffer length must equal transceiver current address width
  * @note For channels [2..5], only write first byte of address, because channels 1-5 share four most significant address bytes
  */
-void PAN211_SetRxAddr(unsigned char Pipe, unsigned char *Addr, unsigned char Len);
+void PAN211_SetRxAddr(uint8_t Pipe, uint8_t *Addr, uint8_t Len);
 /**
  * @brief Set transceiver static transmission address
  * @param Addr Buffer pointer containing address
  * @param Len Address length
  */
-void PAN211_SetTxAddr(unsigned char *Addr, unsigned char Len);
+void PAN211_SetTxAddr(uint8_t *Addr, uint8_t Len);
 /**
  * @brief Get channel number from which payload can be read from RX FIFO
  * @return Channel number (0-5), returns 0xFF if RX FIFO is empty
  */
-unsigned char PAN211_GetRxPipeNum(void);
+uint8_t PAN211_GetRxPipeNum(void);
 /**
  * @brief Set ACK response channel number
  * @param AckPipeNum ACK channel number to set, range from 0 to 5
@@ -378,12 +383,12 @@ unsigned char PAN211_GetRxPipeNum(void);
  *       Before sending ACK response, must first get receiving data packet channel number through PAN211_GetRxPipeNum() function,
  *       Then call this function to set ACK response channel number.
  */
-void PAN211_SetAckPipeNum(unsigned char AckPipeNum);
+void PAN211_SetAckPipeNum(uint8_t AckPipeNum);
 /**
  * @brief Get pending IRQ flags
  * @return Current status of STATUS register RX_DONE, TX_DONE, RX_TIMEOUT and MAX_RT bits
  */
-unsigned char PAN211_GetIRQFlags(void);
+uint8_t PAN211_GetIRQFlags(void);
 /**
  * @brief Clear PAN211 transceiver pending IRQ flags
  * @param Flags IRQ flags to clear, can be combination of following values:
@@ -396,17 +401,17 @@ unsigned char PAN211_GetIRQFlags(void);
  *         - RF_IT_RX_TIMEOUT_IRQ
  *         - RF_IT_RX_IRQ
  */
-void PAN211_ClearIRQFlags(unsigned char Flags);
+void PAN211_ClearIRQFlags(uint8_t Flags);
 /**
  * @brief Set BLE whitening initial value
  * @param Value Whitening initial value
  */
-void PAN211_SetWhiteInitVal(unsigned char Value);
+void PAN211_SetWhiteInitVal(uint8_t Value);
 /**
  * @brief Set PAN211 transmission power (auto-generated by tool)
  * @param TxPower Transmission power value, use PAN211_TXPWR_* constants
  */
-unsigned char PAN211_GetRecvLen(void);
+uint8_t PAN211_GetRecvLen(void);
 /**
  * @brief Set PAN211 transmission power (auto-generated by tool)
  * @param TxPower Transmission power value, use PAN211_TXPWR_* constants

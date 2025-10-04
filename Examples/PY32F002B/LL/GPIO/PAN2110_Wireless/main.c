@@ -30,7 +30,7 @@ int main(void)
 
   APP_GPIO_Init();
 
-  while (PAN211_Init() != 1) /* PAN211 init */
+  while (PAN211_Init(60) != 1) /* PAN211 init */
   {
     printf("PAN211 init failed.\r\n");
     LL_mDelay(500);

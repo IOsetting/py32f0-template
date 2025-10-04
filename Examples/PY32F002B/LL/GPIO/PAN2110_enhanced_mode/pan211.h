@@ -51,7 +51,7 @@
                                                 // [4:5]WORK_MODE, 00:XN297L, 11:BLE
                                                 // [3]WHITEN_ENABLE, 0:off, 1:on
                                                 // [2]CRC_SKIP_ADDR, 0:don't skip, 1:skip
-                                                // [1]TX_NOACK, in enhanced mode, 0:reply ack, 1:no reply ack
+                                                // [1]TX_NOACK, in enhanced mode, 0:reply ack, 1:no reply ack, won't be changed by received packet
                                                 // [0]ENDIAN, 0:le, BLE, 1:be, XN297L
 #define PAN211_P0_WMODE_CFG1            0x08    // default 0x83
                                                 // [7]RX_GOON, exit rx when error, 0:exit, 1:no exit
@@ -249,6 +249,62 @@
 #define PAN211_TXPWR_9dBm        0x09  /* 9dBm */
 
 
+typedef enum {
+  PAN211_TxPower_9dbm               = 9,
+  PAN211_TxPower_6dbm               = 6,
+  PAN211_TxPower_3dbm               = 3,
+  PAN211_TxPower_0dbm               = 0,
+  PAN211_TxPower_n5dbm              = -5,
+  PAN211_TxPower_n10dbm             = -10,
+  PAN211_TxPower_n12dbm             = -12,
+  PAN211_TxPower_n14dbm             = -14,
+  PAN211_TxPower_n16dbm             = -16,
+  PAN211_TxPower_n23dbm             = -23,
+  PAN211_TxPower_n40dbm             = -40,
+} PAN211_TxPower_t;
+/*
+ * ARD, auto retry interval, 0000:250µs, 0001:500µs, 0010:750µs, ……, 1111:4000µs
+*/
+typedef enum {
+  PAN211_TxAuto_Ard_250us           = 0x00,
+  PAN211_TxAuto_Ard_500us           = 0x01,
+  PAN211_TxAuto_Ard_750us           = 0x02,
+  PAN211_TxAuto_Ard_1000us          = 0x03,
+  PAN211_TxAuto_Ard_1250us          = 0x04,
+  PAN211_TxAuto_Ard_1500us          = 0x05,
+  PAN211_TxAuto_Ard_1750us          = 0x06,
+  PAN211_TxAuto_Ard_2000us          = 0x07,
+  PAN211_TxAuto_Ard_2250us          = 0x08,
+  PAN211_TxAuto_Ard_2500us          = 0x09,
+  PAN211_TxAuto_Ard_2750us          = 0x0A,
+  PAN211_TxAuto_Ard_3000us          = 0x0B,
+  PAN211_TxAuto_Ard_3250us          = 0x0C,
+  PAN211_TxAuto_Ard_3500us          = 0x0D,
+  PAN211_TxAuto_Ard_3750us          = 0x0E,
+  PAN211_TxAuto_Ard_4000us          = 0x0F,
+} PAN211_TxAuto_Ard_t;
+/*
+ * 0000:no ack, 0001:ack, no retry, 0002: ack, retry once, ……, 1111:ack, retry 14 times
+*/
+typedef enum {
+  PAN211_TxAuto_Arc_NoAck           = 0x00,
+  PAN211_TxAuto_Arc_AckNoRetry      = 0x01,
+  PAN211_TxAuto_Arc_Ack1Retry       = 0x02,
+  PAN211_TxAuto_Arc_Ack2Retry       = 0x03,
+  PAN211_TxAuto_Arc_Ack3Retry       = 0x04,
+  PAN211_TxAuto_Arc_Ack4Retry       = 0x05,
+  PAN211_TxAuto_Arc_Ack5Retry       = 0x06,
+  PAN211_TxAuto_Arc_Ack6Retry       = 0x07,
+  PAN211_TxAuto_Arc_Ack7Retry       = 0x08,
+  PAN211_TxAuto_Arc_Ack8Retry       = 0x09,
+  PAN211_TxAuto_Arc_Ack9Retry       = 0x0A,
+  PAN211_TxAuto_Arc_Ack10Retry      = 0x0B,
+  PAN211_TxAuto_Arc_Ack11Retry      = 0x0C,
+  PAN211_TxAuto_Arc_Ack12Retry      = 0x0D,
+  PAN211_TxAuto_Arc_Ack13Retry      = 0x0E,
+  PAN211_TxAuto_Arc_Ack14Retry      = 0x0F,
+} PAN211_TxAuto_Arc_t;
+
 /**
  * @brief Write single byte to specified register
  * @param Reg Register address to write
@@ -295,7 +351,11 @@ void PAN211_ReadFIFO(uint8_t *Buffer, uint8_t Size);
  * @return 0: No interrupt triggered
  */
 uint8_t IRQDetected(void);
-
+/**
+ * @brief check if PAN211x exists
+ * @return 0:fail, 1:succ
+ */
+uint8_t PAN211_SelfTest(void);
 /**
  * @brief Initialize PAN211 transceiver to STB3 state after power-on
  * @param rf_channel 0 ~ 83
@@ -304,7 +364,7 @@ uint8_t PAN211_Init(uint8_t rf_channel);
 /**
  * @brief Enter enhanced mode
  */
-void PAN211_SetEnhancedMode(uint8_t enabled);
+void PAN211_SetEnhancedMode(uint8_t enabled, PAN211_TxAuto_Ard_t ard, PAN211_TxAuto_Arc_t arc);
 /**
  * @brief PAN211 transceiver soft reset (SOFT_RSTL)
  * @note This function must be called in STB3 state.
@@ -334,6 +394,14 @@ void PAN211_ExitTxMode(void);
  */
 void PAN211_ExitRxMode(void);
 /**
+ * @brief Set the RX data length. It is ignored in enhanced mode with DPY_EN=1
+ */
+void PAN211_SetRxPayloadLength(uint8_t len);
+/**
+ * @brief Set the TX data length. In enhanced mode with DPY_EN=1, RX will detect this length automatically
+ */
+void PAN211_SetTxPayloadLength(uint8_t len);
+/**
  * @brief Enter transmission state
  * @note Will return to standby state first before entering transmission state
  */
@@ -350,11 +418,22 @@ void PAN211_RxStart(void);
  */
 void PAN211_SetChannel(uint8_t Channel);
 /**
+ * @brief delay when switching between tx and rx
+ *        when ACK is enabled, to ensure the ACK is not sent until data are written to FIFO
+ *        unit:us
+ */
+void PAN211_SetTxRxWaitTime(uint16_t us);
+/**
  * @brief Set PAN211 transceiver frequency channel
  * @param Channel Desired RF channel, range from 0 to 83
  * @note Actual frequency will be (2400 + Channel)MHz
  */
 void PAN211_SetAddrWidth(uint8_t AddrWidth);
+/**
+ * @brief Enable/Disable PAN211 transceiver pipes
+ * @param pipes 0x01:p0, 0x03:p0,p1, ..., 0x1F:p0~p5
+ */
+void PAN211_EnableRxPipes(uint8_t pipes);
 /**
  * @brief Set static reception address for specified channel
  * @param Pipe Channel to configure address, range from 0 to 5
@@ -363,7 +442,7 @@ void PAN211_SetAddrWidth(uint8_t AddrWidth);
  * @note Buffer length must equal transceiver current address width
  * @note For channels [2..5], only write first byte of address, because channels 1-5 share four most significant address bytes
  */
-void PAN211_SetRxAddr(uint8_t Pipe, uint8_t *Addr, uint8_t Len);
+void PAN211_SetRxAddr(uint8_t Pipe, const uint8_t *Addr, uint8_t Len);
 /**
  * @brief Set transceiver static transmission address
  * @param Addr Buffer pointer containing address
@@ -414,9 +493,9 @@ void PAN211_SetWhiteInitVal(uint8_t Value);
 uint8_t PAN211_GetRecvLen(void);
 /**
  * @brief Set PAN211 transmission power (auto-generated by tool)
- * @param TxPower Transmission power value, use PAN211_TXPWR_* constants
+ * @param txpower Transmission power value, use PAN211_TXPWR_* constants
  */
-void PAN211_SetTxPower(int8_t TxPower);
+void PAN211_SetTxPower(PAN211_TxPower_t txpower);
 
 /**
  * @brief Enter carrier wave transmission mode

@@ -11,9 +11,9 @@
 #include <string.h>
 
 // 0:TX, 1:RX
-#define APP_MODE 0
+#define APP_MODE 1
 
-const uint8_t dummy_addr[5] = {0xCC, 0x35, 0x12, 0x23, 0x67};
+const uint8_t dummy_addr[5] = {0xC1, 0x35, 0x12, 0x23, 0x67};
 uint8_t buff[32] = {
   0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
   16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
@@ -33,20 +33,31 @@ int main(void)
 
   APP_GPIO_Init();
 
+  while (PAN211_SelfTest() == 0)
+  {
+    printf(" check failed.\r\n");
+    LL_mDelay(500);
+  }
+  printf(" check succeeded.\r\n");
+
   while (PAN211_Init(78) != 1) /* PAN211 init */
   {
     printf("PAN211 init failed.\r\n");
     LL_mDelay(500);
   }
   printf("PAN211 init succeeded.\r\n");
-  
-  PAN211_SetTxPower(-16); // rf power: -16 dBm
-  PAN211_SetEnhancedMode(1); // switch to enhanced mode
+
+  PAN211_SetTxPower(PAN211_TxPower_n10dbm); // rf power
+  PAN211_SetEnhancedMode(ENABLE, PAN211_TxAuto_Ard_250us, PAN211_TxAuto_Arc_Ack2Retry); // switch to enhanced mode
   PAN211_ClearIRQFlags(0xFF); // clear all irq flags
 
   LL_SYSTICK_EnableIT();
 
 #if APP_MODE == 0
+
+  PAN211_SetTxAddr(dummy_addr, 5);
+  PAN211_SetRxAddr(0, dummy_addr, 5);
+
   while (1)
   {
     if (app_tick - last_sent > 1000)
@@ -73,14 +84,15 @@ int main(void)
       }
       if (irqflag & RF_IT_RX_IRQ) /* rx flag */
       {
-          uint8_t RxLen;
+          uint8_t RxLen, PipeNum;
           RxLen = PAN211_GetRecvLen();
+          PipeNum = PAN211_GetRxPipeNum();
           if (RxLen > 0)
           {
               PAN211_ReadFIFO(rxbuf, RxLen);
           }
           PAN211_ClearIRQFlags(RF_IT_RX_IRQ);
-          printf(">> RF_IT_RX_IRQ[0x%02X], RxLen = %d: ", irqflag, RxLen);
+          printf(">> RF_IT_RX_IRQ[0x%02X]RxLen[%d]Pipe[%d] ", irqflag, RxLen, PipeNum);
           for (i = 0; i < RxLen; i++)
           {
             printf("%02X", *(rxbuf + i));
@@ -104,29 +116,40 @@ int main(void)
 
 #else
 
-  PAN211_WriteReg(PAN211_P0_TX_PLLEN_CFG, 0x02); /* [7:0]TxLen */
-  PAN211_SetTxAddr(dummy_addr, 5);
-  PAN211_RxStart();           /* rx mode */
+  PAN211_WriteReg(PAN211_P0_TX_PLLEN_CFG, 0x03); // ack length
+  PAN211_SetTxRxWaitTime(0x100); // ack after 256us
+  PAN211_EnableRxPipes(0x03); // enable rx on pipe0 and pipe1
+  PAN211_SetRxAddr(1, dummy_addr, 5); // set pipe1 address
+  PAN211_RxStart();
 
   while (1)
   {
-    while (!IRQDetected()); /* wait till sending finishes */
+    while (!IRQDetected()); // optional
 
     irqflag = PAN211_GetIRQFlags();
     if (irqflag & RF_IT_RX_IRQ)     /* rx flag */
     {
-      uint8_t RxLen;
+      uint8_t RxLen, PipeNum;
+      RxLen = PAN211_GetRecvLen();
+      PipeNum = PAN211_GetRxPipeNum();
 
       __disable_irq();
-      RxLen = PAN211_GetRecvLen();
-      // send ack if NoAck = 0 (PAN211_P0_WMODE_CFG0 [1] = 0)
+      // ack will be sent automatically if NoAck = 0 (PAN211_P0_WMODE_CFG0 [1] = 0) and NoAck is 0 in received packet
       buff[0] = j++;
-      PAN211_WriteFIFO(buff, 1); // write ack data
+      buff[1] = PipeNum;
+      buff[2] = RxLen;
+      PAN211_SetAckPipeNum(PipeNum);  // ack to the same pipe
+      /**
+       * 1. Ensure PAN211_P0_TXAUTO_CFG is not 0x00, otherwise all 128-byte FIFO is used for RX, 
+       *    write FIFO will overwrite the data received.
+       * 2. Set TRXTWTH_CFG,TRXTWTL_CFG to 250us+ to ensure the ACK is not sent until data are written to FIFO
+       */
+      PAN211_WriteFIFO(buff, 3); // write ack data
       __enable_irq();
 
       PAN211_ReadFIFO(rxbuf, RxLen);
       PAN211_ClearIRQFlags(RF_IT_RX_IRQ);
-      printf(">> RF_IT_RX_IRQ[%02X] RxLen[%d] ", irqflag, RxLen);
+      printf(">> RF_IT_RX_IRQ[%02X]RxLen[%d]Pipe[%d] ", irqflag, RxLen, PipeNum);
       for (i = 0; i < sizeof(rxbuf); i++)
       {
         printf("%02X", *(rxbuf + i));

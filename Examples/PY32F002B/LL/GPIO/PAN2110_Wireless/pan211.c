@@ -407,7 +407,11 @@ uint8_t PAN211_Init(uint8_t rf_channel)
     PAN211_WriteReg(PAN211_P0_RF_DATARATE_CFG, 0x45); /* [5:4]DataRate */
 #elif (PAN211_DATA_RATE == 3) // 250Kbps
     PAN211_WriteReg(PAN211_P0_RF_DATARATE_CFG, 0xb0); /* [5:4]DataRate */
+    #if (PAN211_XTAL_FREQ == 0) // 16M XTAL
     PAN211_WriteReg(0x37, 0xeb);
+    #else                       // 32M XTAL
+    PAN211_WriteReg(0x37, 0x6b);
+    #endif
     PAN211_WriteReg(0x38, 0x4b);
 #else
     // TODO

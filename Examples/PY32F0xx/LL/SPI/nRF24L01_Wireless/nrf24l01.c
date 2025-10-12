@@ -12,7 +12,7 @@ void NRF24L01_Init(void)
 }
 
 /**
-* Read a 1-bit register
+* Read a 1-byte register
 */
 uint8_t NRF24L01_Read_Reg(uint8_t reg)
 {

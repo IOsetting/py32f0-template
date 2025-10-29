@@ -1,0 +1,21 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "command": "bear --append --output Build/compile_commands.json -- make",
+            "detail": "Build default Makefile target",
+            "label": "build",
+            "problemMatcher": "$gcc",
+            "type": "shell",
+        },
+        {
+            "command": "mkdir -p Build && test -f Build/compile_commands.json || echo [] > Build/compile_commands.json",
+            "detail": "Create Build directory and empty compilation database",
+            "label": "init",
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "type": "shell",
+        },
+    ]
+}

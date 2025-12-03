@@ -208,7 +208,20 @@ __STATIC_INLINE void LL_InitTick(uint32_t HCLKFrequency, uint32_t Ticks)
                    SysTick_CTRL_ENABLE_Msk;                   /* Enable the Systick Timer */
 }
 
-void        LL_Init1msTick(uint32_t HCLKFrequency);
+/**
+  * @brief  This function configures the Cortex-M SysTick source to have 1ms time base.
+  * @note   When a RTOS is used, it is recommended to avoid changing the Systick
+  *         configuration by calling this function, for a delay use rather osDelay RTOS service.
+  * @param  HCLKFrequency HCLK frequency in Hz
+  * @note   HCLK frequency can be calculated thanks to RCC helper macro or function @ref LL_RCC_GetSystemClocksFreq
+  * @retval None
+  */
+__STATIC_INLINE void LL_Init1msTick(uint32_t HCLKFrequency)
+{
+  /* Use frequency provided in argument */
+  LL_InitTick(HCLKFrequency, 1000U);
+}
+
 void        LL_mDelay(uint32_t Delay);
 
 /**

@@ -19,7 +19,7 @@
 #include "py32f0xx_bsp_printf.h"
 #include "pan_rf.h"
 
-/* Mode options: MODE_TX, MODE_RX, MODE_RX_INT */
+/* Mode options: MODE_TX, MODE_RX */
 #define MODE_TX         0
 #define MODE_RX         1
 

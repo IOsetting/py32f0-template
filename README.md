@@ -139,7 +139,7 @@ Don't install from apt repository, because the version 0.13.1+dfsg-1 is too low 
 Install PyOCD from pip
 
 ```bash
-pip uninstall pyocd
+pip install pyocd
 ```
 This will install PyOCD into:
 ```

@@ -22,63 +22,63 @@
 #include "pan_rf.h"
 
 /**
- * @brief PAN3029/3060接收数据包结构体
- * @note 该结构体用于存储接收到的数据包，包括数据长度、数据缓冲区、SNR和RSSI等信息
+ * @brief PAN3029/3060 receive packet structure
+ * @note This structure is used to store received packets, including data length, data buffer, SNR and RSSI information
  */
 volatile RfRxPkt_t g_RfRxPkt = {0};
 
 /**
- * @brief PAN3029/3060配置参数结构体
- * @note 该结构体用于存储PAN3029/3060的配置参数，包括发射功率、频率、扩频因子、带宽、编码率等
+ * @brief PAN3029/3060 configuration parameter structure
+ * @note This structure is used to store PAN3029/3060 configuration parameters, including transmit power, frequency, spreading factor, bandwidth, coding rate, etc.
  */
 static volatile RfConfig_t g_RfCfgParams = {0};
 
 /**
- * @brief 保存当前的RF操作状态
+ * @brief Save current RF operation state
  */
 static volatile RfOpState_t g_RfOperatetate;
 
 /**
- * @brief 微秒级延时函数
- * @param us 延时的微秒数
- * @note 该函数具体的实现需要根据实际硬件平台进行修改。
- * @note 须保证RF_DelayUs(1)大于等于1us。
+ * @brief Microsecond delay function
+ * @param us Number of microseconds to delay
+ * @note The specific implementation of this function needs to be modified according to the actual hardware platform.
+ * @note Must ensure RF_DelayUs(1) is greater than or equal to 1us.
  */
 __attribute__((optimize("O0"))) void RF_DelayUs(uint32_t us)
 {
-    volatile int i, j;
+    uint32_t i, j;
     for (i = 0; i < us; i++)
     {
         for (j = 0; j < 12; j++)
         {
-            __NOP(); /* 每个循环约1 cycle */
+            __NOP(); /* Each loop takes approximately 1 cycle */
         }
     }
 }
 
 /**
- * @brief 毫秒级延时函数
- * @param ms 延时的毫秒数
- * @note 该函数具体的实现需要根据实际硬件平台进行修改。
- * @note 须保证RF_DelayMs(1)大于等于1ms。
+ * @brief Millisecond delay function
+ * @param ms Number of milliseconds to delay
+ * @note The specific implementation of this function needs to be modified according to the actual hardware platform.
+ * @note Must ensure RF_DelayMs(1) is greater than or equal to 1ms.
  */
 void RF_DelayMs(uint32_t ms)
 {
-    LL_mDelay(ms); /* 调用微秒延时函数 */
+    LL_mDelay(ms); /* Call millisecond delay function */
 }
 
 /**
- * @brief SPI 写入单个字节
- * @param Value 要写入的单字节数据
- * @note 此接口为软件SPI实现，具体实现方式可能因MCU平台而异。
- * @note 调用该函数前，必须先调用 SPI_CS_LOW() 函数拉低 CS 引脚。
- * @note 该函数会将 SPI_MOSI 引脚设置为输出模式，并在传输完成后将其设置为输入模式。
- * @note PAN3029/3060 SPI 接口使用的是 3 线 SPI 模式。
- * @note PAN3029/3060 SPI 配置为：
- *       时钟极性：低电平有效
- *       时钟相位：第一个边沿采样数据
- *       数据传输顺序：MSB优先
- * @note 以发送0xCC数据为例，时序图如下：
+ * @brief SPI write single byte
+ * @param Value Single byte data to write
+ * @note This interface is a software SPI implementation, and the specific implementation may vary depending on the MCU platform.
+ * @note Before calling this function, you must first call SPI_CS_LOW() to pull down the CS pin.
+ * @note This function will set the SPI_MOSI pin to output mode and set it to input mode after transmission is complete.
+ * @note PAN3029/3060 SPI interface uses 3-line SPI mode.
+ * @note PAN3029/3060 SPI configuration:
+ *       Clock polarity: Active low
+ *       Clock phase: Sample data on first edge
+ *       Data transmission order: MSB first
+ * @note Taking sending 0xCC data as an example, the timing diagram is as follows:
  *      SPI_CS：  ____________________________________________________
  *      SPI_CLK:  ____|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__
  *      SPI_MOSI: ___|‾‾‾‾‾‾‾‾‾‾|___________|‾‾‾‾‾‾‾‾‾‾‾|_____________
@@ -86,48 +86,48 @@ void RF_DelayMs(uint32_t ms)
  */
 void SPI_WriteByte(uint8_t Value)
 {
-    /* TODO: 根据你的硬件实现，下面是软件SPI实现示例 */
+    /* TODO: According to your hardware implementation, the following is a software SPI implementation example */
 #if INTERFACE_MODE == USE_SPI_4LINE
     SPI_TxRxByte(Value);
 #elif INTERFACE_MODE == USE_SPI_3LINE
     unsigned char i;
 
-    SPI_MOSI_OUTPUT(); /* 设置SPI_MOSI引脚为输出模式 */
+    SPI_MOSI_OUTPUT(); /* Set SPI_MOSI pin to output mode */
 
-    /* 以高比特优先MSB方式传输8位数据 */
+    /* Transmit 8-bit data in MSB first order */
     for (i = 0; i < 8; i++)
     {
-        SPI_SCK_LOW();    /* 拉低时钟线，准备传输数据 */
-        if (Value & 0x80) /* 判断最高位数据 */
+        SPI_SCK_LOW();    /* Pull down clock line, prepare to transfer data */
+        if (Value & 0x80) /* Check highest bit data */
         {
-            SPI_MOSI_HIGH(); /* 如果最高位为1，则发送高电平 */
+            SPI_MOSI_HIGH(); /* If highest bit is 1, send high level */
         }
         else
         {
-            SPI_MOSI_LOW(); /* 如果最高位为0，则发送低电平 */
+            SPI_MOSI_LOW(); /* If highest bit is 0, send low level */
         }
 
-        Value <<= 1;    /* 左移一位，准备传输下一个比特 */
-        SPI_SCK_HIGH(); /* 拉高时钟线，传输一位数据 */
+        Value <<= 1;    /* Shift left one bit, prepare to transfer the next bit */
+        SPI_SCK_HIGH(); /* Raise clock line, transfer one bit of data */
     }
 
-    SPI_MOSI_INPUT(); /* 设置SPI_MOSI引脚为输入模式 */
-    SPI_SCK_LOW();    /* 结束传输，拉低时钟线，保证时钟线处于低电平 */
+    SPI_MOSI_INPUT(); /* Set SPI_MOSI pin to input mode */
+    SPI_SCK_LOW();    /* End transmission, pull down clock line, ensure clock line is low level */
 #endif
 }
 
 /**
- * @brief SPI 读取单个字节
- * @return unsigned char 读取的数据字节
- * @note 此接口为软件SPI实现，具体实现方式可能因MCU平台而异。
- * @note 调用该函数前，必须先调用 SPI_CS_LOW() 函数拉低 CS 引脚。
- * @note 该函数会将 SPI_MOSI 引脚设置为输出模式，并在传输完成后将其设置为输入模式。
- * @note PAN3029/3060 SPI 接口使用的是 3 线 SPI 模式。
- * @note PAN3029/3060 SPI 配置为：
- *       时钟极性：低电平有效
- *       时钟相位：第一个边沿采样数据
- *       数据传输顺序：MSB优先
- * @note 以发送0x33数据为例，时序图如下：
+ * @brief SPI read single byte
+ * @return unsigned char Read data byte
+ * @note This interface is a software SPI implementation, and the specific implementation may vary depending on the MCU platform.
+ * @note Before calling this function, you must first call SPI_CS_LOW() to pull down the CS pin.
+ * @note This function will set the SPI_MOSI pin to output mode and set it to input mode after transmission is complete.
+ * @note PAN3029/3060 SPI interface uses 3-line SPI mode.
+ * @note PAN3029/3060 SPI configuration:
+ *       Clock polarity: Active low
+ *       Clock phase: Sample data on first edge
+ *       Data transmission order: MSB first
+ * @note Taking sending 0x33 data as an example, the timing diagram is as follows:
  *      SPI_CS：  ___________________________________________________
  *      SPI_CLK:  ___|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__|‾‾|__
  *      SPI_MISO: _____________|‾‾‾‾‾‾‾‾‾‾‾|___________|‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -137,26 +137,26 @@ unsigned char SPI_ReadByte(void)
 {
     unsigned char readByte = 0;
 
-    /* TODO: 根据你的硬件实现，下面是软件SPI实现示例 */
+    /* TODO: According to your hardware implementation, the following is a software SPI implementation example */
 #if INTERFACE_MODE == USE_SPI_4LINE
     readByte = SPI_TxRxByte(0xFF);
 #elif INTERFACE_MODE == USE_SPI_3LINE
     unsigned char i;
     unsigned char Value = 0;
 
-    /* 以高比特优先MSB方式接收8位数据 */
+    /* Receive 8-bit data in MSB first order */
     for (i = 0; i < 8; i++)
     {
-        SPI_SCK_LOW();  /* 拉低时钟线，准备接收数据 */
-        Value <<= 1;  /* 左移一位，准备接收下一个比特 */
-        SPI_SCK_HIGH(); /* 拉高时钟线，触发PAN3029 SPI发送数据 */
+        SPI_SCK_LOW();  /* Pull down clock line, prepare to receive data */
+        Value <<= 1;  /* Shift left one bit, prepare to receive the next bit */
+        SPI_SCK_HIGH(); /* Raise clock line, trigger PAN3029 SPI to send data */
         if (SPI_MOSI_STATUS())
         {
             Value |= 0x01;
         }
     }
-    SPI_SCK_LOW(); /* 结束传输，拉低时钟线，保证时钟线处于低电平 */
-    readByte = Value; /* 将接收到的数据存储到readByte中 */
+    SPI_SCK_LOW(); /* End transmission, pull down clock line, ensure clock line is low level */
+    readByte = Value; /* Store received data in readByte */
 #endif
     return readByte;
 }
@@ -180,55 +180,55 @@ uint8_t __ctz(uint8_t Value)
 }
 
 /**
- * @brief 从指定的寄存器读取单个字节
- * @param Addr 要读取的寄存器地址
- * @return uint8_t 从寄存器读取的值
- * @note 该函数的SPI_CS_LOW()、SPI_CS_HIGH()、SPI_WriteByte()
- *       和SPI_ReadByte()函数需要根据实际硬件实现进行修改。
+ * @brief Read single byte from specified register
+ * @param Addr Register address to read from
+ * @return uint8_t Value read from register
+ * @note The SPI_CS_LOW(), SPI_CS_HIGH(), SPI_WriteByte()
+ *       and SPI_ReadByte() functions of this function need to be modified according to the actual hardware implementation.
  */
 uint8_t RF_ReadReg(uint8_t Addr)
 {
     uint8_t Temp;
-    SPI_CS_LOW();                      /* 片选信号拉低，开始SPI传输 */
-    SPI_WriteByte((Addr << 1) & 0xFE); /* Bit7:0为地址，Bit0为读写位，Bit0=0表示读操作 */
-    Temp = SPI_ReadByte();             /* 读取寄存器值 */
-    SPI_CS_HIGH();                     /* 片选信号拉高，结束SPI传输 */
+    SPI_CS_LOW();                      /* Pull down chip select signal, start SPI transmission */
+    SPI_WriteByte((Addr << 1) & 0xFE); /* Bit7:0 is address, Bit0 is read/write bit, Bit0=0 indicates read operation */
+    Temp = SPI_ReadByte();             /* Read register value */
+    SPI_CS_HIGH();                     /* Pull up chip select signal, end SPI transmission */
 
     return Temp;
 }
 
 /**
- * @brief 写入单个字节到指定寄存器
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入寄存器的单字节数据
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
- * @note 该函数的SPI_CS_LOW()、SPI_CS_HIGH()、SPI_WriteByte()
- *       和SPI_ReadByte()函数需要根据实际硬件实现进行修改。
+ * @brief Write single byte to specified register
+ * @param Addr Register address to write to
+ * @param Value Single byte data to write to register
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
+ * @note The SPI_CS_LOW(), SPI_CS_HIGH(), SPI_WriteByte()
+ *       and SPI_ReadByte() functions of this function need to be modified according to the actual hardware implementation.
  */
 RF_Err_t RF_WriteReg(uint8_t Addr, uint8_t Value)
 {
-    SPI_CS_LOW();                      /* 片选信号拉低，开始SPI传输 */
-    SPI_WriteByte((Addr << 1) | 0x01); /* Bit7:1为地址，Bit0为读写位，Bit0=1表示写操作 */
-    SPI_WriteByte(Value);              /* 写入寄存器值 */
-    SPI_CS_HIGH();                     /* 片选信号拉高，结束SPI传输 */
+    SPI_CS_LOW();                      /* Pull down chip select signal, start SPI transmission */
+    SPI_WriteByte((Addr << 1) | 0x01); /* Bit7:1 is address, Bit0 is read/write bit, Bit0=1 indicates write operation */
+    SPI_WriteByte(Value);              /* Write register value */
+    SPI_CS_HIGH();                     /* Pull up chip select signal, end SPI transmission */
 
-#if USE_RF_REG_CHECK /* 是否使用寄存器回读确认功能 */
-    /**
-     * 该部分代码的作用是读取寄存器的值，并与写入的值进行比较，如果不相等则打印错误信息
-     * 代码调试完成后可以注释掉或者删除掉。
+#if USE_RF_REG_CHECK /* Whether to use register readback confirmation function */
+    /*
+     * The function of this part of the code is to read the value of the register and compare it with the written value, 
+     * and print an error message if they are not equal. This code can be commented out or deleted after debugging is complete.
      */
     {
         uint8_t Temp = RF_ReadReg(Addr);
         if (Temp == Value)
         {
             // printf("Write reg ok: 0x%02x, 0x%02x, 0x%02x\n", Addr, Value, Temp);
-            return RF_OK; /* 写入的值与读取的值相等，返回操作成功 */
+            return RF_OK; /* Written value is equal to read value, return operation successful */
         }
         else
         {
-            /* 读取的值与写入的值不相等，返回错误 */
+            /* Read value is not equal to written value, return error */
             printf("Write reg fail: 0x%02x, 0x%02x, 0x%02x\r\n", Addr, Value, Temp);
             return RF_FAIL;
         }
@@ -239,51 +239,51 @@ RF_Err_t RF_WriteReg(uint8_t Addr, uint8_t Value)
 }
 
 /**
- * @brief 连续写入多个字节到指定寄存器区
- * @param Addr 要写入的寄存器区的起始地址
- * @param Buffer 要写入寄存器的缓冲区指针
- * @param Size 要写入的字节数
- * @note 该函数的SPI_CS_LOW()、SPI_CS_HIGH()、SPI_WriteByte()函数需要根据实际硬件实现进行修改。
+ * @brief Continuously write multiple bytes to specified register area
+ * @param Addr Start address of register area to write to
+ * @param Buffer Buffer pointer to write to register
+ * @param Size Number of bytes to write
+ * @note The SPI_CS_LOW(), SPI_CS_HIGH(), SPI_WriteByte() functions of this function need to be modified according to the actual hardware implementation.
  */
 void RF_WriteRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Size)
 {
     unsigned char i;
-    SPI_CS_LOW();                      /** 片选信号拉低，开始SPI传输 */
-    SPI_WriteByte((Addr << 1) | 0x01); /** Bit7:1为地址，Bit0为读写位，Bit0=1表示写操作 */
+    SPI_CS_LOW();                      /* Pull down chip select signal, start SPI transmission */
+    SPI_WriteByte((Addr << 1) | 0x01); /* Bit7:1 is address, Bit0 is read/write bit, Bit0=1 indicates write operation */
     for (i = 0; i < Size; i++)
     {
-        SPI_WriteByte(Buffer[i]); /** 写入寄存器值 */
+        SPI_WriteByte(Buffer[i]); /* Write register value */
     }
-    SPI_CS_HIGH(); /** 片选信号拉高，结束SPI传输 */
+    SPI_CS_HIGH();              /* Pull up chip select signal, end SPI transmission */
 }
 
 /**
- * @brief 从指定的寄存器连续读取多个字节
- * @param Addr 要读取的寄存器地址
- * @param Buffer 存储读取数据的缓冲区指针
- * @param Size 要读取的字节数
- * @note 该函数的SPI_CS_LOW()、SPI_CS_HIGH()、SPI_WriteByte()
- *       和SPI_ReadByte()函数需要根据实际硬件实现进行修改。
+ * @brief Continuously read multiple bytes from specified register
+ * @param Addr Register address to read from
+ * @param Buffer Buffer pointer to store read data
+ * @param Size Number of bytes to read
+ * @note The SPI_CS_LOW(), SPI_CS_HIGH(), SPI_WriteByte()
+ *       and SPI_ReadByte() functions of this function need to be modified according to the actual hardware implementation.
  */
 void RF_ReadRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Size)
 {
     unsigned char i;
-    SPI_CS_LOW();                     /* 片选信号拉低，开始SPI传输 */
-    SPI_WriteByte((Addr << 1) & 0xFE); /* Bit7:0为地址，Bit0为读写位，Bit0=0表示读操作 */
+    SPI_CS_LOW();                      /* Pull down chip select signal, start SPI transmission */
+    SPI_WriteByte((Addr << 1) & 0xFE); /* Bit7:0 is address, Bit0 is read/write bit, Bit0=0 indicates read operation */
     for (i = 0; i < Size; i++)
     {
-        Buffer[i] = SPI_ReadByte(); /* 读取寄存器值 */
+        Buffer[i] = SPI_ReadByte(); /* Read register value */
     }
-    SPI_CS_HIGH(); /* 片选信号拉高，结束SPI传输 */
+    SPI_CS_HIGH();             /* Pull up chip select signal, end SPI transmission */
 }
 
 /**
- * @brief 选择寄存器页
- * @param Page 要选择的寄存器页，页范围0~3
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
- * @note 如果当前页已经是所需页，则无需再配置寄存器
+ * @brief Select register page
+ * @param Page Register page to select, range 0~3
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
+ * @note If the current page is already the required page, no need to configure the register
  */
 RF_Err_t RF_SetPage(uint8_t Page)
 {
@@ -293,18 +293,18 @@ RF_Err_t RF_SetPage(uint8_t Page)
         return RF_OK;
     }
     gCurrPage = Page;
-    RF_ASSERT(RF_WriteReg(0x00, gCurrPage)); /* 选择寄存器页 */
+    RF_ASSERT(RF_WriteReg(0x00, gCurrPage)); /* Write page value to register 0x00 */
     return RF_OK;
 }
 
 /**
- * @brief 写入单个字节到指定页的寄存器
- * @param Page 要写入的寄存器页，页范围0~3
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入寄存器的单字节数据
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Write single byte to specified register of selected page
+ * @param Page Register page to write to, range 0~3
+ * @param Addr Register address to write to
+ * @param Value Single byte data to write to register
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
  */
 RF_Err_t RF_WritePageReg(uint8_t Page, uint8_t Addr, uint8_t Value)
 {
@@ -315,23 +315,23 @@ RF_Err_t RF_WritePageReg(uint8_t Page, uint8_t Addr, uint8_t Value)
 }
 
 /**
- * @brief 写入多个字节到指定页的寄存器区间
- * @param Page 要写入的寄存器页，页范围0~3
- * @param Addr 要写入的寄存器地址
- * @param Buffer 要写入寄存器的缓冲区指针
- * @param Size 要写入的字节数
+ * @brief Write multiple bytes to specified register area of selected page
+ * @param Page Register page to write to, range 0~3
+ * @param Addr Register address to write to
+ * @param Buffer Buffer pointer to write to register
+ * @param Size Number of bytes to write
  */
 void RF_WritePageRegs(uint8_t Page, uint8_t Addr, uint8_t *Buffer, uint8_t Size)
 {
-    RF_SetPage(Page);                 /* 选择寄存器页 */
-    RF_WriteRegs(Addr, Buffer, Size); /* 写入寄存器值 */
+    RF_SetPage(Page);                 /* Select register page */
+    RF_WriteRegs(Addr, Buffer, Size); /* Write register value */
 }
 
 /**
- * @brief 从指定页的寄存器读取单个字节
- * @param Page 要读取的寄存器页，页范围0~3
- * @param Addr 要读取的寄存器地址
- * @return uint8_t 从寄存器读取的值
+ * @brief Read single byte from specified register of selected page
+ * @param Page Register page to read from, range 0~3
+ * @param Addr Register address to read from
+ * @return uint8_t Value read from register
  */
 uint8_t RF_ReadPageReg(uint8_t Page, uint8_t Addr)
 {
@@ -340,26 +340,26 @@ uint8_t RF_ReadPageReg(uint8_t Page, uint8_t Addr)
 }
 
 /**
- * @brief 从指定页的寄存器区间读取多个字节
- * @param Page 要读取的寄存器页，页范围0~3
- * @param Addr 要读取的寄存器地址
- * @param Buffer 存储读取数据的缓冲区指针
- * @param Size 要读取的字节数
+ * @brief Read multiple bytes from specified register area of selected page
+ * @param Page Register page to read from, range 0~3
+ * @param Addr Register address to read from
+ * @param Buffer Buffer pointer to store read data
+ * @param Size Number of bytes to read
  */
 void RF_ReadPageRegs(uint8_t Page, uint8_t Addr, uint8_t *Buffer, uint8_t Size)
 {
-    RF_SetPage(Page);                /* 选择寄存器页 */
-    RF_ReadRegs(Addr, Buffer, Size); /* 读取寄存器值 */
+    RF_SetPage(Page);                /* Select register page */
+    RF_ReadRegs(Addr, Buffer, Size); /* Read register value */
 }
 
 /**
- * @brief 置位指定页的寄存器位
- * @param Page 要读取的寄存器页，页范围0~3
- * @param Addr 要设置的寄存器地址
- * @param Mask 要设置的位掩码
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Set specified bits of register in selected page
+ * @param Page Register page to set bits, range 0~3
+ * @param Addr Register address to set bits
+ * @param Mask Bit mask to set, each bit set to 1 means corresponding bit will be set
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
  */
 RF_Err_t RF_SetPageRegBits(uint8_t Page, uint8_t Addr, uint8_t Mask)
 {
@@ -373,63 +373,64 @@ RF_Err_t RF_SetPageRegBits(uint8_t Page, uint8_t Addr, uint8_t Mask)
 }
 
 /**
- * @brief 复位指定页的寄存器位
- * @param Page 要读取的寄存器页，页范围0~3
- * @param Addr 要重置的寄存器地址
- * @param Mask 要重置的位掩码
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Reset specified bits of register in selected page
+ * @param Page Register page to reset bits, range 0~3
+ * @param Addr Register address to reset bits
+ * @param Mask Bit mask to reset, each bit set to 1 means corresponding bit will be reset
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
  */
 RF_Err_t RF_ResetPageRegBits(uint8_t Page, uint8_t Addr, uint8_t Mask)
 {
     uint8_t Temp;
 
-    RF_SetPage(Page);                  /* 选择寄存器页 */
-    Temp = RF_ReadReg(Addr);           /* 读取寄存器值 */
-    RF_WriteReg(Addr, Temp & (~Mask)); /* 清除寄存器中与掩码对应的位 */
+    RF_SetPage(Page);                  /* Select register page */
+    Temp = RF_ReadReg(Addr);           /* Read register value */
+    RF_WriteReg(Addr, Temp & (~Mask)); /* Clear bits in register corresponding to mask */
 
     return RF_OK;
 }
 
 /**
- * @brief 写入指定页的寄存器位
- * @param Page 要读取的寄存器页，页范围0~3
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入的值
- * @param Mask 要写入的位掩码
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
- * @note 该函数会先清除寄存器中与掩码对应的位，然后再设置新的值
- * @note 比如要设置第1页0x08寄存器的第2位和第3位为0b10，其他位不变，可以调用
- *       RF_WritePageRegBits(1, 0x08, 0x02, 0x0C);
- *       其中Value = 0x02, Mask = 0x0C，Value不需要左移，因为掩码已经指定了要设置的位
+ * @brief Write specified bits of register in selected page
+ * @param Page Register page to write bits, range 0~3
+ * @param Addr Register address to write bits
+ * @param Value Value to write, each bit set to 1 means corresponding bit will be set
+ * @param Mask Bit mask to write, each bit set to 1 means corresponding bit will be written
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
+ * @note This function will first clear bits in register corresponding to mask, then set new value
+ * @note For example, to set bit 2 and bit 3 of page 1 register 0x08 to 0b10, other bits remain unchanged,
+ *       call RF_WritePageRegBits(1, 0x08, 0x02, 0x0C);
+ *       Where Value = 0x02, Mask = 0x0C, Value does not need to be left-shifted,
+ *       because the mask already specifies the bits to be set.
  */
 RF_Err_t RF_WritePageRegBits(uint8_t Page, uint8_t Addr, uint8_t Value, uint8_t Mask)
 {
     uint8_t Temp;
-    uint8_t shift = __ctz(Mask); /* 获取掩码的位移值 */
+    uint8_t shift = __ctz(Mask); /* Get shift value of mask */
 
-    Value <<= shift; /* 将值左移到掩码对应的位置 */
-    Value &= Mask;   /* 将值与掩码进行与操作，确保只设置掩码对应的位 */
+    Value <<= shift; /* Shift value to align with mask */
+    Value &= Mask;   /* Mask value to ensure only set bits are written */
 
-    RF_SetPage(Page);                            /* 选择寄存器页 */
-    Temp = RF_ReadReg(Addr);                     /* 读取寄存器值 */
-    RF_WriteReg(Addr, (Temp & (~Mask)) | Value); /* 清除寄存器中与掩码对应的位，然后设置新的值 */
+    RF_SetPage(Page);                            /* Select register page */
+    Temp = RF_ReadReg(Addr);                     /* Read register value */
+    RF_WriteReg(Addr, (Temp & (~Mask)) | Value); /* Clear bits in register corresponding to mask, then set new value */
 
     return RF_OK;
 }
 
 /**
- * @brief 配置GPIO模式
- * @param <GpioPin> 引脚号
- *        <GpioMode> GPIO模式
- *         - GPIO_MODE_INPUT: 输入模式
- *         - GPIO_MODE_OUTPUT: 输出模式
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Configure GPIO mode
+ * @param[in] <GpioPin> GPIO pin number
+ * @param[in] <GpioMode> GPIO mode
+ *         - GPIO_MODE_INPUT: Input mode
+ *         - GPIO_MODE_OUTPUT: Output mode
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
  */
 RF_Err_t RF_ConfigGpio(uint8_t GpioPin, uint8_t GpioMode)
 {
@@ -464,14 +465,14 @@ RF_Err_t RF_ConfigGpio(uint8_t GpioPin, uint8_t GpioMode)
 }
 
 /**
- * @brief 控制GPIO输出电平
- * @param <GpioPin> 引脚号
- *        <Level>   GPIO电平
- *         - 0: 低电平
- *         - 1: 高电平
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Write GPIO output level
+ * @param[in] <GpioPin> GPIO pin number
+ * @param[in] <Level> GPIO output level
+ *         - 0: Low level
+ *         - 1: High level
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation successful
+ *         - RF_FAIL: Operation failed
  */
 RF_Err_t RF_WriteGpioLevel(uint8_t GpioPin, uint8_t Level)
 {
@@ -488,11 +489,11 @@ RF_Err_t RF_WriteGpioLevel(uint8_t GpioPin, uint8_t Level)
 }
 
 /**
- * @brief 读取GPIO电平
- * @param <GpioPin> 引脚号
- * @return 读取的GPIO电平
- *         - 0: 低电平
- *         - 1: 高电平
+ * @brief Read GPIO input level
+ * @param[in] <GpioPin> GPIO pin number
+ * @return GPIO input level
+ *         - 0: Low level
+ *         - 1: High level
  */
 uint8_t RF_ReadGpioLevel(uint8_t GpioPin)
 {
@@ -512,9 +513,10 @@ uint8_t RF_ReadGpioLevel(uint8_t GpioPin)
 }
 
 /**
- * @brief 初始化PAN3029/3060的天线控制GPIO
- * @note 该函数用于初始化PAN3029/3060的天线控制GPIO，将其配置为输出模式，并设置初始电平为低
- * @note 如果使用MCU的GPIO控制天线开关时，则需要重新适配该函数
+ * @brief Initialize PAN3029/3060 antenna control GPIO
+ * @note This function is used to initialize the GPIO used to control the antenna of PAN3029/3060.
+ *       It configures the GPIO as output mode and sets the initial level to low.
+ * @note If using MCU's GPIO to control the antenna switch, this function needs to be re-adapted.
  */
 void RF_InitAntGpio(void)
 {
@@ -526,9 +528,10 @@ void RF_InitAntGpio(void)
 }
 
 /**
- * @brief 打开PAN3029/3060的发射天线
- * @note 该函数用于打开PAN3029/3060的发射天线，将TX引脚设置为高电平，RX引脚设置为低电平
- * @note 如果使用MCU的GPIO控制天线开关时，则需要重新适配该函数
+ * @brief Turn on PAN3029/3060's transmit antenna
+ * @note This function is used to turn on the transmit antenna of PAN3029/3060.
+ *       It sets the TX pin to high level and the RX pin to low level.
+ * @note If using MCU's GPIO to control the antenna switch, this function needs to be re-adapted.
  */
 void RF_TurnonTxAnt(void)
 {
@@ -537,9 +540,10 @@ void RF_TurnonTxAnt(void)
 }
 
 /**
- * @brief 打开PAN3029/3060的接收天线
- * @note 该函数用于打开PAN3029/3060的接收天线，将RX引脚设置为高电平，TX引脚设置为低电平
- * @note 如果使用MCU的GPIO控制天线开关时，则需要重新适配该函数
+ * @brief Turn on PAN3029/3060's receive antenna
+ * @note This function is used to turn on the receive antenna of PAN3029/3060.
+ *       It sets the RX pin to high level and the TX pin to low level.
+ * @note If using MCU's GPIO to control the antenna switch, this function needs to be re-adapted.
  */
 void RF_TurnonRxAnt(void)
 {
@@ -548,9 +552,10 @@ void RF_TurnonRxAnt(void)
 }
 
 /**
- * @brief 关闭PAN3029/3060的天线
- * @note 该函数用于关闭PAN3029/3060的天线，将RX和TX引脚都设置为低电平
- * @note 如果使用MCU的GPIO控制天线开关时，则需要重新适配该函数
+ * @brief Shutdown PAN3029/3060's antennas
+ * @note This function is used to shutdown the antennas of PAN3029/3060.
+ *       It sets both RX and TX pins to low level.
+ * @note If using MCU's GPIO to control the antenna switch, this function needs to be re-adapted.
  */
 void RF_ShutdownAnt(void)
 {
@@ -559,9 +564,10 @@ void RF_ShutdownAnt(void)
 }
 
 /**
- * @brief 初始化TCXO控制GPIO
- * @note 该函数用于初始化PAN3029/3060的TCXO控制GPIO，将其配置为输出模式，并设置初始电平为高
- * @note 如果使用MCU的GPIO控制TCXO开关时，则需要重新适配该函数
+ * @brief Initialize PAN3029/3060's TCXO control GPIO
+ * @note This function is used to initialize the GPIO used to control the TCXO of PAN3029/3060.
+ *       It configures the GPIO as output mode and sets the initial level to high.
+ * @note If using MCU's GPIO to control the TCXO switch, this function needs to be re-adapted.
  */
 void RF_InitTcxoGpio(void)
 {
@@ -570,9 +576,10 @@ void RF_InitTcxoGpio(void)
 }
 
 /**
- * @brief 打开TCXO的供电电源
- * @note 该函数用于打开PAN3029/3060的TCXO，将TCXO引脚设置为高电平
- * @note 如果使用MCU的GPIO控制TCXO开关时，则需要重新适配该函数
+ * @brief Turn on PAN3029/3060's TCXO
+ * @note This function is used to turn on the TCXO of PAN3029/3060.
+ *       It sets the TCXO pin to high level.
+ * @note If using MCU's GPIO to control the TCXO switch, this function needs to be re-adapted.
  */
 void RF_TurnonTcxo(void)
 {
@@ -580,9 +587,10 @@ void RF_TurnonTcxo(void)
 }
 
 /**
- * @brief 关闭TCXO的供电电源
- * @note 该函数用于关闭PAN3029/3060的TCXO，将TCXO引脚设置为低电平
- * @note 如果使用MCU的GPIO控制TCXO开关时，则需要重新适配该函数
+ * @brief Shutdown PAN3029/3060's TCXO
+ * @note This function is used to shutdown the TCXO of PAN3029/3060.
+ *       It sets the TCXO pin to low level.
+ * @note If using MCU's GPIO to control the TCXO switch, this function needs to be re-adapted.
  */
 void RF_TurnoffTcxo(void)
 {
@@ -606,13 +614,13 @@ void RF_TurnoffLdoPA(void)
 }
 
 /**
- * @brief 关闭内部和外部PA
+ * @brief Shutdown PAN3029/3060's internal and external PA
  */
 void RF_TurnoffPA(void)
 {
-    RF_TurnoffLdoPA(); /* 关闭内部PA */
-    RF_ShutdownAnt();  /* 关闭外部PA */
-    /* 发射完成后，若配置为DCDC电源模式，则需要切换回DCDC电源模式 */
+    RF_TurnoffLdoPA(); /* Shutdown internal PA */
+    RF_ShutdownAnt();  /* Shutdown external PA */
+    /* After transmission, if configured for DCDC power mode, then switch back to DCDC power mode */
     if(g_RfCfgParams.RegulatorMode == USE_DCDC)
     {
         RF_WritePageReg(3, 0x24, 0x08);
@@ -620,22 +628,22 @@ void RF_TurnoffPA(void)
 }
 
 /**
- * @brief 打开内部和外部PA
+ * @brief Turn on PAN3029/3060's internal and external PA
  */
 void RF_TurnonPA(void)
 {
-    /* 若当前为DCDC电源模式，发射前须切换至LDO电源模式 */
+    /* If current power mode is DCDC, then switch to LDO mode before transmission */
     if(g_RfCfgParams.RegulatorMode == USE_DCDC)
     {
         RF_WritePageReg(3, 0x24, 0x00);
     }
-    RF_TurnonLdoPA(); /* 打开内部PA */
-    RF_TurnonTxAnt(); /* 打开外部PA */
+    RF_TurnonLdoPA(); /* Turn on internal PA */
+    RF_TurnonTxAnt(); /* Turn on external PA */
 }
 
 /**
- * @brief 设置芯片模式
- * @param <ChipMode> 芯片模式
+ * @brief Set PAN3029/3060's chip mode
+ * @param <ChipMode> Chip mode
  *        - CHIPMODE_MODE0
  *        - CHIPMODE_MODE1
  */
@@ -663,7 +671,7 @@ void RF_SetChipMode(RfChipMode_t ChipMode)
 }
 
 /**
- * @brief 获取芯片模式
+ * @brief Get PAN3029/3060's chip mode
  * @param -
  */
 RfChipMode_t RF_GetChipMode(void)
@@ -672,11 +680,11 @@ RfChipMode_t RF_GetChipMode(void)
 }
 
 /**
- * @brief 从信息区读取字节
- * @param <Addr> 寄存器地址
- *        <Pattern> 模式匹配值
- *        <InfoAddr> 信息区地址
- * @return 从信息区读取的字节值
+ * @brief Read a byte from PAN3029/3060's info area
+ * @param <Addr> Register address
+ *        <Pattern> Pattern match value
+ *        <InfoAddr> Info area address
+ * @return Byte value read from info area
  */
 uint8_t RF_ReadInfoByte(uint8_t Addr, uint16_t Pattern, uint8_t InfoAddr)
 {
@@ -703,10 +711,10 @@ uint8_t RF_ReadInfoByte(uint8_t Addr, uint16_t Pattern, uint8_t InfoAddr)
 }
 
 /**
- * @brief 校准RF相关参数
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Calibrate PAN3029/3060's RF related parameters
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation success
+ *         - RF_FAIL: Operation fail
  */
 RF_Err_t RF_Calibrate(void)
 {
@@ -741,10 +749,10 @@ RF_Err_t RF_Calibrate(void)
 }
 
 /**
- * @brief Configure AGC function
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Configure PAN3029/3060's AGC function
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation success
+ *         - RF_FAIL: Operation fail
  */
 RF_Err_t RF_ConfigAgc(void)
 {
@@ -765,10 +773,10 @@ RF_Err_t RF_ConfigAgc(void)
 }
 
 /**
- * @brief 配置RF寄存器的默认参数
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
+ * @brief Configure PAN3029/3060's default RF register parameters
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation success
+ *         - RF_FAIL: Operation fail
  */
 RF_Err_t RF_ConfigDefaultParams(void)
 {
@@ -781,102 +789,102 @@ RF_Err_t RF_ConfigDefaultParams(void)
 }
 
 /**
- * @brief 上电后初始化RF收发器到STB3状态
- * @return RF_Err_t 返回操作结果
- *         - RF_OK: 操作成功
- *         - RF_FAIL: 操作失败
- * @note 调用此函数前需要先配置好MCU的SPI和相关GPIO引脚
+ * @brief Initialize PAN3029/3060's RF transceiver to STB3 state
+ * @return RF_Err_t Return operation result
+ *         - RF_OK: Operation success
+ *         - RF_FAIL: Operation fail
+ * @note Call this function before configuring MCU's SPI and related GPIO pins
  */
 RF_Err_t RF_Init(void)
 {
 #if USE_RF_RST_GPIO == 1
-    RF_RESET_PIN_LOW();  /* 拉低芯片复位引脚，开始复位 */
-    RF_DelayUs(100);     /* 保证实际延时在100us以上 */
-    RF_RESET_PIN_High(); /* 拉高芯片复位引脚，释放复位 */
-    RF_DelayUs(100);     /* 保证实际延时在100us以上 */
+    RF_RESET_PIN_LOW();  /* Pull down chip reset pin, start reset */
+    RF_DelayUs(100);     /* Ensure actual delay is at least 100us */
+    RF_RESET_PIN_High(); /* Pull up chip reset pin, release reset */
+    RF_DelayUs(100);     /* Ensure actual delay is at least 100us */
 #endif
-    /* [Pagex][0x04][BIT4]为复位控制，为0时复位芯片，为1时复位释放 */
-    RF_WriteReg(0x04, 0x06); /* 开始POR复位芯片*/
-    RF_DelayUs(100);         /* 保证实际延时在100us以上 */
+    /* [Pagex][0x04][BIT4] is reset control bit, 0 means reset chip, 1 means release reset */
+    RF_WriteReg(0x04, 0x06); /* Start POR reset chip */
+    RF_DelayUs(100);         /* Ensure actual delay is at least 100us */
 
 #if INTERFACE_MODE == USE_SPI_4LINE
-    RF_WriteReg(0x00, 0x03); /* 选择寄存器页3 */
-    RF_WriteReg(0x1A, 0x03); /* 使能4line SPI */
+    RF_WriteReg(0x00, 0x03); /* Select register page 3 */
+    RF_WriteReg(0x1A, 0x03); /* Enable 4line SPI */
 #elif INTERFACE_MODE == USE_SPI_3LINE
-    RF_WriteReg(0x00, 0x03); /* 选择寄存器页3 */
-    RF_WriteReg(0x1A, 0x83); /* 使能3ine SPI */
+    RF_WriteReg(0x00, 0x03); /* Select register page 3 */
+    RF_WriteReg(0x1A, 0x83); /* Enable 3line SPI */
 #endif
 
-    RF_SetPage(0);                                    /* 选择寄存器页0 */
-    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_DEEPSLEEP)); /* 进入deepsleep状态 */
-    RF_DelayUs(10);                                   /* 保证实际延时在10us以上 */
-    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_SLEEP));     /* 进入sleep状态 */
-    RF_DelayUs(10);                                   /* 保证实际延时在10us以上 */
-    RF_ASSERT(RF_WritePageReg(3, 0x06, 0x20));        /* 使能ISO */
-    RF_DelayUs(10);                                   /* 保证实际延时在10us以上 */
-    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB1));      /* 进入stb1状态 */
-    RF_DelayUs(10);                                   /* 保证实际延时在10us以上 */
-#if USE_ACTIVE_CRYSTAL == 1                           /* 如果使用有源晶振，则需要配置TCXO GPIO引脚 */
-    RF_ASSERT(RF_WritePageReg(3, 0x26, 0xA0));        /* 使能内核电源，并打开有源晶振通道 */
-    RF_DelayUs(100);                                  /* 保证实际延时在100us以上 */
-    RF_ASSERT(RF_WriteReg(0x04, 0x36));               /* 使能LFT并释放POR复位 */
-    RF_DelayMs(1);                                    /* 保证实际延时在1ms以上 */
-    RF_InitTcxoGpio();                                /* 初始化TCXO GPIO引脚 */
+    RF_SetPage(0);                                    /* Select register page 0 */
+    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_DEEPSLEEP)); /* Enter deepsleep state */
+    RF_DelayUs(10);                                   /* Ensure actual delay is at least 10us */
+    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_SLEEP));     /* Enter sleep state */
+    RF_DelayUs(10);                                   /* Ensure actual delay is at least 10us */
+    RF_ASSERT(RF_WritePageReg(3, 0x06, 0x20));        /* Enable ISO */
+    RF_DelayUs(10);                                   /* Ensure actual delay is at least 10us */
+    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB1));      /* Enter stb1 state */
+    RF_DelayUs(10);                                   /* Ensure actual delay is at least 10us */
+#if USE_ACTIVE_CRYSTAL == 1                           /* If using active crystal, need to configure TCXO GPIO pin */
+    RF_ASSERT(RF_WritePageReg(3, 0x26, 0xA0));        /* Enable kernel power and open active crystal channel */
+    RF_DelayUs(100);                                  /* Ensure actual delay is at least 100us */
+    RF_ASSERT(RF_WriteReg(0x04, 0x36));               /* Enable LFT and release POR reset */
+    RF_DelayMs(1);                                    /* Ensure actual delay is at least 1ms */
+    RF_InitTcxoGpio();                                /* Initialize TCXO GPIO pin */
 #else
-    RF_ASSERT(RF_WritePageReg(3, 0x26, 0x20));        /* 使能内核电源 */
-    RF_DelayUs(100);                                  /* 保证实际延时在100us以上 */
-    RF_ASSERT(RF_WriteReg(0x04, 0x36));               /* 使能LFT并释放POR复位 */
-    RF_DelayMs(1);                                    /* 保证实际延时在1ms以上 */
+    RF_ASSERT(RF_WritePageReg(3, 0x26, 0x20));        /* Enable kernel power */
+    RF_DelayUs(100);                                  /* Ensure actual delay is at least 100us */
+    RF_ASSERT(RF_WriteReg(0x04, 0x36));               /* Enable LFT and release POR reset */
+    RF_DelayMs(1);                                    /* Ensure actual delay is at least 1ms */
 #endif
-    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB2));      /* 进入stb2状态 */
-    RF_DelayMs(1);                                    /* 保证实际延时在1ms以上 */
-    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB3));      /* 进入stb3状态 */
-    RF_DelayUs(100);                                  /* 保证实际延时在100us以上 */
-    RF_ASSERT(RF_ConfigDefaultParams());              /* 配置RF寄存器的默认参数 */
-    RF_ASSERT(RF_Calibrate());                        /* 校准RF相关参数 */
-    RF_ASSERT(RF_ConfigAgc());                        /* 配置AGC功能 */
-    RF_InitAntGpio();                                 /* 初始化天线GPIO引脚 */
-    g_RfOperatetate = RF_STATE_STB3;                  /* 设置当前工作状态为STB3 */
+    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB2));      /* Enter stb2 state */
+    RF_DelayMs(1);                                    /* Ensure actual delay is at least 1ms */
+    RF_ASSERT(RF_WriteReg(0x02, RF_STATE_STB3));      /* Enter stb3 state */
+    RF_DelayUs(100);                                  /* Ensure actual delay is at least 100us */
+    RF_ASSERT(RF_ConfigDefaultParams());              /* Configure default RF register parameters */
+    RF_ASSERT(RF_Calibrate());                        /* Calibrate RF related parameters */
+    RF_ASSERT(RF_ConfigAgc());                        /* Configure AGC function */
+    RF_InitAntGpio();                                 /* Initialize antenna GPIO pins */
+    g_RfOperatetate = RF_STATE_STB3;                  /* Set current operate state to STB3 */
 
     return RF_OK;
 }
 
 /**
- * @brief 配置RF芯片的用户参数
+ * @brief Configure PAN3029/3060's user parameters
  */
 void RF_ConfigUserParams(void)
 {
-    RF_SetTxPower(22);                    /* 设置功率档位 */
-    RF_SetFreq(RF_FREQ_DEFAULT);          /* 设置频率 */
-    RF_SetBW(RF_BW_DEFAULT);              /* 设置带宽 */
-    RF_SetSF(RF_SF_DEFAULT);              /* 设置扩频因子 */
-    RF_SetCR(RF_CR_DEFAULT);              /* 设置信道编码率 */
-    RF_SetCRC(RF_CRC_DEFAULT);            /* 设置CRC校验 */
-    RF_SetLDR(RF_LDR_DEFAULT);            /* 设置低速率模式 */
-    RF_SetPreamLen(RF_PREAMBLE_DEFAULT);  /* 设置前导码长度 */
-    RF_SetInvertIQ(RF_IQ_INVERT_DEFAULT); /* 设置IQ不反转 */
-    RF_SetRegulatorMode(USE_LDO);         /* 设置芯片为LDO电源模式 */
-    RF_SetChipMode(CHIPMODE_MODE0);       /* 设置芯片模式为MODE0 */
+    RF_SetTxPower(22);                    /* Set power level */
+    RF_SetFreq(RF_FREQ_DEFAULT);          /* Set frequency */
+    RF_SetBW(RF_BW_DEFAULT);              /* Set bandwidth */
+    RF_SetSF(RF_SF_DEFAULT);              /* Set spreading factor */
+    RF_SetCR(RF_CR_DEFAULT);              /* Set channel coding rate */
+    RF_SetCRC(RF_CRC_DEFAULT);            /* Set CRC check */
+    RF_SetLDR(RF_LDR_DEFAULT);            /* Set low data rate mode */
+    RF_SetPreamLen(RF_PREAMBLE_DEFAULT);  /* Set preamble length */
+    RF_SetInvertIQ(RF_IQ_INVERT_DEFAULT); /* Set IQ invert */
+    RF_SetRegulatorMode(USE_LDO);         /* Set regulator mode to LDO */
+    RF_SetChipMode(CHIPMODE_MODE0);       /* Set chip mode to MODE0 */
 }
 
 /**
- * @brief 软件复位RF芯片控制逻辑
+ * @brief Reset PAN3029/3060's logic
  */
 void RF_ResetLogic(void)
 {
     RF_WriteReg(0x00, 0x80);
     RF_WriteReg(0x00, 0x00);
 
-    (void)RF_ReadReg(0x00); /* 需要空读一次寄存器0x00，才能使复位生效 */ 
+    (void)RF_ReadReg(0x00); /* Need to read register 0x00 once to make reset effective */ 
 }
 
 /**
- * @brief 获取RF芯片的工作状态
- * @return RfOpState_t 当前工作状态
- *         - RF_STATE_SLEEP: 芯片处于睡眠模式
- *         - RF_STATE_STB3:  芯片处于待机模式
- *         - RF_STATE_TX:    芯片处于发射模式
- *         - RF_STATE_RX:    芯片处于接收模式
+ * @brief Get PAN3029/3060's working state
+ * @return RfOpState_t Current working state
+ *         - RF_STATE_SLEEP:  Chip is in sleep mode
+ *         - RF_STATE_STB3:   Chip is in standby mode
+ *         - RF_STATE_TX:     Chip is in transmit mode
+ *         - RF_STATE_RX:     Chip is in receive mode
  */
 RfOpState_t RF_GetOperateState(void)
 {
@@ -884,12 +892,12 @@ RfOpState_t RF_GetOperateState(void)
 }
 
 /**
- * @brief 设置RF芯片的工作状态
- * @param <RfState> 工作状态
- *         - RF_STATE_SLEEP: 芯片处于睡眠模式
- *         - RF_STATE_STB3: 芯片处于待机模式
- *         - RF_STATE_TX: 芯片处于发射模式
- *         - RF_STATE_RX: 芯片处于接收模式
+ * @brief Set PAN3029/3060's working state
+ * @param <RfState> Working state
+ *         - RF_STATE_SLEEP:  Chip is in sleep mode
+ *         - RF_STATE_STB3:   Chip is in standby mode
+ *         - RF_STATE_TX:     Chip is in transmit mode
+ *         - RF_STATE_RX:     Chip is in receive mode
  */
 void RF_SetOperateState(RfOpState_t RfState)
 {
@@ -897,8 +905,8 @@ void RF_SetOperateState(RfOpState_t RfState)
 }
 
 /**
- * @brief 设置RF芯片的工作状态
- * @param <RfState>
+ * @brief Set PAN3029/3060's working state
+ * @param <RfState> Working state
  *        - RF_STATE_DEEPSLEEP
  *        - RF_STATE_SLEEP
  *        - RF_STATE_STB3
@@ -912,99 +920,99 @@ void RF_SetRfState(uint8_t RfState)
 }
 
 /**
- * @brief 进入深度睡眠模式
- * @note 该函数用于将RF芯片置于深度睡眠模式，关闭天线供电和TCXO电源
- * @note 该函数会将芯片的工作状态设置为MODE_DEEPSLEEP
- * @note 执行该函数后，如需唤醒RF芯片，需要调用RF_Init()函数唤醒芯片
+ * @brief Enter PAN3029/3060's deep sleep mode
+ * @note This function is used to put the RF chip into deep sleep mode, shutting down the antenna power and TCXO power
+ * @note This function will set the chip's working state to MODE_DEEPSLEEP
+ * @note After executing this function, if you need to wake up the RF chip, you need to call the RF_Init() function to wake up the chip
  */
 void RF_EnterDeepsleepState(void)
 {
-    RF_ShutdownAnt();                      /* 关闭天线 */
-    RF_WriteReg(0x02, RF_STATE_STB3);      /* 进入STB3状态 */
-    RF_DelayUs(150);                       /* 保证实际延时在150us以上 */
-    RF_WriteReg(0x02, RF_STATE_STB2);      /* 进入STB2状态 */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_STB1);      /* 进入STB1状态 */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-#if USE_ACTIVE_CRYSTAL == 1                /* 如果使用有源晶振，则需要关闭TCXO电源 */
-    RF_TurnoffTcxo();                      /* 关闭TCXO电源 */
+    RF_ShutdownAnt();                      /* Shutdown antenna */
+    RF_WriteReg(0x02, RF_STATE_STB3);      /* Enter STB3 state */
+    RF_DelayUs(150);                       /* Ensure actual delay is at least 150us */
+    RF_WriteReg(0x02, RF_STATE_STB2);      /* Enter STB2 state */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_STB1);      /* Enter STB1 state */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+#if USE_ACTIVE_CRYSTAL == 1                /* If using active crystal, need to shutdown TCXO power */
+    RF_TurnoffTcxo();                      /* Shutdown TCXO power */
 #endif
-    RF_WriteReg(0x04, 0x06);               /* 关闭LFT */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_SLEEP);     /* 进入SLEEP状态 */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-    RF_WritePageReg(3, 0x06, 0x00);        /* 关闭ISO */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-    RF_WritePageReg(3, 0x26, 0x00);        /* 关闭内部电源 */
-    RF_DelayUs(10);                        /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_DEEPSLEEP); /* 进入DEEPSLEEP状态 */
+    RF_WriteReg(0x04, 0x06);               /* Shutdown LFT */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_SLEEP);     /* Enter SLEEP state */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+    RF_WritePageReg(3, 0x06, 0x00);        /* Shutdown ISO */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+    RF_WritePageReg(3, 0x26, 0x00);        /* Shutdown internal power */
+    RF_DelayUs(10);                        /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_DEEPSLEEP); /* Enter DEEPSLEEP state */
 
     g_RfOperatetate = RF_STATE_DEEPSLEEP;
 }
 
 /**
- * @brief 进入睡眠模式
- * @note 该函数用于将RF芯片置于睡眠模式，关闭天线供电和TCXO电源
- * @note 该函数会将芯片的工作状态设置为MODE_SLEEP
- * @note 执行该函数后，如需唤醒RF芯片，需要调用RF_ExitSleepState()函数
+ * @brief Enter PAN3029/3060's sleep mode
+ * @note This function is used to put the RF chip into sleep mode, shutting down the antenna power and TCXO power
+ * @note This function will set the chip's working state to MODE_SLEEP
+ * @note After executing this function, if you need to wake up the RF chip, you need to call the RF_ExitSleepState() function
  */
 void RF_EnterSleepState(void)
 {
-    RF_ShutdownAnt();                   /* 关闭天线 */
-    RF_WriteReg(0x02, RF_STATE_STB3);   /* 进入STB3状态 */
-    RF_DelayUs(150);                    /* 保证实际延时在150us以上 */
-    RF_WriteReg(0x02, RF_STATE_STB2);   /* 进入STB2状态 */
-    RF_DelayUs(10);                     /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_STB1);   /* 进入STB1状态 */
-    RF_DelayUs(10);                     /* 保证实际延时在10us以上 */
-#if USE_ACTIVE_CRYSTAL == 1             /* 如果使用有源晶振，则需要关闭TCXO电源 */
+    RF_ShutdownAnt();                   /* Shutdown antenna */
+    RF_WriteReg(0x02, RF_STATE_STB3);   /* Enter STB3 state */
+    RF_DelayUs(150);                    /* Ensure actual delay is at least 150us */
+    RF_WriteReg(0x02, RF_STATE_STB2);   /* Enter STB2 state */
+    RF_DelayUs(10);                     /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_STB1);   /* Enter STB1 state */
+    RF_DelayUs(10);                     /* Ensure actual delay is at least 10us */
+#if USE_ACTIVE_CRYSTAL == 1             /* If using active crystal, need to shutdown TCXO power */
     RF_TurnoffTcxo();                   /* 关闭TCXO电源 */
 #endif
-    RF_WriteReg(0x04, 0x16);            /* 关闭LFT */
-    RF_DelayUs(10);                     /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_SLEEP);  /* 进入SLEEP状态 */
-    RF_DelayUs(10);                     /* 保证实际延时在10us以上 */
-    RF_ResetPageRegBits(3, 0x06, 0x20); /* 关闭ISO */
-    RF_DelayUs(10);                     /* 保证实际延时在10us以上 */
-    RF_WritePageReg(3, 0x26, 0x00);     /* 关闭内部电源 */
+    RF_WriteReg(0x04, 0x16);            /* Shutdown LFT */
+    RF_DelayUs(10);                     /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_SLEEP);  /* Enter SLEEP state */
+    RF_DelayUs(10);                     /* Ensure actual delay is at least 10us */
+    RF_ResetPageRegBits(3, 0x06, 0x20); /* Shutdown ISO */
+    RF_DelayUs(10);                     /* Ensure actual delay is at least 10us */
+    RF_WritePageReg(3, 0x26, 0x00);     /* Shutdown internal power */
 
     g_RfOperatetate = RF_STATE_SLEEP;
 }
 
 /**
- * @brief 退出睡眠模式
- * @note 该函数用于将RF芯片退出睡眠模式，打开天线供电和TCXO电源
- * @note 该函数会将芯片的工作状态设置为MODE_STDBY
+ * @brief Exit sleep mode
+ * @note This function is used to exit sleep mode, powering on the antenna and TCXO
+ * @note This function will set the chip's working state to MODE_STDBY
  */
 void RF_ExitSleepState(void)
 {
-    RF_SetPageRegBits(3, 0x06, 0x20); /* 使能ISO */
-    RF_DelayUs(10);                   /* 保证实际延时在10us以上 */
-    RF_WriteReg(0x02, RF_STATE_STB1); /* 进入STB1状态 */
-    RF_DelayUs(10);                   /* 保证实际延时在10us以上 */
+    RF_SetPageRegBits(3, 0x06, 0x20); /* Enable ISO */
+    RF_DelayUs(10);                   /* Ensure actual delay is at least 10us */
+    RF_WriteReg(0x02, RF_STATE_STB1); /* Enter STB1 state */
+    RF_DelayUs(10);                   /* Ensure actual delay is at least 10us */
 #if USE_ACTIVE_CRYSTAL == 1
-    RF_WritePageReg(3, 0x26, 0xA0);   /* 使能内核电源，并打开有源晶振通道 */
-    RF_DelayUs(100);                  /* 保证实际延时在100us以上 */
-    RF_WriteReg(0x04, 0x36);          /* 使能LFT */
-    RF_DelayUs(100);                  /* 保证实际延时在100us以上 */
-    RF_TurnonTcxo();                  /* 打开TCXO */
+    RF_WritePageReg(3, 0x26, 0xA0);   /* Enable internal power and active crystal channel */
+    RF_DelayUs(100);                  /* Ensure actual delay is at least 100us */
+    RF_WriteReg(0x04, 0x36);          /* Enable LFT */
+    RF_DelayUs(100);                  /* Ensure actual delay is at least 100us */
+    RF_TurnonTcxo();                  /* Power on TCXO */
 #else
-    RF_WritePageReg(3, 0x26, 0x20);   /* 使能内核电源 */
-    RF_DelayUs(100);                  /* 保证实际延时在100us以上 */
-    RF_WriteReg(0x04, 0x36);          /* 使能LFT */
-    RF_DelayUs(100);                  /* 保证实际延时在100us以上 */
+    RF_WritePageReg(3, 0x26, 0x20);   /* Enable internal power */
+    RF_DelayUs(100);                  /* Ensure actual delay is at least 100us */
+    RF_WriteReg(0x04, 0x36);          /* Enable LFT */
+    RF_DelayUs(100);                  /* Ensure actual delay is at least 100us */
 #endif
-    RF_WriteReg(0x02, RF_STATE_STB2); /* 进入STB2状态 */
-    RF_DelayMs(1);                    /* 保证实际延时在1ms以上 */
-    RF_WriteReg(0x02, RF_STATE_STB3); /* 进入STB3状态 */
-    RF_DelayUs(100);                  /* 保证实际延时在100us以上 */
+    RF_WriteReg(0x02, RF_STATE_STB2); /* Enter STB2 state */
+    RF_DelayMs(1);                    /* Ensure actual delay is at least 1ms */
+    RF_WriteReg(0x02, RF_STATE_STB3); /* Enter STB3 state */
+    RF_DelayUs(100);                  /* Ensure actual delay is at least 100us */
 
     g_RfOperatetate = RF_STATE_STB3;
 }
 
 /**
- * @brief 进入待机模式
- * @note 该函数会将芯片的工作状态设置为MODE_STDBY
+ * @brief Enter standby mode
+ * @note This function will set the chip's working state to MODE_STDBY
  */
 void RF_EnterStandbyState(void)
 {
@@ -1013,10 +1021,10 @@ void RF_EnterStandbyState(void)
 }
 
 /**
- * @brief 检查RF芯片是否处于休眠状态
- * @note 该函数用于检查RF芯片是否处于休眠状态，
- * @note 如果处于睡眠状态，则退出睡眠状态进入待机状态
- * @note 该函数会将芯片的工作状态设置为MODE_STDBY
+ * @brief Check if the RF chip is in sleep state
+ * @note This function is used to check if the RF chip is in sleep state,
+ * @note If it is in sleep state, it will exit sleep state and enter standby state
+ * @note This function will set the chip's working state to MODE_STDBY
  */
 void RF_CheckDeviceReady(void)
 {
@@ -1027,12 +1035,12 @@ void RF_CheckDeviceReady(void)
 }
 
 /**
- * @brief 设置芯片的供电模式
- * @param <RegulatorMode> 供电模式
- *         - USE_LDO: 使用LDO供电
- *         - USE_DCDC: 使用DCDC供电
- * @note 在发射状态下，RF必须使用LDO电源模式，
- *       其它状态下可任意选择电源供电模式。
+ * @brief Set the power supply mode of the RF chip
+ * @param <RegulatorMode> Power supply mode
+ *         - USE_LDO: Use LDO power supply
+ *         - USE_DCDC: Use DCDC power supply
+ * @note In transmit state, RF must use LDO power supply mode,
+ *       other states can choose any power supply mode.
  */
 void RF_SetRegulatorMode(RfRegulatorMode_t RegulatorMode)
 {
@@ -1041,13 +1049,13 @@ void RF_SetRegulatorMode(RfRegulatorMode_t RegulatorMode)
 }
 
 /**
- * @brief 设置RF芯片的频率
- * @param <Frequency> 通信频率(Hz)
- * @note  支持的频率范围为：
- *        低频段：
+ * @brief Set the frequency of the RF chip
+ * @param <Frequency> Communication frequency (Hz)
+ * @note  The supported frequency range is:
+ *        Low frequency band:
  *         - 138.33MHz ~ 282.5MHz
  *         - 405.00MHz ~ 565.00MHz
- *        高频段：
+ *        High frequency band:
  *         - 810.00MHz ~ 1080.00MHz
  */
 RF_Err_t RF_SetFreq(uint32_t Frequency)
@@ -1064,7 +1072,7 @@ RF_Err_t RF_SetFreq(uint32_t Frequency)
         return RF_FAIL;
     }
     
-    /* 遍历频率表，找到匹配的频率段 */
+    /* Find the matching frequency range in the frequency table */
     for (i = 0; i < FreqTableNum; i++)
     {
         if (Frequency > g_RfFreqTable[i].StartFreq && Frequency <= g_RfFreqTable[i].StopFreq)
@@ -1104,10 +1112,10 @@ RF_Err_t RF_SetFreq(uint32_t Frequency)
 }
 
 /**
- * @brief 设置IQ反转
- * @param <NewState> 使能或禁用IQ反转
- *         - true: 使能IQ反转
- *         - false: 禁用IQ反转
+ * @brief Set IQ inversion
+ * @param <NewState> Enable or disable IQ inversion
+ *         - true: Enable IQ inversion
+ *         - false: Disable IQ inversion
  */
 void RF_SetInvertIQ(bool NewState)
 {
@@ -1132,9 +1140,9 @@ void RF_SetInvertIQ(bool NewState)
 }
 
 /**
- * @brief 设置前导码长度
- * @param <PreamLen> 前导码长度值
- *         范围为4 - 65535
+ * @brief Set the preamble length
+ * @param <PreamLen> Preamble length value
+ *         Range: 4 - 65535
  */
 void RF_SetPreamLen(uint16_t PreamLen)
 {
@@ -1144,11 +1152,13 @@ void RF_SetPreamLen(uint16_t PreamLen)
 }
 
 /**
- * @brief 设置同步字
- * @param <syncWord> 同步字值
- * @note PAN3029/3060支持的同步字大小为1字节
- * @note 同步字用于接收数据包时的同步检测，通常在发送和接收数据包时需要设置相同的同步字
- *       例如，如果发送数据包时设置了同步字为0x12，则在接收数据包时也需要设置同步字为0x12
+ * @brief Set the sync word
+ * @param <SyncWord> Sync word value
+ * @note PAN3029/3060 supports sync word size of 1 byte
+ * @note Sync word is used for synchronization detection when receiving packets,
+ *       typically needs to be set the same as the sync word when sending and receiving packets
+ *       For example, if the sync word is set to 0x12 when sending packets,
+ *       it must also be set to 0x12 when receiving packets.
  */
 void RF_SetSyncWord(uint8_t SyncWord)
 {
@@ -1157,11 +1167,11 @@ void RF_SetSyncWord(uint8_t SyncWord)
 }
 
 /**
- * @brief 设置发射功率
- * @param <TxPower> 发射档位，档位范围：1-22
- * @note 功率档位对应的功率值如下表所示：
+ * @brief Set the transmit power
+ * @param <TxPower> Transmit power level, range: 1-22
+ * @note Power level corresponding power values are shown in the table below:
  *|------|------------------|------------------|------------------|------------------|
- *| 档位 | 410MHz 功率(dBm) | 430MHz 功率(dBm)  | 450MHz 功率(dBm) | 460MHz 功率(dBm) |
+ *|Level | 410MHz 功率(dBm) | 430MHz 功率(dBm)  | 450MHz 功率(dBm) | 460MHz 功率(dBm) |
  *|------|------------------|------------------|------------------|------------------|
  *|  1   |       -18.7      |      -18.2       |       -18.8      |       -19.7      |
  *|  2   |       -8.3       |      -7.9        |       -8.6       |       -9.5       |
@@ -1235,12 +1245,12 @@ void RF_SetTxPower(uint8_t TxPower)
 }
 
 /**
- * @brief 设置调制带宽
- * @param <BandWidth> 调制带宽值
+ * @brief Set the modulation bandwidth
+ * @param <BandWidth> Modulation bandwidth value
  *         - RF_BW_062K / RF_BW_125K / RF_BW_250K / RF_BW_500K
- * @note 调制带宽越大，数据速率越高，但传输距离越短
- * @note PAN3029芯片的调制带宽范围为RF_BW_062K - RF_BW_500K
- * @note PAN3060芯片的调制带宽范围为RF_BW_125K - RF_BW_500K
+ * @note The larger the modulation bandwidth, the higher the data rate, but the shorter the transmission distance
+ * @note PAN3029 chip supports modulation bandwidth range from RF_BW_062K to RF_BW_500K
+ * @note PAN3060 chip supports modulation bandwidth range from RF_BW_125K to RF_BW_500K
  */
 void RF_SetBW(uint8_t BandWidth)
 {
@@ -1260,12 +1270,12 @@ void RF_SetBW(uint8_t BandWidth)
 }
 
 /**
- * @brief 设置扩频因子
- * @param <SpreadFactor> 扩频因子值
+ * @brief Set the spreading factor
+ * @param <SpreadFactor> Spreading factor value
  *         - RF_SF5 / RF_SF6 / RF_SF7 / RF_SF8 / RF_SF9 / RF_SF10 / RF_SF11 / RF_SF12
- * @note 扩频因子越大，传输距离越远，但数据速率越低
- * @note PAN3029芯片的扩频因子范围为RF_SF5 - RF_SF12
- * @note PAN3060芯片的扩频因子范围为RF_SF5 - RF_SF9
+ * @note The larger the spreading factor, the farther the transmission distance, but the lower the data rate
+ * @note PAN3029 chip supports spreading factor range from RF_SF5 to RF_SF12
+ * @note PAN3060 chip supports spreading factor range from RF_SF5 to RF_SF9
  */
 void RF_SetSF(uint8_t SpreadFactor)
 {
@@ -1276,8 +1286,8 @@ void RF_SetSF(uint8_t SpreadFactor)
 }
 
 /**
- * @brief 设置信道编码率
- * @param <CodingRate> 信道编码率值
+ * @brief Set the coding rate
+ * @param <CodingRate> Coding rate value
  *         - RF_CR_4_5 / RF_CR_4_6 / RF_CR_4_7 / RF_CR_4_8
  */
 void RF_SetCR(uint8_t CodingRate)
@@ -1289,10 +1299,10 @@ void RF_SetCR(uint8_t CodingRate)
 }
 
 /**
- * @brief 设置CRC校验
- * @param <CrcMode> 使能或禁用CRC校验
- *        - RF_CRC_ON: 使能CRC校验
- *        - RF_CRC_OFF: 禁用CRC校验
+ * @brief Set the CRC mode
+ * @param <CrcMode> CRC mode value
+ *        - RF_CRC_ON: Enable CRC check
+ *        - RF_CRC_OFF: Disable CRC check
  */
 void RF_SetCRC(uint8_t CrcMode)
 {
@@ -1303,10 +1313,10 @@ void RF_SetCRC(uint8_t CrcMode)
 }
 
 /**
- * @brief 设置低速率模式
- * @param <LdrMode> 低速率模式值
- *         - RF_LDR_ON: 使能低速率模式
- *         - RF_LDR_OFF：禁用低速率模式
+ * @brief Set the low datarate optimize mode
+ * @param <LdrMode> Low datarate optimize mode value
+ *         - RF_LDR_ON: Enable low datarate optimize mode
+ *         - RF_LDR_OFF: Disable low datarate optimize mode
  */
 void RF_SetLDR(uint8_t LdrMode)
 {
@@ -1346,12 +1356,12 @@ void RF_SetModemMode(uint8_t ModemMode)
 }
 
 /**
- * @brief 设置发送模式
- * @param Buffer 要发送的数据缓冲区
- * @param Size 要发送的数据字节数
- * @note 保证在调用此函数前，RF已经处于待机(STB3)模式
- * @note 此函数为单次发送模式，发送完成后会自动进入待机(STB3)模式
- * @note 发送完成后会触发TX_DONE中断
+ * @brief Set the transmit mode
+ * @param Buffer Data buffer to be sent
+ * @param Size Number of bytes to be sent
+ * @note Ensure that the RF is in standby (STB3) mode before calling this function
+ * @note This function is a single transmission mode, and will enter standby (STB3) mode after transmission is complete
+ * @note After transmission is complete, a TX_DONE interrupt will be triggered
  */
 void RF_SetTx(uint8_t *Buffer, uint8_t Size)
 {
@@ -1360,11 +1370,11 @@ void RF_SetTx(uint8_t *Buffer, uint8_t Size)
 }
 
 /**
- * @brief 设置接收模式
- * @param TimeoutMs 接收超时时间，单位为毫秒
- *        - 0: 连续接收模式
- *        - >0: 单次接收模式，超时后报超时中断并自动进入待机(STB3)模式
- * @note 保证在调用此函数前，RF已经处于待机(STB3)模式
+ * @brief Set the receive mode
+ * @param TimeoutMs Receive timeout time, unit is millisecond
+ *        - 0: Continuous receive mode
+ *        - >0: Single receive mode, timeout will trigger timeout interrupt and enter standby (STB3) mode automatically
+ * @note Ensure that the RF is in standby (STB3) mode before calling this function
  */
 void RF_SetRx(uint32_t TimeoutMs)
 {
@@ -1381,17 +1391,17 @@ void RF_SetRx(uint32_t TimeoutMs)
 }
 
 /**
- * @brief 启动CAD检测
- * @param <Threshold>
-           - RF_CAD_THRESHOLD_0A
-           - RF_CAD_THRESHOLD_10
-           - RF_CAD_THRESHOLD_15
-           - RF_CAD_THRESHOLD_20
-          <Chirps>
-           - RF_CAD_01_SYMBOL
-           - RF_CAD_02_SYMBOL
-           - RF_CAD_03_SYMBOL
-           - RF_CAD_04_SYMBOL
+ * @brief Start CAD detection
+ * @param <Threshold> CAD detection threshold
+ *         - RF_CAD_THRESHOLD_0A
+ *         - RF_CAD_THRESHOLD_10
+ *         - RF_CAD_THRESHOLD_15
+ *         - RF_CAD_THRESHOLD_20
+ * @param <Chirps> CAD detection symbol number
+ *         - RF_CAD_01_SYMBOL
+ *         - RF_CAD_02_SYMBOL
+ *         - RF_CAD_03_SYMBOL
+ *         - RF_CAD_04_SYMBOL
  */
 void RF_StartCad(uint8_t Threshold, uint8_t Chirps)
 {
@@ -1408,8 +1418,8 @@ void RF_StartCad(uint8_t Threshold, uint8_t Chirps)
 }
 
 /**
- * @brief 设置CAD检测阈值
- * @param <Threshold> CAD检测阈值
+ * @brief Set the CAD detection threshold
+ * @param <Threshold> CAD detection threshold
  *         - RF_CAD_THRESHOLD_0A
  *         - RF_CAD_THRESHOLD_10
  *         - RF_CAD_THRESHOLD_15
@@ -1421,8 +1431,8 @@ void RF_SetCadThreshold(uint8_t Threshold)
 }
 
 /**
- * @brief 设置CAD检测符号数
- * @param <Chirps> CAD检测符号数
+ * @brief Set the CAD detection symbol number
+ * @param <Chirps> CAD detection symbol number
  *         - RF_CAD_01_SYMBOL
  *         - RF_CAD_02_SYMBOL
  *         - RF_CAD_03_SYMBOL
@@ -1434,7 +1444,7 @@ void RF_SetCadChirps(uint8_t Chirps)
 }
 
 /**
- * @brief 停止CAD检测
+ * @brief Stop CAD detection
 */
 void RF_StopCad(void)
 {
@@ -1447,11 +1457,11 @@ void RF_StopCad(void)
 }
 
 /**
- * @brief 设置发射模式
+ * @brief Set the transmit mode
  * @param <TxMode>
- *         - RF_TX_SINGLE：单次发送模式
- *         - RF_TX_CONTINOUS：连续发送模式
- * @note 该函数仅用于设置发射模式，并不改变芯片的工作状态
+ *         - RF_TX_SINGLE：Single transmission mode
+ *         - RF_TX_CONTINOUS：Continuous transmission mode
+ * @note This function only sets the transmission mode, and does not change the working state of the chip
  */
 void RF_SetTxMode(uint8_t TxMode)
 {
@@ -1459,29 +1469,29 @@ void RF_SetTxMode(uint8_t TxMode)
 }
 
 /**
- * @brief 发送单个数据包
- * @param <Buffer> 要发送的数据缓冲区
- * @param <Size> 要发送的数据字节数
- * @note 发送完成后会触发TX_DONE中断
- * @note 在发送完成中断中，需调用RF_TurnoffPA()函数来关闭芯片内部和外部PA
+ * @brief Send a single packet
+ * @param <Buffer> Data buffer to be sent
+ * @param <Size> Number of bytes to be sent
+ * @note After the transmission is complete, a TX_DONE interrupt will be triggered
+ * @note In the TX_DONE interrupt, you need to call the RF_TurnoffPA() function to turn off the internal and external PA of the chip
  */
 void RF_TxSinglePkt(uint8_t *Buffer, uint8_t Size)
 {
-    RF_WriteReg(0x02, RF_STATE_STB3); /* 进入待机状态 */
-    RF_SetTxMode(RF_TX_MODE_SINGLE);  /* 设置单次发送模式 */
-    RF_WritePageReg(1, 0x0C, Size);   /* 设置发送数据长度 */
-    RF_TurnonPA();                    /* 发射数据前须打开PA */
-    RF_SetRfState(RF_STATE_TX);       /* 设置芯片为发射状态 */
-    RF_WriteRegs(0x01, Buffer, Size); /* 写入数据到FIFO, 写完数据后，芯片开始发射数据, 其中0x01为FIFO寄存器地址 */
+    RF_WriteReg(0x02, RF_STATE_STB3); /* Enter standby state */
+    RF_SetTxMode(RF_TX_MODE_SINGLE);  /* Set single transmission mode */
+    RF_WritePageReg(1, 0x0C, Size);   /* Set payload length */
+    RF_TurnonPA();                    /* PA must be turned on before transmitting data */
+    RF_SetRfState(RF_STATE_TX);       /* Set the chip to transmit state */
+    RF_WriteRegs(0x01, Buffer, Size); /* Write data to FIFO, after writing, the chip will start transmitting data, where 0x01 is the FIFO register address */
 }
 
 /**
- * @brief 设置接收模式
+ * @brief Set the receive mode
  * @param <RxMode>
- *         - RF_RX_SINGLE: 单次接收模式,接收到一包数据后自动进入待机模式
- *         - RF_RX_SINGLE_TIMEOUT：单次带超时接收模式,超时后自动进入待机模式
- *         - RF_RX_CONTINOUS：连续接收模式,接收到一包数据后继续接收
- * @note 该函数仅用于设置接收模式，并不改变芯片的工作状态
+ *         - RF_RX_SINGLE: Single receive mode, automatically enter standby mode after receiving a packet
+ *         - RF_RX_SINGLE_TIMEOUT：Single receive mode with timeout, automatically enter standby mode after timeout
+ *         - RF_RX_CONTINOUS：Continuous receive mode, continue receiving after receiving a packet
+ * @note This function only sets the receive mode, and does not change the working state of the chip
  */
 void RF_SetRxMode(uint8_t RxMode)
 {
@@ -1489,24 +1499,24 @@ void RF_SetRxMode(uint8_t RxMode)
 }
 
 /**
- * @brief 让芯片进入连续接收状态
- * @note 调用此函数后，芯片会进入连续接收状态
- * @note 该函数会将芯片的工作状态设置为MODE_RX
+ * @brief Enter continuous receive state
+ * @note Calling this function will put the chip into continuous receive state
+ * @note This function will set the working state of the chip to MODE_RX
  */
 void RF_EnterContinousRxState(void)
 {
-    RF_SetRfState(RF_STATE_STB3);       /* 进入待机状态 */
-    RF_TurnonRxAnt();                   /* 打开接收天线开关 */
-    RF_TurnoffLdoPA();                  /* 关闭内部PA */
-    RF_SetRxMode(RF_RX_MODE_CONTINOUS); /* 设置接收模式为连续接收 */
-    RF_SetRfState(RF_STATE_RX);         /* 进入接收状态 */
+    RF_SetRfState(RF_STATE_STB3);       /* Enter standby state */
+    RF_TurnonRxAnt();                   /* Turn on receive antenna switch */
+    RF_TurnoffLdoPA();                  /* Turn off internal PA */
+    RF_SetRxMode(RF_RX_MODE_CONTINOUS); /* Set receive mode to continuous receive */
+    RF_SetRfState(RF_STATE_RX);         /* Enter receive state */
 }
 
 /**
- * @brief 设置接收超时时间
- * @param <TimeoutMs> 超时时间，单位为ms
- *         超时时间范围：0~65535ms
- * @note 该函数仅用于设置接收超时时间，并不改变芯片的工作状态
+ * @brief Set the receive timeout time
+ * @param <TimeoutMs> Timeout time, unit is ms
+ *         Timeout time range: 0~65535ms
+ * @note This function only sets the receive timeout time, and does not change the working state of the chip
  */
 void RF_SetRxTimeout(uint16_t TimeoutMs)
 {
@@ -1515,26 +1525,26 @@ void RF_SetRxTimeout(uint16_t TimeoutMs)
 }
 
 /**
- * @brief 让芯片进入带超时的单次接收状态
- * @param <TimeoutMs> 超时时间，单位为ms
- *            超时时间范围：1~65535ms
- * @note 调用此函数后，芯片会进入带超时的单次接收状态
- * @note 该函数会将芯片的工作状态设置为MODE_RX
+ * @brief Enter single receive state with timeout
+ * @param <TimeoutMs> Timeout time, unit is ms
+ *            Timeout time range: 1~65535ms
+ * @note Calling this function will put the chip into single receive state with timeout
+ * @note This function will set the working state of the chip to MODE_RX
  */
 void RF_EnterSingleRxWithTimeout(uint16_t TimeoutMs)
 {
-    RF_SetRfState(RF_STATE_STB3);            /* 进入待机状态 */
-    RF_TurnonRxAnt();                        /* 打开接收天线开关 */
-    RF_TurnoffLdoPA();                       /* 关闭内部PA */
-    RF_SetRxTimeout(TimeoutMs);              /* 设置接收超时时间 */
-    RF_SetRxMode(RF_RX_MODE_SINGLE_TIMEOUT); /* 设置接收模式为单次接收模式 */
-    RF_SetRfState(RF_STATE_RX);              /* 进入接收状态 */
+    RF_SetRfState(RF_STATE_STB3);            /* Enter standby state */
+    RF_TurnonRxAnt();                        /* Turn on receive antenna switch */
+    RF_TurnoffLdoPA();                       /* Turn off internal PA */
+    RF_SetRxTimeout(TimeoutMs);              /* Set receive timeout time */
+    RF_SetRxMode(RF_RX_MODE_SINGLE_TIMEOUT); /* Set receive mode to single receive mode with timeout */
+    RF_SetRfState(RF_STATE_RX);              /* Enter receive state */
 }
 
 /**
- * @brief 获取接收数据长度
- * @return 接收数据长度
- * @note 此函数须在接收中断被清除前调用，因为清除接收中断会将接收长度寄存器清零
+ * @brief Get the receive data length
+ * @return Receive data length
+ * @note This function must be called before the receive interrupt is cleared, because clearing the receive interrupt will clear the receive length register
  */
 uint8_t RF_GetRxPayloadLen(void)
 {
@@ -1542,24 +1552,24 @@ uint8_t RF_GetRxPayloadLen(void)
 }
 
 /**
- * @brief 函数用于获取接收数据长度及内容
- * @param *Buffer 待接收数据区指针地址
- * @return 接收到的数据长度
- * @note 此函数须在接收中断被清除前调用，因为清除接收中断会将接收长度寄存器清零
+ * @brief Get the receive data length and content
+ * @param *Buffer Pointer to the receive data buffer
+ * @return Received data length
+ * @note This function must be called before the receive interrupt is cleared, because clearing the receive interrupt will clear the receive length register
  */
 uint8_t RF_GetRecvPayload(uint8_t *Buffer)
 {
     uint8_t Size;
-    Size = RF_GetRxPayloadLen();     /* 获取接收数据长度 */
-    RF_ReadRegs(0x01, Buffer, Size); /* 从FIFO中读取接收到的数据, 其中0x01为FIFO寄存器地址 */
+    Size = RF_GetRxPayloadLen();     /* Get receive data length */
+    RF_ReadRegs(0x01, Buffer, Size); /* Read received data from FIFO, where 0x01 is the FIFO register address */
     return Size;
 }
 
 /**
- * @brief 获取接收数据包的RSSI值
- * @return RSSI值
- * @note RSSI值范围：-125~-10，单位dBm，RSSI值小于等于灵敏度值
- * @note 此函数须在接收中断被清除前调用，因为清除接收中断会将信号强度寄存器清零
+ * @brief Get the RSSI value of the received packet
+ * @return RSSI value
+ * @note RSSI value range: -125~-10, unit: dBm, RSSI value is less than or equal to sensitivity value
+ * @note This function must be called before the receive interrupt is cleared, because clearing the receive interrupt will clear the signal strength register
  */
 int8_t RF_GetPktRssi(void)
 {
@@ -1567,14 +1577,14 @@ int8_t RF_GetPktRssi(void)
 }
 
 /**
- * @brief 获取实时RSSI值
- * @return RSSI值
- * @note RSSI值范围：-125~-10，单位dBm
- * @note 调用此函数前需须保证RF处于接收状态
+ * @brief Get the real-time RSSI value
+ * @return RSSI value
+ * @note RSSI value range: -125~-10, unit: dBm
+ * @note This function must be called before the receive interrupt is cleared, because clearing the receive interrupt will clear the signal strength register
  */
 int8_t RF_GetRealTimeRssi(void)
 {
-    /* 将寄存器0x06的Bit[2]清零再置为1，即可更新[Page1][Reg0x7E]的值 */
+    /* Set Bit[2] of register 0x06 to 0, then set it to 1, to update the value of [Page1][Reg0x7E] */
     RF_ResetPageRegBits(2, 0x06, 0x04);
     RF_SetPageRegBits(2, 0x06, 0x04);
 
@@ -1582,10 +1592,10 @@ int8_t RF_GetRealTimeRssi(void)
 }
 
 /**
- * @brief 获取接收数据包的SNR值
- * @return SNR值
- * @note 此函数须在接收中断被清除前调用，因为清除接收中断会将SNR寄存器清零
- * @note SNR值范围：-20~10，单位dB
+ * @brief Get the SNR value of the received packet
+ * @return SNR value
+ * @note This function must be called before the receive interrupt is cleared, because clearing the receive interrupt will clear the SNR register
+ * @note SNR value range: -20~10, unit: dB
  */
 int32_t RF_GetPktSnr(void)
 {
@@ -1627,9 +1637,9 @@ int32_t RF_GetPktSnr(void)
 }
 
 /**
- * @brief 获取中断标志位
- * @return IRQ标志位
- *         - 0x00: 无中断
+ * @brief Get the interrupt flag bits
+ * @return IRQ flag bits
+ *         - 0x00: No interrupt
  *         - 0x01: RF_IRQ_TX_DONE
  *         - 0x02: RF_IRQ_RX_TIMEOUT
  *         - 0x04: RF_IRQ_CRC_ERR
@@ -1642,8 +1652,8 @@ uint8_t RF_GetIRQFlag(void)
 }
 
 /**
- * @brief 清中断标志位
- * @param <IRQFlag> 中断标志位
+ * @brief Clear the interrupt flag bits
+ * @param <IRQFlag> Interrupt flag bits
  */
 void RF_ClrIRQFlag(uint8_t IRQFlag)
 {
@@ -1651,7 +1661,7 @@ void RF_ClrIRQFlag(uint8_t IRQFlag)
 }
 
 /**
- * * @brief 获取当前的频率设置
+ * @brief Get the current frequency setting
  */
 uint32_t RF_GetFreq(void)
 {
@@ -1659,7 +1669,7 @@ uint32_t RF_GetFreq(void)
 }
 
 /**
- * * @brief 获取当前的IQ反转值
+ * @brief Get the current IQ inversion setting
  */
 RfIQModes_t RF_GetInvertIQ(void)
 {
@@ -1667,7 +1677,7 @@ RfIQModes_t RF_GetInvertIQ(void)
 }
 
 /**
- * @brief 获取当前的前导码长度设置
+ * @brief Get the current preamble length setting
  */
 uint16_t RF_GetPreamLen(void)
 {
@@ -1675,7 +1685,7 @@ uint16_t RF_GetPreamLen(void)
 }
 
 /**
- * @brief 获取当前的发射功率设置
+ * @brief Get the current transmit power setting
  */
 uint8_t RF_GetTxPower(void)
 {
@@ -1683,7 +1693,7 @@ uint8_t RF_GetTxPower(void)
 }
 
 /**
- * @brief 获取当前的调制带宽设置
+ * @brief Get the current bandwidth setting
  */
 uint8_t RF_GetBandWidth(void)
 {
@@ -1691,7 +1701,7 @@ uint8_t RF_GetBandWidth(void)
 }
 
 /**
- * @brief 获取当前的扩频因子设置
+ * @brief Get the current spreading factor setting
  */
 uint8_t RF_GetSF(void)
 {
@@ -1699,7 +1709,7 @@ uint8_t RF_GetSF(void)
 }
 
 /**
- * @brief 获取当前的CRC校验设置
+ * @brief Get the current CRC mode setting
  */
 uint8_t RF_GetCRC(void)
 {
@@ -1707,7 +1717,7 @@ uint8_t RF_GetCRC(void)
 }
 
 /**
- * @brief 获取当前的编码率设置
+ * @brief Get the current coding rate setting
  */
 uint8_t RF_GetCR(void)
 {
@@ -1715,7 +1725,7 @@ uint8_t RF_GetCR(void)
 }
 
 /**
- * @brief 获取当前的同步字设置
+ * @brief Get the current sync word setting
  */
 uint8_t RF_GetSyncWord(void)
 {
@@ -1723,7 +1733,7 @@ uint8_t RF_GetSyncWord(void)
 }
 
 /**
- * @brief 获取当前的发射模式设置
+ * @brief Get the current low data rate optimize setting
  */
 uint8_t RF_GetLDR(void)
 {
@@ -1731,13 +1741,13 @@ uint8_t RF_GetLDR(void)
 }
 
 /**
- * @brief 获取单个符号的时间
- * @param <bw> 带宽
+ * @brief Get the current symbol time setting
+ * @param <bw> Bandwidth
  *           - RF_BW_062K / RF_BW_125K / RF_BW_250K / RF_BW_500K
- * @param <sf> 扩频因子
+ * @param <sf> Spreading factor
  *           - RF_SF5 / RF_SF6 / RF_SF7 / RF_SF8 / RF_SF9 / RF_SF10 / RF_SF11 / RF_SF12
- * @return 单个符号的时间，单位为us
- * @note 该函数用于计算单个符号的时间
+ * @return Symbol time, unit: us
+ * @note This function is used to calculate the symbol time
  */
 uint32_t RF_GetOneSymbolTime(uint8_t bw, uint8_t sf)
 {
@@ -1752,9 +1762,9 @@ uint32_t RF_GetOneSymbolTime(uint8_t bw, uint8_t sf)
 }
 
 /**
- * @brief 计算发送数据包的时间
- * @param <Size> 发送数据包的大小，单位为字节
- * @return 发送数据包的时间，单位为ms
+ * @brief Get the current transmit time setting
+ * @param <Size> Transmit payload size, unit: byte
+ * @return Transmit time, unit: ms
  */
 uint32_t RF_GetTxTimeMs(uint8_t Size)
 {
@@ -1796,7 +1806,7 @@ uint32_t RF_GetTxTimeMs(uint8_t Size)
 }
 
 /**
- * @brief 启动mapm模式
+ * @brief Enable mapm mode
  */
 void RF_EnableMapm(void)
 {
@@ -1805,7 +1815,7 @@ void RF_EnableMapm(void)
 }
 
 /**
- * @brief 关闭mapm模式
+ * @brief Disable mapm mode
  */
 void RF_DisableMapm(void)
 {
@@ -1814,15 +1824,15 @@ void RF_DisableMapm(void)
 }
 
 /**
- * @brief 配置mapm相关参数
+ * @brief Set the mapm configuration
  * @param <pMapmCfg>
- *         fn: mapm中的field个数，总共发送fn*(2^fnm)个field（通常fnm=0）
- *         fnm: 同一个field重复发送的次数配置(默认fnm=0)
+ *         fn: Number of fields in mapm, total number of fields sent is fn*(2^fnm) (usually fnm=0)
+ *         fnm: Number of times the same field is repeated (default fnm=0)
  *              - fnm=0时，表示同一个field发送1次，总共发送fn*1个fields
  *              - fnm=1时，表示同一个field发送2次，总共发送fn*2个fields
  *              - fnm=2时，表示同一个field发送4次，总共发送fn*4个fields
  *              - fnm=3时，表示同一个field发送8次，总共发送fn*8个fields
- *         gfs: 每个field中最后一个group的载荷功能选择
+ *         gfs: Last group function selection
  *              - gfs=0时，表示最后一个group的载荷功能为地址
  *              - gfs=1时，表示最后一个group的载荷功能为剩余field的个数(包含当前field)
  *         gn: 一个field中group的个数
@@ -1857,16 +1867,16 @@ void RF_ConfigMapm(RF_MapmCfg_t *pMapmCfg)
 }
 
 /**
- * @brief 设置mapm模式下的组地址
- * @param <MapmAddr> mapm组地址
- *        <AddrWidth> 地址宽度,范围为1~4
- * @note 接收端的MapmAddr[0]须与发送端的MapmAddr[0]一致，
- *       否则接收端不会触发mapm中断。
- * @note Mapm地址寄存器说明：
- *       [Page1][Reg0x3E]为MapmAddr[0]
- *       [Page1][Reg0x3F]为MapmAddr[1]
- *       [Page1][Reg0x40]为MapmAddr[2]
- *       [Page1][Reg0x41]为MapmAddr[3]
+ * @brief Set the mapm address
+ * @param <MapmAddr> mapm group address
+ *        <AddrWidth> Address width, range: 1~4
+ * @note The MapmAddr[0] of the receiver must be the same as that of the sender,
+ *       otherwise the receiver will not trigger the mapm interrupt.
+ * @note Mapm address register description:
+ *       [Page1][Reg0x3E] is MapmAddr[0]
+ *       [Page1][Reg0x3F] is MapmAddr[1]
+ *       [Page1][Reg0x40] is MapmAddr[2]
+ *       [Page1][Reg0x41] is MapmAddr[3]
  */
 void RF_SetMapmAddr(uint8_t *MapmAddr, uint8_t AddrWidth)
 {
@@ -1874,12 +1884,13 @@ void RF_SetMapmAddr(uint8_t *MapmAddr, uint8_t AddrWidth)
 }
 
 /**
- * @brief 计算1个field花费的时间(ms)
- * @param <pMapmCfg> mapm配置参数
- *        <SymbolTime> 单个symbol(chirp)时间
- * @note Group1中chirp的数量为(pg1 + 2)，其中pg1为Group1中前导码的个数，2为Group1中地址占用的chirp数。
- * @note 其它Group中chirp的数量为(pgn + 2)*(gn-1)，其中pgn为其它单个Group中前导码的个数，
- *       2为其它单个Group中地址(或计数值)占用的chirp数，(gn-1)为除去Group1后剩余的Group数。
+ * @brief Calculate the time it takes to send one field (ms)
+ * @param <pMapmCfg> mapm configuration parameters
+ *        <SymbolTime> Time of one symbol (chirp)
+ * @note Group1 in chirp number is (pg1 + 2), where pg1 is the number of preambles in Group1, and 2 is the number of chirps occupied by the address in Group1.
+ * @note The number of chirps in other groups is (pgn + 2) * (gn - 1), where pgn is the number of preambles in other single groups,
+ *       and 2 is the number of chirps occupied by the address (or count value) in other single groups.
+ *       (gn-1) is the number of groups remaining after removing Group1.
  */
 uint32_t RF_GetMapmOneFieldTime(RF_MapmCfg_t *pMapmCfg, uint32_t SymbolTime)
 {
@@ -1892,12 +1903,12 @@ uint32_t RF_GetMapmOneFieldTime(RF_MapmCfg_t *pMapmCfg, uint32_t SymbolTime)
 }
 
 /**
- * @brief 获取mapm模式下的剩余Mapm时间
- * @param <pMapmCfg> mapm配置参数
- *        <SymbolTime> 单个symbol(chirp)时间
- * @return 剩余Mapm时间，单位为ms
- * @note 剩余Mapm时间为从当前时刻到剩余field发送完成的时间
- * @note 剩余filed计数包括当前filed在内
+ * @brief Calculate the remaining Mapm time
+ * @param <pMapmCfg> mapm configuration parameters
+ *        <SymbolTime> Time of one symbol (chirp)
+ * @return Remaining Mapm time, unit: ms
+ * @note The remaining Mapm time is the time from the current moment to the completion of the remaining fields.
+ * @note The remaining field count includes the current field.
  */
 uint32_t RF_GetLeftMapmTime(RF_MapmCfg_t *pMapmCfg, uint32_t SymbolTime)
 {
@@ -1913,108 +1924,108 @@ uint32_t RF_GetLeftMapmTime(RF_MapmCfg_t *pMapmCfg, uint32_t SymbolTime)
     fn = pMapmCfg->fn;
     
     /**
-     * @brief 计算1个field中chirp的数量
-     * @note Group1中chirp的数量为(pg1 + 2)，其中pg1为Group1中前导码的个数，2为Group1中地址占用的chirp数。
-     * @note 其它Group中chirp的数量为(pgn + 2)*(gn-1)，其中pgn为其它单个Group中前导码的个数，
-     *       (gn-1)为除去Group1后剩余的Group数，2为其它单个Group中地址(或计数值)占用的chirp数。
+     * @brief Calculate the number of chirps in one field
+     * @note Group1 in chirp number is (pg1 + 2), where pg1 is the number of preambles in Group1, and 2 is the number of chirps occupied by the address in Group1.
+     * @note The number of chirps in other groups is (pgn + 2) * (gn - 1), where pgn is the number of preambles in other single groups,
+     *       and 2 is the number of chirps occupied by the address (or count value) in other single groups.
+     *       (gn-1) is the number of groups remaining after removing Group1.
      */
     ChirpNumInOneField = (pg1 + 2) + (pgn + 2) * (gn - 1);
     
     /**
-     * @brief 计算剩余chirp的数量
-     * @note fn为mapm中field的数量,如果fnm > 0时，实际发送的field的数量为fn*(2^fnm)。
-     * @note pn为field与sync word之间的前导码个数，空中对应有pn个chirp。
-     * @note 减掉1个field的chirp数是为了减去自身filed花费的时间。
+     * @brief Calculate the number of remaining chirps
+     * @note fn is the number of fields in mapm, if fnm > 0, the actual number of fields sent is fn*(2^fnm).
+     * @note pn is the number of preambles between the last group and the sync word, and there are pn chirps in the air.
+     * @note Subtracting the number of chirps in one field is to subtract the time spent on the current field.
      */
     NumberOfLeftChirps = (1 << fnm) * fn * ChirpNumInOneField - ChirpNumInOneField;
     
-    /* 剩余时间为剩余chirp数乘以单个chirp的时间 */
+    /* Calculate the remaining Mapm time */
     LeftMapmTime = SymbolTime * NumberOfLeftChirps;
 
     return LeftMapmTime / 1000; /* 微秒转毫秒 */
 }
 
 /**
- * @brief 开始发送连续载波
- * @note 调用此函数前须设置好发射功率和频率
- * @note 调用此函数后，芯片会一直处于发射状态，直到调用RF_StopTxContinuousWave()函数停止发射
+ * @brief Start sending continuous carrier
+ * @note Before calling this function, you need to set the transmission power and frequency.
+ * @note After calling this function, the chip will continue to transmit until RF_StopTxContinuousWave() is called to stop transmission.
  */
 void RF_StartTxContinuousWave(void)
 {
-    RF_WriteReg(0x02, RF_STATE_STB3);   /* 设置芯片为空闲状态 */
-    RF_WritePageReg(0, 0x58, 0x00);     /* 关闭所有RF中断 */
-    RF_SetTxMode(RF_TX_MODE_CONTINOUS); /* 设置连续发送模式 */
-    RF_WritePageReg(1, 0x0C, 1);        /* 设置发送数据长度为1字节 */
-    RF_TurnonPA();                      /* 发射数据前须打开PA */
-    RF_WriteReg(0x02, RF_STATE_TX);     /* 设置芯片为发射状态 */
-    RF_WriteReg(0x01, 0xFF);            /* 其中0x01为FIFO寄存器地址, 写完数据后在CS上升沿开始发送载波 */
+    RF_WriteReg(0x02, RF_STATE_STB3);   /* Set chip to idle state */
+    RF_WritePageReg(0, 0x58, 0x00);     /* Disable all RF interrupts */
+    RF_SetTxMode(RF_TX_MODE_CONTINOUS); /* Set continuous transmission mode */
+    RF_WritePageReg(1, 0x0C, 1);        /* Set the length of transmitted data to 1 byte */
+    RF_TurnonPA();                      /* Turn on PA before transmitting data */
+    RF_WriteReg(0x02, RF_STATE_TX);     /* Set chip to transmit state */
+    RF_WriteReg(0x01, 0xFF);            /* Write 0xFF to FIFO register, then start transmitting continuous carrier */
     g_RfOperatetate = RF_STATE_TX;
 }
 
 /**
- * @brief 停止发送连续载波
- * @note 调用此函数后，芯片会停止发射，并进入待机状态
+ * @brief Stop sending continuous carrier
+ * @note After calling this function, the chip will stop transmitting and enter idle state.
  */
 void RF_StopTxContinuousWave(void)
 {
-    RF_WriteReg(0x02, RF_STATE_STB3); /* 设置芯片为空闲状态 */
-    RF_TurnoffPA();                   /* 发送完成后须关闭PA */
-    RF_WritePageReg(0, 0x58, 0x0F);   /* 恢复RF默认中断 */
+    RF_WriteReg(0x02, RF_STATE_STB3); /* Set chip to idle state */
+    RF_TurnoffPA();                   /* Turn off PA after transmitting */
+    RF_WritePageReg(0, 0x58, 0x0F);   /* Restore RF default interrupts */
     g_RfOperatetate = RF_STATE_STB3;
 }
 
 /**
- * @brief 处理RF中断事件
- * @note 此函数可以放在中断服务函数中调用；
- *       也可以用于轮询方式调用此函数来处理RF中断事件。
+ * @brief Process RF interrupt events
+ * @note This function can be called in interrupt service function or polling mode.
  */
 void RF_IRQ_Process(void)
 {
-    if (CHECK_RF_IRQ()) /* 检测到RF中断，高电平表示有中断 */
+    if (CHECK_RF_IRQ()) /* Detect RF interrupt, high level indicates an interrupt */
     {
         uint8_t IRQFlag;
 
-        IRQFlag = RF_GetIRQFlag();    /* 获取中断标志位 */
-        if (IRQFlag & RF_IRQ_TX_DONE) /* 发送完成中断 */
+        IRQFlag = RF_GetIRQFlag();    /* Get interrupt flags */
+        if (IRQFlag & RF_IRQ_TX_DONE) /* Transmit done interrupt */
         {
-            RF_TurnoffPA();                /* 发送完成后须关闭PA */
-            RF_ClrIRQFlag(RF_IRQ_TX_DONE); /* 清除发送完成中断标志位 */
+            RF_TurnoffPA();                /* Turn off PA after transmitting */
+            RF_ClrIRQFlag(RF_IRQ_TX_DONE); /* Clear transmit done interrupt flag */
             IRQFlag &= ~RF_IRQ_TX_DONE;
         }
-        if (IRQFlag & RF_IRQ_RX_DONE) /* 接收完成中断 */
+        if (IRQFlag & RF_IRQ_RX_DONE) /* Receive done */
         {
-            g_RfRxPkt.Snr = RF_GetPktSnr();   /* 获取接收数据包的SNR值 */
-            g_RfRxPkt.Rssi = RF_GetPktRssi(); /* 获取接收数据包的RSSI值 */
+            g_RfRxPkt.Snr = RF_GetPktSnr();   /* Get the SNR value of the received packet */
+            g_RfRxPkt.Rssi = RF_GetPktRssi(); /* Get the RSSI value of the received packet */
             
-            /* 获取接收数据和长度 */
+            /* Get received data and length */
             g_RfRxPkt.RxLen = RF_GetRecvPayload((uint8_t *)g_RfRxPkt.RxBuf);
 
-            RF_ClrIRQFlag(RF_IRQ_RX_DONE); /* 清除接收完成中断标志位 */
+            RF_ClrIRQFlag(RF_IRQ_RX_DONE); /* Clear receive done interrupt flag */
             IRQFlag &= ~RF_IRQ_RX_DONE;
         }
-        if (IRQFlag & RF_IRQ_MAPM_DONE) /* mapm接收完成中断 */
+        if (IRQFlag & RF_IRQ_MAPM_DONE) /* mapm receive done interrupt */
         {
             uint8_t MapmAddr = RF_ReadPageReg(0, 0x6E);
             g_RfRxPkt.MapmRxBuf[g_RfRxPkt.MapmRxIndex++] = MapmAddr;
 
-            RF_ClrIRQFlag(RF_IRQ_MAPM_DONE); /* 清除mapm接收完成中断标志位 */
+            RF_ClrIRQFlag(RF_IRQ_MAPM_DONE); /* Clear mapm receive done interrupt flag */
             IRQFlag &= ~RF_IRQ_MAPM_DONE;
         }
-        if (IRQFlag & RF_IRQ_CRC_ERR) /* CRC错误中断 */
+        if (IRQFlag & RF_IRQ_CRC_ERR) /* CRC error */
         {
-            RF_ClrIRQFlag(RF_IRQ_CRC_ERR); /* 清除CRC错误中断标志位 */
+            RF_ClrIRQFlag(RF_IRQ_CRC_ERR); /* Clear CRC error interrupt flag */
             IRQFlag &= ~RF_IRQ_CRC_ERR;
         }
-        if (IRQFlag & RF_IRQ_RX_TIMEOUT) /* 接收超时中断 */
+        if (IRQFlag & RF_IRQ_RX_TIMEOUT) /* Receive timeout */
         {
             /* rf_refresh(); */
             IRQFlag &= ~RF_IRQ_RX_TIMEOUT;
-            RF_ClrIRQFlag(RF_IRQ_RX_TIMEOUT); /* 清除接收超时中断标志位 */
+            RF_ClrIRQFlag(RF_IRQ_RX_TIMEOUT); /* Clear receive timeout interrupt flag */
         }
 
         if (IRQFlag)
         {
-            RF_ClrIRQFlag(IRQFlag); /* 清除未处理的中断标志位 */
+            RF_ClrIRQFlag(IRQFlag); /* Clear unprocessed interrupt flags */
         }
     }
 }

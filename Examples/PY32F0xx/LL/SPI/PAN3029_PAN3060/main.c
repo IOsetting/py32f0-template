@@ -15,6 +15,7 @@
  */
 #include <string.h>
 #include "main.h"
+#include "py32f0xx_bsp_clock.h"
 #include "py32f0xx_bsp_printf.h"
 #include "pan_rf.h"
 
@@ -22,9 +23,8 @@
 #define MODE_TX         0
 #define MODE_RX         1
 
-#define PAN3029_MODE      MODE_TX
+#define PAN3029_MODE      MODE_RX
 
-static void APP_SystemClockConfig(void);
 static void APP_GPIOConfig(void);
 static void APP_SPIConfig(void);
 
@@ -36,11 +36,10 @@ int main(void)
   uint32_t g_RxCount = 0;
 #else
   unsigned int g_TxCount = 0;
-  /* g_TxBuf为PAN3029/3060 发送数据缓冲区，大小16字节，内容为0~15 */
   unsigned char g_TxBuf[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 #endif
   /* Set clock = 48MHz */
-  APP_SystemClockConfig();
+  BSP_RCC_HSI_PLL48MConfig();
   /* Enable peripheral clock */
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA | LL_IOP_GRP1_PERIPH_GPIOB);
 
@@ -50,85 +49,80 @@ int main(void)
   APP_GPIOConfig();
   APP_SPIConfig();
 
-  ret = RF_Init();        /* PAN3029/3060初始化 */
+  ret = RF_Init();
   if (ret != RF_OK)
   {
     printf("RF init fail\r\n");
     while (1);
   }
 #if PAN3029_MODE == MODE_RX
-  printf("RF rx test start.\r\n");
-  RF_ConfigUserParams();      /* 配置 Frequency、SF、BW、Preamble、CRC等参数 */
-  RF_EnterContinousRxState(); /* 进入连续接收状态 */
+  printf("Rx test start\r\n");
+  RF_ConfigUserParams();      /* Configure parameters like Frequency, SF, BW, Preamble, CRC, etc. */
+  RF_EnterContinousRxState(); /* Enter continuous reception state */
 
   while (1)
   {
-    if (CHECK_RF_IRQ()) /* 检测到RF中断，高电平表示有中断 */
+    if (CHECK_RF_IRQ()) /* Detect RF interrupt, high level indicates an interrupt */
     {
       uint8_t IRQFlag;
-      IRQFlag = RF_GetIRQFlag();    /* 获取中断标志位 */
-      if (IRQFlag & RF_IRQ_RX_DONE) /* 接收完成中断 */
+      IRQFlag = RF_GetIRQFlag();    /* Get interrupt flags */
+      if (IRQFlag & RF_IRQ_RX_DONE) /* flag = Receive complete */
       {
-        g_RfRxPkt.Snr = RF_GetPktSnr();   /* 获取接收数据包的SNR值 */
-        g_RfRxPkt.Rssi = RF_GetPktRssi(); /* 获取接收数据包的RSSI值 */
-
-        /* 获取接收数据和长度 */
-        g_RfRxPkt.RxLen = RF_GetRecvPayload((uint8_t *)g_RfRxPkt.RxBuf);
-
-        printf("+Rx Len=%d, Count=%ld ", g_RfRxPkt.RxLen, ++g_RxCount);
-        printf("+RxHexData: ");
+        g_RfRxPkt.Snr = RF_GetPktSnr();   /* Get the SNR value of the received packet */
+        g_RfRxPkt.Rssi = RF_GetPktRssi(); /* Get the RSSI value of the received packet */
+        g_RfRxPkt.RxLen = RF_GetRecvPayload((uint8_t *)g_RfRxPkt.RxBuf); /* Get received data and length */
+        printf("SNR:%ddB, RSSI:%ddBm Len=%d, Count=%ld Data:\r\n", 
+          (int)g_RfRxPkt.Snr, (int)g_RfRxPkt.Rssi, g_RfRxPkt.RxLen, ++g_RxCount);
         for (int i = 0; i < (int)g_RfRxPkt.RxLen; i++)
         {
           printf("%02X ", ((uint8_t *)g_RfRxPkt.RxBuf)[i]);
         }
         printf("\r\n");
-        printf("SNR:%ddB, RSSI:%ddBm \r\n", (int)g_RfRxPkt.Snr, (int)g_RfRxPkt.Rssi);
-        RF_ClrIRQFlag(RF_IRQ_RX_DONE); /* 清除接收完成中断标志位 */
+        RF_ClrIRQFlag(RF_IRQ_RX_DONE); /* Clear interrupt flag */
         IRQFlag &= ~RF_IRQ_RX_DONE;
       }
-      if (IRQFlag & RF_IRQ_CRC_ERR) /* CRC错误中断 */
+      if (IRQFlag & RF_IRQ_CRC_ERR) /* CRC error */
       {
-        RF_ClrIRQFlag(RF_IRQ_CRC_ERR); /* 清除CRC错误中断标志位 */
+        RF_ClrIRQFlag(RF_IRQ_CRC_ERR);
         IRQFlag &= ~RF_IRQ_CRC_ERR;
         printf(">>RF_IRQ_CRC_ERR\r\n");
       }
-      if (IRQFlag & RF_IRQ_RX_TIMEOUT) /* 接收超时中断 */
+      if (IRQFlag & RF_IRQ_RX_TIMEOUT) /* Receive timeout */
       {
-        RF_ClrIRQFlag(RF_IRQ_RX_TIMEOUT); /* 清除接收超时中断标志位 */
+        RF_ClrIRQFlag(RF_IRQ_RX_TIMEOUT);
         IRQFlag &= ~RF_IRQ_RX_TIMEOUT;
         printf(">>RF_IRQ_RX_TIMEOUT\r\n");
       }
       if (IRQFlag)
       {
-        RF_ClrIRQFlag(IRQFlag); /* 清除未处理的中断标志位 */
+        RF_ClrIRQFlag(IRQFlag); /* Clear unhandled interrupt flags */
       }
     }
   }
 #else
-  printf("RF tx test start.\r\n");
-  RF_ConfigUserParams(); /* 配置 Frequency、SF、BW、Preamble、CRC等参数 */
+  printf("Tx test start\r\n");
+  RF_ConfigUserParams(); /* Configure parameters like Frequency, SF, BW, Preamble, CRC, etc. */
   while (1)
   {
-    //memset(g_TxBuf, g_TxCount, sizeof(g_TxBuf));
-    RF_TxSinglePkt(g_TxBuf, sizeof(g_TxBuf)); /* 发送数据包 */
+    RF_TxSinglePkt(g_TxBuf, sizeof(g_TxBuf)); /* Send data packet */
     while (1)
     {
-      if (CHECK_RF_IRQ()) /* 检测到RF中断，高电平表示有中断 */
+      if (CHECK_RF_IRQ()) /* Detect RF interrupt, high level indicates an interrupt */
       {
         uint8_t IRQFlag;
-        IRQFlag = RF_GetIRQFlag();      /* 获取中断标志位 */
-        if (IRQFlag & RF_IRQ_TX_DONE)   /* 发送完成中断 */
+        IRQFlag = RF_GetIRQFlag();      /* Get interrupt flags */
+        if (IRQFlag & RF_IRQ_TX_DONE)   /* Transmit complete */
         {
-          RF_TurnoffPA();                /* 发送完成后须关闭PA */
-          RF_ClrIRQFlag(RF_IRQ_TX_DONE); /* 清除发送完成中断标志位 */
+          RF_TurnoffPA();                /* Must turn off PA after transmission is complete */
+          RF_ClrIRQFlag(RF_IRQ_TX_DONE); /* Clear transmit complete interrupt flag */
           IRQFlag &= ~RF_IRQ_TX_DONE;
-          RF_EnterStandbyState();       /* 发送完成后须设置为RF_STATE_STB3状态 */
-          printf("Tx done, tx count:%d\r\n", ++g_TxCount); /* 打印发送次数 */
+          RF_EnterStandbyState();       /* Must set to RF_STATE_STB3 state after transmission is complete */
+          printf("Tx done, tx count:%d\r\n", ++g_TxCount);
           break;
         }
         if (IRQFlag)
         {
-          RF_ClrIRQFlag(IRQFlag); /* 清除未处理的中断标志位 */
+          RF_ClrIRQFlag(IRQFlag); /* Clear unhandled interrupt flags */
         }
       }
     }
@@ -223,23 +217,6 @@ static void APP_SPIConfig(void)
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   LL_SPI_Init(SPI1, &SPI_InitStruct);
   LL_SPI_Enable(SPI1);
-}
-
-static void APP_SystemClockConfig(void)
-{
-  LL_UTILS_ClkInitTypeDef UTILS_ClkInitStruct;
-
-  LL_RCC_HSI_Enable();
-  /* Change this value to adjust clock frequency, larger is faster */
-  LL_RCC_HSI_SetCalibFreq(LL_RCC_HSICALIBRATION_24MHz + 15);
-  while (LL_RCC_HSI_IsReady() != 1);
-
-  UTILS_ClkInitStruct.AHBCLKDivider = LL_RCC_SYSCLK_DIV_1;
-  UTILS_ClkInitStruct.APB1CLKDivider = LL_RCC_APB1_DIV_1;
-  LL_PLL_ConfigSystemClock_HSI(&UTILS_ClkInitStruct);
-
-  /* Re-init frequency of SysTick source, reload = freq/ticks = 48000000/1000 = 48000 */
-  LL_InitTick(48000000, 1000U);
 }
 
 void APP_ErrorHandler(void)

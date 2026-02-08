@@ -30,28 +30,28 @@ typedef struct
 /* Power levels 1..RF_MAX_RAMP. Indexed by desired power step. */
 static const RF_PowerRampCfg_t g_RfPowerRampCfg[RF_MAX_RAMP + 1] =
 {
-    {0x01, 0x01, 0x00}, //!< 功率档位1
-    {0x03, 0x01, 0x01}, //!< 功率档位2
-    {0x03, 0xF0, 0x30}, //!< 功率档位3
-    {0x05, 0x01, 0x81}, //!< 功率档位4
-    {0x05, 0xA1, 0x81}, //!< 功率档位5
-    {0x05, 0xF0, 0x81}, //!< 功率档位6
-    {0x07, 0x01, 0x81}, //!< 功率档位7
-    {0x05, 0x01, 0x80}, //!< 功率档位8
-    {0x05, 0x31, 0x80}, //!< 功率档位9
-    {0x07, 0x01, 0x80}, //!< 功率档位10
-    {0x07, 0x21, 0x80}, //!< 功率档位11
-    {0x0B, 0x11, 0x80}, //!< 功率档位12
-    {0x0B, 0x21, 0x80}, //!< 功率档位13
-    {0x0B, 0x41, 0x80}, //!< 功率档位14
-    {0x0B, 0x61, 0x80}, //!< 功率档位15
-    {0x0B, 0x91, 0x80}, //!< 功率档位16
-    {0x0B, 0xB1, 0x80}, //!< 功率档位17
-    {0x0D, 0xB1, 0x80}, //!< 功率档位18
-    {0x0F, 0xB1, 0x80}, //!< 功率档位19
-    {0x11, 0x50, 0x80}, //!< 功率档位20
-    {0x15, 0x30, 0x20}, //!< 功率档位21
-    {0x15, 0x50, 0x70}, //!< 功率档位22
+    {0x01, 0x01, 0x00}, //!< Power level 1
+    {0x03, 0x01, 0x01}, //!< Power level 2
+    {0x03, 0xF0, 0x30}, //!< Power level 3
+    {0x05, 0x01, 0x81}, //!< Power level 4
+    {0x05, 0xA1, 0x81}, //!< Power level 5
+    {0x05, 0xF0, 0x81}, //!< Power level 6
+    {0x07, 0x01, 0x81}, //!< Power level 7
+    {0x05, 0x01, 0x80}, //!< Power level 8
+    {0x05, 0x31, 0x80}, //!< Power level 9
+    {0x07, 0x01, 0x80}, //!< Power level 10
+    {0x07, 0x21, 0x80}, //!< Power level 11
+    {0x0B, 0x11, 0x80}, //!< Power level 12
+    {0x0B, 0x21, 0x80}, //!< Power level 13
+    {0x0B, 0x41, 0x80}, //!< Power level 14
+    {0x0B, 0x61, 0x80}, //!< Power level 15
+    {0x0B, 0x91, 0x80}, //!< Power level 16
+    {0x0B, 0xB1, 0x80}, //!< Power level 17
+    {0x0D, 0xB1, 0x80}, //!< Power level 18
+    {0x0F, 0xB1, 0x80}, //!< Power level 19
+    {0x11, 0x50, 0x80}, //!< Power level 20
+    {0x15, 0x30, 0x20}, //!< Power level 21
+    {0x15, 0x50, 0x70}, //!< Power level 22
 };
 
 /* Single register write item (page, address, value). */
@@ -63,8 +63,9 @@ typedef struct
 } PAN_RegCfg_t;
 
 /**
- * @brief PAN3029/3060 推荐的默认寄存器配置
- * @note 该配置参数用于在芯片上电后，初始化RF收发器的寄存器值
+ * @brief Recommended default register configuration for PAN3029/3060
+ * @note This configuration parameter is used to initialize the RF transceiver's 
+ *       register values after chip power-on
  */
 static const PAN_RegCfg_t g_RfDefaultConfig[] = 
 {
@@ -138,16 +139,17 @@ typedef struct
 } RadioFreqTable_t;
 
 /**
- * @brief PAN3029/3060 频率参数表
- * @note 用户在设置不同频率时，需要用到该参数表，
- *       不同的频率对应不同的vco参数、频率因子和lo参数
- * @note 该表支持的频率范围为：
- *       低频段：
+ * @brief PAN3029/3060 frequency parameter table
+ * @note This parameter table is used when users set different frequencies,
+ *       different frequencies correspond to different VCO parameters, frequency 
+ *       factors, and LO parameters
+ * @note The frequency range supported by this table:
+ *       Low frequency bands:
  *        - 138.33MHz ~ 180.00MHz
  *        - 207.00MHz ~ 270.00MHz
  *        - 282.50MHz ~ 360.00MHz
  *        - 408.00MHz ~ 540.00MHz
- *       高频段：
+ *       High frequency bands:
  *        - 810.00MHz ~ 1080.00MHz
  */
 static const RadioFreqTable_t g_RfFreqTable[] = 
@@ -188,8 +190,8 @@ static const RadioFreqTable_t g_RfFreqTable[] =
 };
 
 /**
- * @brief VCO分频系数表
- * @note 该表用于存储VCO的分频系数
+ * @brief VCO division factor table
+ * @note This table is used to store VCO division factors
  */
 static const uint8_t g_VcoDivTable[] =
 {
@@ -197,9 +199,10 @@ static const uint8_t g_VcoDivTable[] =
 };
 
 /**
- * @brief PAN3029/3060 低频段AGC配置参数
- * @note 该配置参数用于设置低频段的AGC（自动增益控制）相关寄存器的值
- * @note 该参数支持的频段：138.33MHz ~ 282.5MHz，405.00MHz ~ 565.00MHz
+ * @brief PAN3029/3060 low frequency band AGC configuration parameters
+ * @note This configuration parameter is used to set the values of AGC (Automatic 
+ *       Gain Control) related registers for low frequency bands
+ * @note This parameter supports frequency bands: 138.33MHz ~ 282.5MHz, 405.00MHz ~ 565.00MHz
  */
 static const uint8_t g_LowFreqAgcCfg[40] = 
 {
@@ -211,9 +214,10 @@ static const uint8_t g_LowFreqAgcCfg[40] =
 };
 
 /**
- * @brief PAN3029/3060 低频段AGC配置参数
- * @note 该配置参数用于设置低频段的AGC（自动增益控制）相关寄存器的值
- * @note 该参数支持的频段：810.00MHz ~ 1080.00MHz
+ * @brief PAN3029/3060 high frequency band AGC configuration parameters
+ * @note This configuration parameter is used to set the values of AGC (Automatic Gain 
+ *       Control) related registers for high frequency bands
+ * @note This parameter supports frequency bands: 810.00MHz ~ 1080.00MHz
  */
 static const uint8_t g_HighFreqAgcCfg[40] = 
 {
@@ -225,9 +229,9 @@ static const uint8_t g_HighFreqAgcCfg[40] =
 };
 
 /**
- * @brief 该表用于将信噪比(SNR)转换为线性值
- * @note SNR的范围是-10到20dB，对应的线性值范围是10到10240
- * @note 为了减少MCU的计算负担，使用了对数表来进行转换
+ * @brief This table is used to convert Signal-to-Noise Ratio (SNR) to linear values
+ * @note The SNR range is -10 to 20dB, corresponding to linear values ranging from 10 to 10240
+ * @note A logarithmic table is used for conversion to reduce MCU calculation load
  */
 const uint32_t g_SnrLog10Talbe[31] = 
 {

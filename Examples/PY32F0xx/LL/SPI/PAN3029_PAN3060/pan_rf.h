@@ -28,93 +28,93 @@
 #include "main.h"
 
 
-/** TODO: 根据您的硬件做调整：
- * @note 当使用4线SPI时，本SDK使用硬件SPI接口进行数据传输。
- *       - SPI_CS引脚配置为普通GPIO功能，模式为推挽输出
- *       - SPI_SCK引脚配置为SPI功能，模式为推挽输出
- *       - SPI_MOSI引脚配置为SPI功能，模式为推挽输出
- *       - SPI_MISO引脚配置为SPI功能，模式为输入
- * @note 当使用3线SPI时，本SDK使用软件SPI接口进行数据传输。
- *       - SPI_CS引脚配置普通GPIO功能，为推挽输出
- *       - SPI_SCK引脚配置为普通GPIO功能，推挽输出
- *       - SPI_MOSI引脚配置为普通GPIO功能，推挽输出或输入模式，
- *         低功耗模式下须配置为输入带上拉电阻
+/** TODO: Adjust according to your hardware:
+ * @note When using 4-wire SPI, this SDK uses hardware SPI interface for data transmission.
+ *       - SPI_CS pin configured as general GPIO function, push-pull output mode
+ *       - SPI_SCK pin configured as SPI function, push-pull output mode
+ *       - SPI_MOSI pin configured as SPI function, push-pull output mode
+ *       - SPI_MISO pin configured as SPI function, input mode
+ * @note When using 3-wire SPI, this SDK uses software SPI interface for data transmission.
+ *       - SPI_CS pin configured as general GPIO function, push-pull output
+ *       - SPI_SCK pin configured as general GPIO function, push-pull output
+ *       - SPI_MOSI pin configured as general GPIO function, push-pull output or input mode,
+ *         must be configured as input with pull-up resistor in low power mode
  */
-#define SPI_CS_HIGH()      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_6)     /* 将SPI_CS引脚拉高 */
-#define SPI_CS_LOW()       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)   /* 将SPI_CS引脚拉低 */
+#define SPI_CS_HIGH()      LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_6)     /* Pull SPI_CS pin high */
+#define SPI_CS_LOW()       LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_6)   /* Pull SPI_CS pin low */
 
-#if INTERFACE_MODE == USE_SPI_3LINE /* 使用3线SPI */
-#define SPI_SCK_HIGH()     PORT_SetBits(SPI_SCK_PORT, SPI_SCK_PIN)     /* 将SPI_SCK引脚拉高 */
-#define SPI_SCK_LOW()      PORT_ResetBits(SPI_SCK_PORT, SPI_SCK_PIN)   /* 将SPI_SCK引脚拉低 */
-#define SPI_MOSI_HIGH()    PORT_SetBits(SPI_MOSI_PORT, SPI_MOSI_PIN)   /* 将SPI_MOSI引脚拉高 */
-#define SPI_MOSI_LOW()     PORT_ResetBits(SPI_MOSI_PORT, SPI_MOSI_PIN) /* 将SPI_MOSI引脚拉低 */
-#define SPI_MOSI_STATUS()  PORT_GetBit(SPI_MOSI_PORT, SPI_MOSI_PIN)    /* 检测SPI_MOSI引脚状态 */
-#define SPI_MOSI_OUTPUT()  BSP_SetGpioMode(SPI_MOSI_PORT, SPI_MOSI_PIN, Pin_Mode_Out)  /* 设置SPI_MOSI引脚为输出模式 */
-#define SPI_MOSI_INPUT()   BSP_SetGpioMode(SPI_MOSI_PORT, SPI_MOSI_PIN, Pin_Mode_In)   /* 设置SPI_MOSI引脚为输入模式 */
+#if INTERFACE_MODE == USE_SPI_3LINE /* Use 3-wire SPI */
+#define SPI_SCK_HIGH()     PORT_SetBits(SPI_SCK_PORT, SPI_SCK_PIN)     /* Pull SPI_SCK pin high */
+#define SPI_SCK_LOW()      PORT_ResetBits(SPI_SCK_PORT, SPI_SCK_PIN)   /* Pull SPI_SCK pin low */
+#define SPI_MOSI_HIGH()    PORT_SetBits(SPI_MOSI_PORT, SPI_MOSI_PIN)   /* Pull SPI_MOSI pin high */
+#define SPI_MOSI_LOW()     PORT_ResetBits(SPI_MOSI_PORT, SPI_MOSI_PIN) /* Pull SPI_MOSI pin low */
+#define SPI_MOSI_STATUS()  PORT_GetBit(SPI_MOSI_PORT, SPI_MOSI_PIN)    /* Detect SPI_MOSI pin status */
+#define SPI_MOSI_OUTPUT()  BSP_SetGpioMode(SPI_MOSI_PORT, SPI_MOSI_PIN, Pin_Mode_Out)  /* Set SPI_MOSI pin to output mode */
+#define SPI_MOSI_INPUT()   BSP_SetGpioMode(SPI_MOSI_PORT, SPI_MOSI_PIN, Pin_Mode_In)   /* Set SPI_MOSI pin to input mode */
 #endif
 
 /** PA4   ------> IRQ
- * @brief 定义PAN3029/3060中断引脚电平读取宏
- * @note 该宏用于读取PAN3029/3060的中断引脚电平状态，高电平表示中断触发，低电平表示中断未触发
+ * @brief Define PAN3029/3060 interrupt pin level read macro
+ * @note This macro is used to read the interrupt pin level state of PAN3029/3060, high level indicates interrupt triggered, low level indicates interrupt not triggered
  */
 #define CHECK_RF_IRQ()  LL_GPIO_IsInputPinSet(GPIOA, LL_GPIO_PIN_4)
 
 /** PB0   ------> CAD
- * @brief 定义PAN3029/3060 CAD引脚电平读取宏
- * @note 该宏用于读取PAN3029/3060的CAD引脚电平状态，高电平表示信道忙，低电平表示信道空闲
- * @note 不使用CAD功能时，此宏可以不适配，保持PAN3029/3060的CAD(GPIO11)引脚上拉或者悬空即可
+ * @brief Define PAN3029/3060 CAD pin level read macro
+ * @note This macro is used to read the CAD pin level state of PAN3029/3060, high level indicates channel busy, low level indicates channel idle
+ * @note When CAD function is not used, this macro can be not adapted, keep PAN3029/3060 CAD(GPIO11) pin pulled up or floating
  */
 #define CHECK_RF_CAD()  LL_GPIO_IsInputPinSet(GPIOB, LL_GPIO_PIN_0)
 
 /** PA5   ------> RESET
- * @brief 定义PAN3029/3060复位引脚宏
- * @note RF_RESET_PIN_LOW()用于将复位引脚设置为低电平，复位芯片
- * @note RF_RESET_PIN_High()用于释放复位控制信号
- * @note 不用硬件复位时，此宏可以不适配，保持PAN3029/3060的复位引脚上拉或者悬空即可
+ * @brief Define PAN3029/3060 reset pin macro
+ * @note RF_RESET_PIN_LOW() is used to set the reset pin to low level to reset the chip
+ * @note RF_RESET_PIN_High() is used to release the reset control signal
+ * @note When hardware reset is not used, this macro can be not adapted, keep PAN3029/3060 reset pin pulled up or floating
  */
-#define RF_RESET_PIN_LOW()   LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5) /* 设置复位引脚为低电平 */
-#define RF_RESET_PIN_High()  LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_5)   /* 设置复位引脚为高电平 */
+#define RF_RESET_PIN_LOW()   LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5) /* Set reset pin to low level */
+#define RF_RESET_PIN_High()  LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_5)   /* Set reset pin to high level */
 
-/**TODO: 根据您的硬件做调整：
- * @brief PAN3029/3060 GPIO引脚定义
+/**TODO: Adjust according to your hardware:
+ * @brief PAN3029/3060 GPIO pin definitions
  */
-#define MODULE_GPIO_TX             0  /* PAN3029/3060 天线发射控制引脚，高电平时表示打开发射天线，低电平表示关闭发射天线 */
-#define MODULE_GPIO_RX             10 /* PAN3029/3060 天线接收控制引脚，高电平时表示打开接收天线，低电平表示关闭接收天线 */
-#define MODULE_GPIO_TCXO           3  /* PAN3029/3060 TCXO控制引脚，用于打开或关闭TCXO电源 */
-#define MODULE_GPIO_CAD_IRQ        11 /* PAN3029/3060 CAD中断引脚，检测CAD信号时输出高电平，否则输出低电平 */
-
-/**
- * @brief PAN3029/3060的频段定义
- */
-#define REGION_CN470_510           0x00 /* 中国470-510MHz频段 */
-#define REGION_EU_863_870          0x01 /* 欧洲863-870MHz频段 */
-#define REGION_US_902_928          0x02 /* 美国902-928MHz频段 */
-
-#define REGION_DEFAULT             REGION_CN470_510 /* 默认频段为中国470-510MHz频段 */
+#define MODULE_GPIO_TX             0  /* PAN3029/3060 antenna transmit control pin, high level indicates transmit antenna enabled, low level indicates transmit antenna disabled */
+#define MODULE_GPIO_RX             10 /* PAN3029/3060 antenna receive control pin, high level indicates receive antenna enabled, low level indicates receive antenna disabled */
+#define MODULE_GPIO_TCXO           3  /* PAN3029/3060 TCXO control pin, used to enable or disable TCXO power */
+#define MODULE_GPIO_CAD_IRQ        11 /* PAN3029/3060 CAD interrupt pin, outputs high level when CAD signal is detected, otherwise outputs low level */
 
 /**
- * @brief 定义PAN3029/3060的默认参数，用户根据需要修改这些RF参数
+ * @brief PAN3029/3060 frequency band definitions
  */
-#define RF_FREQ_DEFAULT            490000000   /* 默认频率配置 */
-#define RF_SF_DEFAULT              RF_SF7      /* 默认扩频因子配置 */
-#define RF_BW_DEFAULT              RF_BW_500K  /* 默认带宽配置 */
-#define RF_CR_DEFAULT              RF_CR_4_5   /* 默认信道编码率配置 */
-#define RF_CRC_DEFAULT             RF_CRC_ON   /* 默认CRC校验配置 */
-#define RF_LDR_DEFAULT             RF_LDR_OFF  /* 默认低速率优化配置 */
-#define RF_PREAMBLE_DEFAULT        8           /* 默认前导码长度配置 */
-#define RF_IQ_INVERT_DEFAULT       FALSE       /* 默认IQ调制配置 */
+#define REGION_CN470_510           0x00 /* China 470-510MHz band */
+#define REGION_EU_863_870          0x01 /* Europe 863-870MHz band */
+#define REGION_US_902_928          0x02 /* United States 902-928MHz band */
+
+#define REGION_DEFAULT             REGION_CN470_510 /* Default band is China 470-510MHz band */
 
 /**
- * @brief PAN3029/3060的外接晶振和复位引脚配置
+ * @brief Define default parameters for PAN3029/3060, users can modify these RF parameters as needed
  */
-#define USE_ACTIVE_CRYSTAL         0 /* 是否使用外部有源晶振(0:不使用, 1: 使用) */
-#define USE_RF_RST_GPIO            1 /* 是否使用MCU引脚控制RF复位功能(0:不使用, 1: 使用) */
+#define RF_FREQ_DEFAULT            490000000   /* Default frequency configuration */
+#define RF_SF_DEFAULT              RF_SF7      /* Default spreading factor configuration */
+#define RF_BW_DEFAULT              RF_BW_500K  /* Default bandwidth configuration */
+#define RF_CR_DEFAULT              RF_CR_4_5   /* Default channel coding rate configuration */
+#define RF_CRC_DEFAULT             RF_CRC_ON   /* Default CRC check configuration */
+#define RF_LDR_DEFAULT             RF_LDR_OFF  /* Default low data rate optimization configuration */
+#define RF_PREAMBLE_DEFAULT        8           /* Default preamble length configuration */
+#define RF_IQ_INVERT_DEFAULT       FALSE       /* Default IQ modulation configuration */
 
 /**
- * @brief PAN3029/3060的寄存器回读确认功能开关
- * @note 该功能用于在写入寄存器后，通过读取寄存器值来确认写入是否成功
+ * @brief PAN3029/3060 external crystal oscillator and reset pin configuration
  */
-#define USE_RF_REG_CHECK           0 /* 是否使用寄存器回读确认功能(0:不使用, 1: 使用) */
+#define USE_ACTIVE_CRYSTAL         0 /* Whether to use external active crystal oscillator(0: not use, 1: use) */
+#define USE_RF_RST_GPIO            1 /* Whether to use MCU pin to control RF reset function(0: not use, 1: use) */
+
+/**
+ * @brief PAN3029/3060 register read-back confirmation function switch
+ * @note This function is used to confirm whether the write is successful by reading the register value after writing to the register
+ */
+#define USE_RF_REG_CHECK           0 /* Whether to use register read-back confirmation function(0: not use, 1: use) */
 #if USE_RF_REG_CHECK
 #define RF_ASSERT(fn)        \
     do                       \
@@ -129,32 +129,32 @@
 #endif
 
 /**
- * @brief PAN3029/3060 中断标志位定义
+ * @brief PAN3029/3060 interrupt flag definitions
  */
-#define RF_IRQ_TX_DONE                  0x01 /* 发送完成中断标志 */
-#define RF_IRQ_RX_TIMEOUT               0x02 /* 单次接收超时中断标志 */
-#define RF_IRQ_CRC_ERR                  0x04 /* CRC错误中断标志 */
-#define RF_IRQ_RX_DONE                  0x08 /* 接收完成中断标志 */
-#define RF_IRQ_MAPM_DONE                0x40 /* MAPM中断标志 */
+#define RF_IRQ_TX_DONE                  0x01 /* Transmit complete interrupt flag */
+#define RF_IRQ_RX_TIMEOUT               0x02 /* Single reception timeout interrupt flag */
+#define RF_IRQ_CRC_ERR                  0x04 /* CRC error interrupt flag */
+#define RF_IRQ_RX_DONE                  0x08 /* Receive complete interrupt flag */
+#define RF_IRQ_MAPM_DONE                0x40 /* MAPM interrupt flag */
 
 /**
- * @brief PAN3029/3060 调制模式定义
+ * @brief PAN3029/3060 modulation mode definitions
  */
-#define MODEM_MODE_NORMAL               0x00 /* 普通调制模式 */
-#define MODEM_MODE_MULTI_SECTOR         0x01 /* 多段调制模式 */
+#define MODEM_MODE_NORMAL               0x00 /* Normal modulation mode */
+#define MODEM_MODE_MULTI_SECTOR         0x01 /* Multi-sector modulation mode */
 
 /**
- * @brief PAN3029/3060同步字定义
- * @note PAN3029/3060的同步字为单字节，范围为0x00-0xFF
+ * @brief PAN3029/3060 sync word definitions
+ * @note The sync word of PAN3029/3060 is a single byte, range 0x00-0xFF
  */
-#define RF_MAC_PRIVATE_SYNCWORD         0x12 /* 私有网络同步字，默认值使用0x12 */
-#define RF_MAC_PUBLIC_SYNCWORD          0x34 /* 公有网络同步字 */
+#define RF_MAC_PRIVATE_SYNCWORD         0x12 /* Private network sync word, default value 0x12 */
+#define RF_MAC_PUBLIC_SYNCWORD          0x34 /* Public network sync word */
 
 /**
- * @brief PAN3029/3060 功率档位定义
+ * @brief PAN3029/3060 power level definitions
  */
-#define RF_MIN_RAMP                     1  /* 最小功率档位 */
-#define RF_MAX_RAMP                     22 /* 最大功率档位 */
+#define RF_MIN_RAMP                     1  /* Minimum power level */
+#define RF_MAX_RAMP                     22 /* Maximum power level */
 
 #ifndef TRUE
 #define TRUE 1
@@ -165,9 +165,9 @@
 #endif
 
 /**
- * @brief RF相关操作的返回值定义
- * - RF_OK: 操作成功
- * - RF_FAIL: 操作失败
+ * @brief RF related operation return value definitions
+ * - RF_OK: Operation successful
+ * - RF_FAIL: Operation failed
  */
 typedef enum
 {
@@ -176,7 +176,7 @@ typedef enum
 } RF_Err_t;
 
 /**
- * @brief PAN3029/3060的工作状态定义
+ * @brief PAN3029/3060 operating state definitions
  */
 typedef enum
 {
@@ -190,9 +190,9 @@ typedef enum
 } RfOpState_t;
 
 /**
- * @brief PAN3029/3060的GPIO模式定义
- *        - GPIO_MODE_INPUT: GPIO输入模式
- *        - GPIO_MODE_OUTPUT: GPIO输出模式
+ * @brief PAN3029/3060 GPIO mode definitions
+ *        - GPIO_MODE_INPUT: GPIO input mode
+ *        - GPIO_MODE_OUTPUT: GPIO output mode
  */
 typedef enum
 {
@@ -201,9 +201,9 @@ typedef enum
 } RfGpioMode_t;
 
 /**
- * @brief PAN3029/3060的发射模式定义
- *        - RF_TX_MODE_SINGLE: 单次发送模式,大多数情况下使用此模式
- *        - RF_TX_MODE_CONTINOUS: 连续发送模式，常用于载波信号发射
+ * @brief PAN3029/3060 transmission mode definitions
+ *        - RF_TX_MODE_SINGLE: Single transmission mode, used in most cases
+ *        - RF_TX_MODE_CONTINOUS: Continuous transmission mode, commonly used for carrier signal transmission
  */
 typedef enum
 {
@@ -212,10 +212,10 @@ typedef enum
 } RfTxMode_t;
 
 /**
- * @brief PAN3029/3060的接收模式定义
- *        - RF_RX_MODE_SINGLE: 单次接收模式,接收到一包数据后自动进入待机模式，一般不用此模式
- *        - RF_RX_MODE_SINGLE_TIMEOUT: 单次带超时接收模式,超时后自动进入待机模式
- *        - RF_RX_MODE_CONTINOUS: 连续接收模式,接收到一包数据后继续接收
+ * @brief PAN3029/3060 reception mode definitions
+ *        - RF_RX_MODE_SINGLE: Single reception mode, automatically enters standby mode after receiving a packet, generally not used
+ *        - RF_RX_MODE_SINGLE_TIMEOUT: Single reception with timeout mode, automatically enters standby mode after timeout
+ *        - RF_RX_MODE_CONTINOUS: Continuous reception mode, continues to receive after receiving a packet
  */
 typedef enum
 {
@@ -225,9 +225,9 @@ typedef enum
 } RfRxMode_t;
 
 /**
- * @brief PAN3029/3060的供电模式定义
- *        - USE_LDO: 使用LDO供电，电流略大一点，但接收灵敏度略好
- *        - USE_DCDC: 使用DCDC供电，电流略小一点，但接收灵敏度略差1~2dB
+ * @brief PAN3029/3060 power supply mode definitions
+ *        - USE_LDO: Use LDO for power supply, current is slightly larger, but receive sensitivity is slightly better
+ *        - USE_DCDC: Use DCDC for power supply, current is slightly smaller, but receive sensitivity is slightly worse by 1~2dB
  */
 typedef enum
 {
@@ -236,9 +236,7 @@ typedef enum
 } RfRegulatorMode_t;
 
 /**
- * @brief PAN3029/3060的芯片模式定义
- *        - CHIPMODE_MODE0
- *        - CHIPMODE_MODE1
+ * @brief PAN3029/3060 chip mode definitions
  */
 typedef enum
 {
@@ -247,9 +245,9 @@ typedef enum
 } RfChipMode_t;
 
 /**
- * @brief CAD检测门限值配置定义
- *        - 门限值越小，可检测到更弱的信号，但误报率会增加
- *        - 门限值越大，误报率会降低，但可检测到的信号强度范围会减小
+ * @brief CAD detection threshold configuration definitions
+ *        - The smaller the threshold value, the weaker the signal that can be detected, but the false alarm rate will increase
+ *        - The larger the threshold value, the lower the false alarm rate, but the detectable signal strength range will decrease
  */
 typedef enum
 {
@@ -260,14 +258,14 @@ typedef enum
 } RfCadThreshold_t;
 
 /**
- * @brief CAD检测符号数配置定义
+ * @brief CAD detection symbol number configuration definitions
  */
 typedef enum
 {
-    RF_CAD_01_SYMBOL = 0x01, //!< 实际检测时间可能会大于1个符号的时间
-    RF_CAD_02_SYMBOL = 0x02, //!< 实际检测时间可能会大于2个符号的时间
-    RF_CAD_03_SYMBOL = 0x03, //!< 实际检测时间可能会大于3个符号的时间
-    RF_CAD_04_SYMBOL = 0x04, //!< 实际检测时间可能会大于4个符号的时间
+    RF_CAD_01_SYMBOL = 0x01, //!< Actual detection time may be longer than 1 symbol time
+    RF_CAD_02_SYMBOL = 0x02, //!< Actual detection time may be longer than 2 symbol time
+    RF_CAD_03_SYMBOL = 0x03, //!< Actual detection time may be longer than 3 symbol time
+    RF_CAD_04_SYMBOL = 0x04, //!< Actual detection time may be longer than 4 symbol time
 } RfCadSymbols_t;
 
 /**
@@ -309,9 +307,9 @@ typedef enum
 } RfCodingRates_t;
 
 /**
- * @brief CRC模式
- * @note  RF_CRC_ON: 开启CRC校验
- * @note  RF_CRC_OFF: 关闭CRC校验，需要用户自己校验数据完整性
+ * @brief CRC mode
+ * @note  RF_CRC_ON: Enable CRC check
+ * @note  RF_CRC_OFF: Disable CRC check, user needs to verify data integrity themselves
  */
 typedef enum
 {
@@ -320,9 +318,7 @@ typedef enum
 } RfCrcModes_t;
 
 /**
- * @brief 低速率优化模式
- * @note  RF_LDR_ON: Low data rate optimization activated
- * @note  RF_LDR_OFF: Low data rate optimization not used
+ * @brief Low data rate optimization mode
  */
 typedef enum
 {
@@ -430,8 +426,8 @@ typedef struct
 } RfRxPkt_t;
 
 /**
- * @brief PAN3029/3060的配置参数结构体
- * @note  方便用户快速获取之前设置的参数
+ * @brief PAN3029/3060 configuration parameter structure
+ * @note  Convenient for users to quickly obtain previously set parameters
  */
 typedef struct
 {
@@ -450,8 +446,8 @@ typedef struct
 } RfConfig_t;
 
 /**
- * @brief PAN3029/3060接收数据包结构体
- * @note 该结构体用于存储接收到的数据包，包括数据长度、数据缓冲区、SNR和RSSI等信息
+ * @brief PAN3029/3060 received data packet structure
+ * @note This structure is used to store received data packets, including data length, data buffer, SNR and RSSI information, etc.
  */
 extern volatile RfRxPkt_t g_RfRxPkt;
 
@@ -467,173 +463,173 @@ extern volatile RfRxPkt_t g_RfRxPkt;
 
  
 /**
- * @brief 微秒级延时函数
- * @param us 延时的微秒数
+ * @brief Microsecond delay function
+ * @param us Number of microseconds to delay
  */
 void RF_DelayUs(uint32_t us);
 
 /**
- * @brief 毫秒级延时函数
- * @param ms 延时的毫秒数
+ * @brief Millisecond delay function
+ * @param ms Number of milliseconds to delay
  */
 void RF_DelayMs(uint32_t ms);
 
 /**
- * @brief 写入单个字节到指定寄存器
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入寄存器的单字节数据
- * @return RF_Err_t 返回操作结果
+ * @brief Write a single byte to the specified register
+ * @param Addr Register address to write to
+ * @param Value Single byte data to write to the register
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_WriteReg(uint8_t Addr, uint8_t Value);
 
 /**
- * @brief 从指定的寄存器读取单个字节
- * @param Addr 要读取的寄存器地址
- * @return uint8_t 从寄存器读取的值
+ * @brief Read a single byte from the specified register
+ * @param Addr Register address to read from
+ * @return uint8_t Value read from the register
  */
 uint8_t RF_ReadReg(uint8_t Addr);
 
 /**
- * @brief 连续写入多个字节到指定寄存器区
- * @param Addr 要写入的寄存器区的起始地址
- * @param Buffer 要写入寄存器的缓冲区指针
- * @param Size 要写入的字节数
+ * @brief Continuously write multiple bytes to the specified register area
+ * @param Addr Start address of the register area to write to
+ * @param Buffer Pointer to the buffer to write to the register
+ * @param Size Number of bytes to write
  */
 void RF_WriteRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 从指定的寄存器连续读取多个字节
- * @param Addr 要读取的寄存器地址
- * @param Buffer 存储读取数据的缓冲区指针
- * @param Size 要读取的字节数
+ * @brief Continuously read multiple bytes from the specified register
+ * @param Addr Register address to read from
+ * @param Buffer Pointer to the buffer to store read data
+ * @param Size Number of bytes to read
  */
 void RF_ReadRegs(uint8_t Addr, uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 选择寄存器页
- * @param Page 要选择的寄存器页
- * @return RF_Err_t 返回操作结果
+ * @brief Select register page
+ * @param Page Register page to select
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_SetPage(uint8_t Page);
 
 /**
- * @brief 写入单个字节到指定页的寄存器
- * @param Page 要写入的寄存器页
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入寄存器的单字节数据
- * @return RF_Err_t 返回操作结果
+ * @brief Write a single byte to the register of the specified page
+ * @param Page Register page to write to
+ * @param Addr Register address to write to
+ * @param Value Single byte data to write to the register
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_WritePageReg(uint8_t Page, uint8_t Addr, uint8_t Value);
 
 /**
- * @brief 写入多个字节到指定页的寄存器区间
- * @param Page 要写入的寄存器页
- * @param Addr 要写入的寄存器地址
- * @param Buffer 要写入寄存器的缓冲区指针
- * @param Size 要写入的字节数
+ * @brief Write multiple bytes to the register area of the specified page
+ * @param Page Register page to write to
+ * @param Addr Register address to write to
+ * @param Buffer Pointer to the buffer to write to the register
+ * @param Size Number of bytes to write
  */
 void RF_WritePageRegs(uint8_t Page, uint8_t Addr, uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 从指定页的寄存器读取单个字节
- * @param Page 要读取的寄存器页
- * @param Addr 要读取的寄存器地址
- * @return uint8_t 从寄存器读取的值
+ * @brief Read a single byte from the register of the specified page
+ * @param Page Register page to read from
+ * @param Addr Register address to read from
+ * @return uint8_t Value read from the register
  */
 uint8_t RF_ReadPageReg(uint8_t Page, uint8_t Addr);
 
 /**
- * @brief 从指定页的寄存器区间读取多个字节
- * @param Page 要读取的寄存器页
- * @param Addr 要读取的寄存器地址
- * @param Buffer 存储读取数据的缓冲区指针
- * @param Size 要读取的字节数
+ * @brief Read multiple bytes from the register area of the specified page
+ * @param Page Register page to read from
+ * @param Addr Register address to read from
+ * @param Buffer Pointer to the buffer to store read data
+ * @param Size Number of bytes to read
  */
 void RF_ReadPageRegs(uint8_t Page, uint8_t Addr, uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 置位指定页的寄存器位
- * @param Page 要设置的寄存器页
- * @param Addr 要设置的寄存器地址
- * @param Mask 要设置的位掩码
- * @return RF_Err_t 返回操作结果
+ * @brief Set bits of the register of the specified page
+ * @param Page Register page to set
+ * @param Addr Register address to set
+ * @param Mask Bit mask to set
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_SetPageRegBits(uint8_t Page, uint8_t Addr, uint8_t Mask);
 
 /**
- * @brief 复位指定页的寄存器位
- * @param Page 要重置的寄存器页
- * @param Addr 要重置的寄存器地址
- * @param Mask 要重置的位掩码
- * @return RF_Err_t 返回操作结果
+ * @brief Reset bits of the register of the specified page
+ * @param Page Register page to reset
+ * @param Addr Register address to reset
+ * @param Mask Bit mask to reset
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_ResetPageRegBits(uint8_t Page, uint8_t Addr, uint8_t Mask);
 
 /**
- * @brief 写入指定页的寄存器位
- * @param Page 要写入的寄存器页
- * @param Addr 要写入的寄存器地址
- * @param Value 要写入的值
- * @param Mask 要写入的位掩码
- * @return RF_Err_t 返回操作结果
+ * @brief Write bits to the register of the specified page
+ * @param Page Register page to write to
+ * @param Addr Register address to write to
+ * @param Value Value to write
+ * @param Mask Bit mask to write
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_WritePageRegBits(uint8_t Page, uint8_t Addr, uint8_t Value, uint8_t Mask);
 
 /**
- * @brief 配置GPIO模式
- * @param[in] <GpioPin> 引脚号
- * @param[in] <GpioMode> GPIO模式
- * @return RF_Err_t 返回操作结果
+ * @brief Configure GPIO mode
+ * @param[in] <GpioPin> Pin number
+ * @param[in] <GpioMode> GPIO mode
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_ConfigGpio(uint8_t GpioPin, uint8_t GpioMode);
 
 /**
- * @brief 控制GPIO输出电平
- * @param[in] <GpioPin> 引脚号
- * @param[in] <Level> GPIO电平
- * @return RF_Err_t 返回操作结果
+ * @brief Write GPIO output level
+ * @param[in] <GpioPin> GPIO pin number
+ * @param[in] <Level> GPIO output level
+ * @return RF_Err_t Return operation result
  */
 RF_Err_t RF_WriteGpioLevel(uint8_t GpioPin, uint8_t Level);
 
 /**
- * @brief 读取GPIO电平
- * @param[in] <GpioPin> 引脚号
- * @return 读取的GPIO电平
+ * @brief Read GPIO input level
+ * @param[in] <GpioPin> GPIO pin number
+ * @return GPIO input level
  */
 uint8_t RF_ReadGpioLevel(uint8_t GpioPin);
 
 /**
- * @brief 初始化PAN3029/3060的天线控制GPIO
+ * @brief Initialize PAN3029/3060 antenna control GPIO
  */
 void RF_InitAntGpio(void);
 
 /**
- * @brief 打开PAN3029/3060的发射天线
+ * @brief Enable PAN3029/3060 transmit antenna
  */
 void RF_TurnonTxAnt(void);
 
 /**
- * @brief 打开PAN3029/3060的接收天线
+ * @brief Enable PAN3029/3060 receive antenna
  */
 void RF_TurnonRxAnt(void);
 
 /**
- * @brief 关闭PAN3029/3060的天线
+ * @brief Disable PAN3029/3060 antenna
  */
 void RF_ShutdownAnt(void);
 
 /**
- * @brief 初始化TCXO控制GPIO
+ * @brief Initialize TCXO control GPIO
  */
 void RF_InitTcxoGpio(void);
 
 /**
- * @brief 打开TCXO的供电电源
+ * @brief Enable TCXO power supply
  */
 void RF_TurnonTcxo(void);
 
 /**
- * @brief 关闭TCXO的供电电源
+ * @brief Disable TCXO power supply
  */
 void RF_TurnoffTcxo(void);
 
@@ -648,163 +644,170 @@ void RF_TurnonLdoPA(void);
 void RF_TurnoffLdoPA(void);
 
 /**
- * @brief 打开内部和外部PA
+ * @brief Enable internal and external PA
  */
 void RF_TurnonPA(void);
 
 /**
- * @brief 关闭内部和外部PA
+ * @brief Disable internal and external PA
  */
 void RF_TurnoffPA(void);
 
 /**
- * @brief 设置芯片模式
- * @param[in] <ChipMode> 芯片模式
+ * @brief Set chip mode
+ * @param[in] <ChipMode> Chip mode
  */
 void RF_SetChipMode(RfChipMode_t ChipMode);
 
 /**
- * @brief 获取芯片模式
- * @return RfChipMode_t 当前芯片模式
+ * @brief Get chip mode
+ * @return RfChipMode_t Current chip mode
  */
 RfChipMode_t RF_GetChipMode(void);
 
 /**
- * @brief 上电后初始化RF收发器到STB3状态
- * @return 初始化是否成功，0表示成功，1表示失败
+ * @brief Initialize RF transceiver to STB3 state after power-on
+ * @return Whether initialization is successful, 0 indicates success, 1 indicates failure
  */
 RF_Err_t RF_Init(void);
 
 /**
- * @brief 配置RF芯片的用户参数
+ * @brief Configure user parameters for RF chip
  */
 void RF_ConfigUserParams(void);
 
 /**
- * @brief 软件复位RF芯片控制逻辑
+ * @brief Software reset RF chip control logic
  */
 void RF_ResetLogic(void);
 
 /**
- * @brief 获取RF芯片的工作状态
- * @return RfOpState_t 当前工作状态
+ * @brief Get RF chip operating state
+ * @return RfOpState_t Current operating state
  */
 RfOpState_t RF_GetOperateState(void);
 
 /**
- * @brief 设置RF芯片的工作状态
- * @param[in] <RfState> 工作状态
+ * @brief Set RF chip operating state
+ * @param[in] <RfState> Operating state
  */
 void RF_SetOperateState(RfOpState_t RfState);
 
 /**
- * @brief 设置RF芯片的工作状态
- * @param[in] <RfState> 工作状态
+ * @brief Set RF chip operating state
+ * @param[in] <RfState> Operating state
  */
 void RF_SetRfState(uint8_t RfState);
 
 /**
- * @brief 进入深度睡眠模式
- * @note 该函数用于将RF芯片置于深度睡眠模式，关闭天线供电和TCXO电源
- * @note 该函数会将芯片的工作状态设置为MODE_DEEPSLEEP
- * @note 执行该函数后，如需唤醒RF芯片，需要调用RF_Init()函数唤醒芯片
+ * @brief Enter deep sleep mode
+ * @note This function is used to put the RF chip into deep sleep mode, disable antenna power supply and TCXO power
+ * @note This function sets the chip's operating state to MODE_DEEPSLEEP
+ * @note After executing this function, if you need to wake up the RF chip, you need to call RF_Init() function to wake up the chip
  */
 void RF_EnterDeepsleepState(void);
 
 /**
- * @brief 进入睡眠模式
- * @note 该函数用于将RF芯片置于睡眠模式，关闭天线供电和TCXO电源
- * @note 该函数会将芯片的工作状态设置为MODE_SLEEP
- * @note 执行该函数后，如需唤醒RF芯片，需要调用RF_ExitSleepState()函数
+ * @brief Enter sleep mode
+ * @note This function is used to put the RF chip into sleep mode, disable antenna power supply and TCXO power
+ * @note This function sets the chip's operating state to MODE_SLEEP
+ * @note After executing this function, if you need to wake up the RF chip, you need to call RF_ExitSleepState() function
  */
 void RF_EnterSleepState(void);
 
 /**
- * @brief 退出睡眠模式
+ * @brief Exit sleep mode
+ * @note This function is used to wake up the RF chip from sleep mode
+ * @note This function sets the chip's operating state to MODE_STANDBY
+ * @note After executing this function, if you need to put the RF chip into sleep mode, you need to call RF_EnterSleepState() function
  */
 void RF_ExitSleepState(void);
 
 /**
- * @brief 进入待机模式
+ * @brief Enter standby mode
+ * @note This function is used to put the RF chip into standby mode, enable antenna power supply and TCXO power
+ * @note This function sets the chip's operating state to MODE_STANDBY
+ * @note After executing this function, if you need to put the RF chip into sleep mode, you need to call RF_EnterSleepState() function
  */
 void RF_EnterStandbyState(void);
 
 /**
- * @brief 检查RF芯片是否处于休眠状态
+ * @brief Check if the RF chip is in sleep mode
+ * @return Whether the RF chip is in sleep mode, 0 indicates not in sleep mode, 1 indicates in sleep mode
  */
 void RF_CheckDeviceReady(void);
 
 /**
- * @brief 设置芯片的供电模式
- * @param[in] <RegulatorMode> 供电模式
+ * @brief Set regulator mode
+ * @param[in] <RegulatorMode> Regulator mode
  */
 void RF_SetRegulatorMode(RfRegulatorMode_t RegulatorMode);
 
 /**
- * @brief 设置RF芯片的频率
- * @param[in] <Frequency> 频率值
+ * @brief Set RF chip frequency
+ * @param[in] <Frequency> Frequency value
  */
 RF_Err_t RF_SetFreq(uint32_t Frequency);
 
 /**
- * @brief 设置IQ反转
- * @param[in] <enable> 使能或禁用IQ反转
+ * @brief Set IQ inversion
+ * @param[in] <NewState> Enable or disable IQ inversion
  */
 void RF_SetInvertIQ(bool NewState);
 
 /**
- * @brief 设置前导码长度
- * @param[in] <PreamLen> 前导码长度值
+ * @brief Set preamble length
+ * @param[in] <PreamLen> Preamble length value
  */
 void RF_SetPreamLen(uint16_t PreamLen);
 
 /**
- * @brief 设置同步字
- * @param[in] <syncWord> 同步字值
+ * @brief Set sync word
+ * @param[in] <syncWord> Sync word value
  */
 void RF_SetSyncWord(uint8_t SyncWord);
 
 /**
- * @brief 设置发射功率
- * @param[in] <TxPower> 发射档位
+ * @brief Set transmit power
+ * @param[in] <TxPower> Transmit power value
  */
 void RF_SetTxPower(uint8_t TxPower);
 
 /**
- * @brief 设置调制带宽
- * @param[in] <BandWidth> 调制带宽值
+ * @brief Set modulation bandwidth
+ * @param[in] <BandWidth> Modulation bandwidth value
  *            - RF_BW_062K / RF_BW_125K / RF_BW_250K / RF_BW_500K
- * @note 调制带宽越大，数据速率越高，但传输距离越短
- * @note PAN3029芯片的调制带宽范围为RF_BW_062K - RF_BW_500K
- * @note PAN3060芯片的调制带宽范围为RF_BW_125K - RF_BW_500K
+ * @note The larger the modulation bandwidth, the higher the data rate, but the shorter the transmission distance
+ * @note The modulation bandwidth range of PAN3029 is RF_BW_062K - RF_BW_500K
+ * @note The modulation bandwidth range of PAN3060 is RF_BW_125K - RF_BW_500K
  */
 void RF_SetBW(uint8_t BandWidth);
 
 /**
- * @brief 设置扩频因子
- * @param[in] <SpreadFactor> 扩频因子值
+ * @brief Set spreading factor
+ * @param[in] <SpreadFactor> Spreading factor value
  *          - RF_SF5 / RF_SF6 / RF_SF7 / RF_SF8 / RF_SF9 / RF_SF10 / RF_SF11 / RF_SF12
- * @note 扩频因子越大，传输距离越远，但数据速率越低
- * @note PAN3029芯片的扩频因子范围为RF_SF5 - RF_SF12
- * @note PAN3060芯片的扩频因子范围为RF_SF5 - RF_SF9
+ * @note The larger the spreading factor, the longer the transmission distance, but the lower the data rate
+ * @note The spreading factor range of PAN3029 is RF_SF5 - RF_SF12
+ * @note The spreading factor range of PAN3060 is RF_SF5 - RF_SF9
  */
 void RF_SetSF(uint8_t SpreadFactor);
 
 /**
- * @brief 设置信道编码率
- * @param[in] <CodingRate> 信道编码率值
+ * @brief Set channel coding rate
+ * @param[in] <CodingRate> Channel coding rate value
  */
 void RF_SetCR(uint8_t CodingRate);
 
 /**
- * @brief 设置CRC校验
- * @param[in] <NewState> 使能或禁用CRC校验
+ * @brief Set CRC check
+ * @param[in] <NewState> Enable or disable CRC check
  */
 void RF_SetCRC(uint8_t CrcMode);
 
 /**
- * @brief 设置低速率模式
- * @param[in] <LdrMode> 低速率模式值
+ * @brief Set low data rate mode
+ * @param[in] <LdrMode> Low data rate mode value
  */
 void RF_SetLDR(uint8_t LdrMode);
 
@@ -815,15 +818,15 @@ void RF_SetLDR(uint8_t LdrMode);
 void RF_SetModemMode(uint8_t ModemMode);
 
 /**
- * @brief 设置发送模式
- * @param Buffer 要发送的数据缓冲区
- * @param Size 要发送的数据字节数
+ * @brief Set transmit mode
+ * @param Buffer Data buffer to be sent
+ * @param Size Number of data bytes to be sent
  */
 void RF_SetTx(uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 设置接收模式
- * @param TimeoutMs 接收超时时间
+ * @brief Set receive mode
+ * @param TimeoutMs Receive timeout time
  */
 void RF_SetRx(uint32_t TimeoutMs);
 
@@ -834,8 +837,8 @@ void RF_SetRx(uint32_t TimeoutMs);
 void RF_StartCad(uint8_t Threshold, uint8_t Chirps);
 
 /**
- * @brief 设置CAD检测阈值
- * @param[in] <Threshold> CAD检测阈值
+ * @brief Set CAD detection threshold
+ * @param[in] <Threshold> CAD detection threshold
  *            - RF_CAD_THRESHOLD_0A
  *            - RF_CAD_THRESHOLD_10
  *            - RF_CAD_THRESHOLD_15
@@ -844,8 +847,8 @@ void RF_StartCad(uint8_t Threshold, uint8_t Chirps);
 void RF_SetCadThreshold(uint8_t Threshold);
 
 /**
- * @brief 设置CAD检测符号数
- * @param[in] <Chirps> CAD检测符号数
+ * @brief Set CAD detection symbol number
+ * @param[in] <Chirps> CAD detection symbol number
  *            - RF_CAD_01_SYMBOL
  *            - RF_CAD_02_SYMBOL
  *            - RF_CAD_03_SYMBOL
@@ -859,208 +862,208 @@ void RF_SetCadChirps(uint8_t Chirps);
 void RF_StopCad(void);
 
 /**
- * @brief 设置发射模式
+ * @brief Set transmit mode
  * @param[in] <TxMode>
  */
 void RF_SetTxMode(uint8_t TxMode);
 
 /**
- * @brief 发送单个数据包
- * @param[in] <Buffer> 要发送的数据缓冲区
- * @param[in] <Size> 要发送的数据字节数
+ * @brief Send a single data packet
+ * @param[in] <Buffer> Data buffer to be sent
+ * @param[in] <Size> Number of data bytes to be sent
  */
 void RF_TxSinglePkt(uint8_t *Buffer, uint8_t Size);
 
 /**
- * @brief 设置接收模式
- * @param[in] <RxMode> 接收模式
+ * @brief Set receive mode
+ * @param[in] <RxMode> Receive mode
  */
 void RF_SetRxMode(uint8_t RxMode);
 
 /**
- * @brief 让芯片进入连续接收状态
+ * @brief Make the chip enter continuous reception state
  */
 void RF_EnterContinousRxState(void);
 
 /**
- * @brief 设置接收超时时间
- * @param[in] <TimeoutMs> 超时时间
+ * @brief Set receive timeout time
+ * @param[in] <TimeoutMs> Timeout time
  */
 void RF_SetRxTimeout(uint16_t TimeoutMs);
 
 /**
- * @brief 让芯片进入带超时的单次接收状态
- * @param[in] <TimeoutMs> 超时时间
+ * @brief Make the chip enter single reception with timeout state
+ * @param[in] <TimeoutMs> Timeout time
  */
 void RF_EnterSingleRxWithTimeout(uint16_t TimeoutMs);
 
 /**
- * @brief 获取接收数据长度
- * @return 接收数据长度
+ * @brief Get receive data length
+ * @return Receive data length
  */
 uint8_t RF_GetRxPayloadLen(void);
 
 /**
- * @brief 函数用于获取接收数据长度及内容
- * @param *Buffer 待接收数据区指针地址
- * @return 接收到的数据长度
+ * @brief Function used to get receive data length and content
+ * @param *Buffer Pointer address of the data area to receive data
+ * @return Length of received data
  */
 uint8_t RF_GetRecvPayload(uint8_t *Buffer);
 
 /**
- * @brief 获取接收数据包的RSSI值
- * @return RSSI值
+ * @brief Get RSSI value of received data packet
+ * @return RSSI value
  */
 int8_t RF_GetPktRssi(void);
 
 /**
- * @brief 获取实时RSSI值
- * @return RSSI值
+ * @brief Get real-time RSSI value
+ * @return RSSI value
  */
 int8_t RF_GetRealTimeRssi(void);
 
 /**
- * @brief 获取接收数据包的SNR值
- * @return SNR值
+ * @brief Get SNR value of received data packet
+ * @return SNR value
  */
 int32_t RF_GetPktSnr(void);
 
 /**
- * @brief 获取中断标志位
- * @return IRQ标志位
+ * @brief Get interrupt flag bits
+ * @return IRQ flag bits
  */
 uint8_t RF_GetIRQFlag(void);
 
 /**
- * @brief 清中断标志位
- * @param[in] <IRQFlag> 中断标志位
+ * @brief Clear interrupt flag bits
+ * @param[in] <IRQFlag> Interrupt flag bits
  */
 void RF_ClrIRQFlag(uint8_t IRQFlag);
 
 /**
- * @brief 获取当前的频率设置
+ * @brief Get current frequency setting
  */
 uint32_t RF_GetFreq(void);
 
 /**
- * @brief 获取IQ反转值
+ * @brief Get current IQ inversion setting
  */
 RfIQModes_t RF_GetInvertIQ(void);
 
 /**
- * @brief 获取当前的前导码长度设置
+ * @brief Get current preamble length setting
  */
 uint16_t RF_GetPreamLen(void);
 
 /**
- * @brief 获取当前的发射功率设置
+ * @brief Get current transmit power setting
  */
 uint8_t RF_GetTxPower(void);
 
 /**
- * @brief 获取当前的调制带宽设置
+ * @brief Get current bandwidth setting
  */
 uint8_t RF_GetBandWidth(void);
 
 /**
- * @brief 获取当前的扩频因子设置
+ * @brief Get current spreading factor setting
  */
 uint8_t RF_GetSF(void);
 
 /**
- * @brief 获取当前的CRC校验设置
+ * @brief Get current CRC check setting
  */
 uint8_t RF_GetCRC(void);
 
 /**
- * @brief 获取当前的编码率设置
+ * @brief Get current coding rate setting
  */
 uint8_t RF_GetCR(void);
 
 /**
- * @brief 获取当前的同步字设置
+ * @brief Get current sync word setting
  */
 uint8_t RF_GetSyncWord(void);
 
 /**
- * @brief 获取当前的发射模式设置
+ * @brief Get current low data rate mode setting
  */
 uint8_t RF_GetLDR(void);
 
 /**
- * @brief 获取单个符号的时间
- * @param[in] <bw> 带宽
+ * @brief Get the time of a single symbol
+ * @param[in] <bw> Bandwidth
  *           - RF_BW_062K / RF_BW_125K / RF_BW_250K / RF_BW_500K
- * @param[in] <sf> 扩频因子
+ * @param[in] <sf> Spreading factor
  *           - RF_SF5 / RF_SF6 / RF_SF7 / RF_SF8 / RF_SF9 / RF_SF10 / RF_SF11 / RF_SF12
- * @return 单个符号的时间，单位为us
- * @note 该函数用于计算单个符号的时间
+ * @return Time of a single symbol, unit is us
+ * @note This function is used to calculate the time of a single symbol
  */
 uint32_t RF_GetOneSymbolTime(uint8_t bw, uint8_t sf);
 
 /**
- * @brief 计算发送数据包的时间
- * @param[in] <Size> 发送数据包的大小，单位为字节
- * @return 发送数据包的时间，单位为ms
+ * @brief Calculate the time to send a data packet
+ * @param[in] <Size> Size of the data packet to be sent, unit is bytes
+ * @return Time to send the data packet, unit is ms
  */
 uint32_t RF_GetTxTimeMs(uint8_t Size);
 
 /**
- * @brief 启动mapm模式
+ * @brief Enable mapm mode
  */
 void RF_EnableMapm(void);
 
 /**
- * @brief 关闭mapm模式
+ * @brief Disable mapm mode
  */
 void RF_DisableMapm(void);
 
 /**
- * @brief 配置mapm相关参数
+ * @brief Configure mapm related parameters
  * @param[in] <pMapmCfg>
  */
 void RF_ConfigMapm(RF_MapmCfg_t *pMapmCfg);
 
 /**
- * @brief 设置mapm模式下的组地址
- * @param[in] <MapmAddr> mapm组地址
- *            <AddrWidth> 地址宽度,范围为1~4
- * @note 接收端的MapmAddr[0]须与发送端的MapmAddr[0]一致，
- *       否则接收端不会触发mapm中断。
+ * @brief Set group address in mapm mode
+ * @param[in] <MapmAddr> mapm group address
+ *            <AddrWidth> Address width, range is 1~4
+ * @note The MapmAddr[0] of the receiving end must be consistent with the MapmAddr[0] of the transmitting end,
+ *       otherwise the receiving end will not trigger mapm interrupt.
  */
 void RF_SetMapmAddr(uint8_t *MapmAddr, uint8_t AddrWidth);
 
 /**
- * @brief 计算1个field花费的时间(ms)
- * @param[in] <pMapmCfg> mapm配置参数
- *            <SymbolTime> 单个symbol(chirp)时间
- * @note Group1中chirp的数量为(pg1 + 2)，其中pg1为Group1中前导码的个数，2为Group1中地址占用的chirp数。
- * @note 其它Group中chirp的数量为(pgn + 2)*(gn-1)，其中pgn为其它单个Group中前导码的个数，
- *       2为其它单个Group中地址(或计数值)占用的chirp数，(gn-1)为除去Group1后剩余的Group数。
+ * @brief Calculate the time spent on 1 field (ms)
+ * @param[in] <pMapmCfg> mapm configuration parameters
+ *            <SymbolTime> Time of a single symbol (chirp)
+ * @note The number of chirps in Group1 is (pg1 + 2), where pg1 is the number of preambles in Group1, and 2 is the number of chirps occupied by the address in Group1.
+ * @note The number of chirps in other Groups is (pgn + 2)*(gn-1), where pgn is the number of preambles in other single Groups,
+ *       2 is the number of chirps occupied by the address (or count value) in other single Groups, and (gn-1) is the number of remaining Groups after removing Group1.
  */
 uint32_t RF_GetMapmOneFieldTime(RF_MapmCfg_t *pMapmCfg, uint32_t SymbolTime);
 
 /**
- * @brief 获取mapm模式下的剩余Mapm时间
- * @param[in] <pMapmCfg> mapm配置参数
- * @param[in] <SynbolTime> 单个chirp时间
- * @return 剩余Mapm时间，单位为ms
+ * @brief Get remaining Mapm time in mapm mode
+ * @param[in] <pMapmCfg> mapm configuration parameters
+ * @param[in] <SynbolTime> Time of a single chirp
+ * @return Remaining Mapm time, unit is ms
  */
 uint32_t RF_GetLeftMapmTime(RF_MapmCfg_t *pMapmCfg, uint32_t SynbolTime);
 
 /**
- * @brief 开始发送连续载波
+ * @brief Start transmitting continuous carrier
  */
 void RF_StartTxContinuousWave(void);
 
 /**
- * @brief 停止发送连续载波
+ * @brief Stop transmitting continuous carrier
  */
 void RF_StopTxContinuousWave(void);
 
 /**
- * @brief 处理RF中断
- * @note 此函数会在中断服务函数中调用
+ * @brief Process RF interrupts
+ * @note This function will be called in the interrupt service function
  */
 void RF_IRQ_Process(void);
 

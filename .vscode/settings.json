@@ -1,0 +1,14 @@
+{
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/Build/compile_commands.json",
+    "clangd.arguments": [
+        "--compile-commands-dir=Build",
+        "--query-driver=/usr/bin/arm-none-eabi-*",
+    ],
+    "cmake.ignoreCMakeListsMissing": true,
+    "cortex-debug.gdbPath": "gdb-multiarch",
+    "cortex-debug.objdumpPath": "arm-none-eabi-objdump",
+    "debug.onTaskErrors": "abort",
+    "files.associations": {
+        "*.h": "c"
+    },
+}

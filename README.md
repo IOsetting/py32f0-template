@@ -41,8 +41,8 @@ Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more
 # File Structure
 
 ```
+├── .vscode                     # Visual Studio Code tasks and launch settings
 ├── Build                       # Build results
-├── Docs                        # Datesheets and User Manuals
 ├── Examples
 │   ├── PY32F002B               # PY32F002B examples
 │   │   ├── HAL                 # HAL library examples
@@ -68,7 +68,6 @@ Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more
 │   ├── PY32F0xx_HAL_Driver     # PY32F002A/003/030 HAL library
 │   ├── PY32F0xx_LL_BSP         # PY32F002A/003/030 LL BSP
 │   └── PY32F0xx_LL_Driver      # PY32F002A/003/030 LL library
-|
 ├── Makefile                    # Make config
 ├── Misc
 │   ├── Flash
@@ -95,7 +94,11 @@ Frequency up to 72 MHz, 128 Kbytes of Flash memory, 16 Kbytes of SRAM, with more
 
 ## 1. Install GNU Arm Embedded Toolchain
 
-Download the toolchain from [Arm GNU Toolchain Downloads](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) according to your pc architecture, extract the files
+If possible, use your distribution's package manager to install the toolchain.
+The `Makefile` and VS Code settings expect the compiler to be located in `/usr/bin`.
+
+If your distribution does not provide the toolchain, download it from [Arm GNU Toolchain Downloads](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads) according to your architecture, then extract the files.
+You will then need to adjust the path in the `Makefile` (and possibly the VS Code settings).
 
 ```bash
 sudo mkdir -p /opt/gcc-arm/
@@ -218,44 +221,11 @@ make flash
 
 # Debugging In VSCode
 
-Install Cortex Debug extension, add a new configuration in launch.json, e.g.
-```
-{
-    "armToolchainPath": "/opt/gcc-arm/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/",
-    "toolchainPrefix": "arm-none-eabi",
-    "name": "Cortex Debug",
-    "cwd": "${workspaceFolder}",
-    "executable": "${workspaceFolder}/Build/app.elf",
-    "request": "launch",        // can be launch or attach
-    "type": "cortex-debug",
-    "runToEntryPoint": "Reset_Handler", // "main" or other function name. runToMain is deprecated
-    "servertype": "jlink",  // jlink, openocd, pyocd, pe and stutil
-    "device": "PY32F030X8",
-    "interface": "swd",
-    "preLaunchTask": "build",  // Set this to run a task from tasks.json before starting a debug session
-    // "preLaunchCommands": ["Build all"], // Uncomment this if not using preLaunchTask
-    "svdFile": "${workspaceFolder}/Misc/SVD/py32f030xx.svd",  // svd for this part number
-    "showDevDebugOutput": "vscode", // parsed, raw, vscode:vscode log and raw
-    "swoConfig":
-    {
-        "enabled": true,
-        "cpuFrequency": 8000000, // Target CPU frequency in Hz
-        "swoFrequency":  4000000,
-        "source": "probe", // either be “probe” to get directly from the debug probe, 
-                           // or a serial port device to use a serial port external to the debug probe.
-        "decoders":
-        [
-            {
-                "label": "ITM port 0 output",
-                "type": "console",
-                "port": 0,
-                "showOnStartup": true,
-                "encoding": "ascii"
-            }
-        ]
-    }
-}
-```
+Install the Cortex-Debug extension (`marus25.cortex-debug`).
+
+In "Run and Debug", select the appropriate launch configuration for your debugger and device.
+Note that the `Makefile` determines the target chip for building.
+
 If Cortex Debug cannot find JLinkGDBServerCLExe, add the following line to settings.json
 ```
 "cortex-debug.JLinkGDBServerPath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",

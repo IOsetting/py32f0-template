@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Copyright The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: hal_py32
+build:
+  cmake-ext: true
+  kconfig-ext: true
